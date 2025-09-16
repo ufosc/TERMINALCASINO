@@ -2,6 +2,11 @@
 
 This is a set of casino games all in terminal. Multiplayer and item stores will eventually be added. This is a 100% Python project.
 
+## How to Contribute
+
+1. Create a fork of the branch you'd like to work on
+2. Make something cool
+
 ## Current Task
 
 Current milestone is a working single player blackjack.
