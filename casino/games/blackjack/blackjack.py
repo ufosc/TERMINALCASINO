@@ -3,7 +3,7 @@ import sys
 import os
 import shutil
 
-from .card_assets import assignCardArt
+from casino.card_assets import assignCardArt
 
 
 def dealCard(turn, deck):
