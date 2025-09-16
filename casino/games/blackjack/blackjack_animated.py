@@ -232,7 +232,7 @@ while game == True:
             callSecurity()
             clearScreen(1)
             cprint(f"🤵: That's not a choice in this game.\n")
-            cprint(f"Dealer hand: {showDealer()}, ?")
+            cprint(showDealer())
             cprint("Your hand:")
             cprint(display(playerHand)) # ASCII cards printed side by side
             cprint(f"Total: {total(playerHand)}")
