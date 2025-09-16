@@ -3,17 +3,17 @@ import sys
 import os
 import shutil
 
-from casino.card_assets import assignCardArt
+from casino.card_assets import assign_card_art
 
 
-def dealCard(turn, deck):
+def deal_card(turn, deck):
     """Deal a card to the player."""
     card = random.choice(deck)
     turn.append(card)
     deck.remove(card)
 
 
-def total(turn):
+def hand_total(turn):
     """Calculate the total of each hand."""
     total = 0
     aces = 0
@@ -37,13 +37,13 @@ def total(turn):
     return total
 
 
-def showDealer(dealerHand):
+def show_dealer(dealer_hand):
     """Return a string of the dealer's hand."""
-    if len(dealerHand) == 0:
+    if len(dealer_hand) == 0:
         return ""
     # first card shown, rest hidden
-    first_card = assignCardArt(*dealerHand[0])
-    hidden_card = assignCardArt(0, "flipped")
+    first_card = assign_card_art(*dealer_hand[0])
+    hidden_card = assign_card_art(0, "flipped")
     return "\n".join([
         "  ".join(lines)
         for lines in zip(first_card.strip("\n").splitlines(),
@@ -51,10 +51,10 @@ def showDealer(dealerHand):
     ])
 
 
-def display(hand):
+def display_hand(hand):
     """Return a string of cards side by side."""
     card_lines = [
-        assignCardArt(0, card_id).strip("\n").splitlines()
+        assign_card_art(0, card_id).strip("\n").splitlines()
         for _, card_id in hand
     ]
     max_lines = max(len(lines) for lines in card_lines)
@@ -74,18 +74,18 @@ def display(hand):
     return "\n".join(combined_lines)
 
 
-def callSecurity(stubborn):
+def call_security(stubborn):
     """Call the security guard if the player gets too stubborn."""
     if stubborn >= 13:
-        clearScreen(0)
-        print(f"")
+        clear_screen(0)
+        print("")
         cprint(f"👮‍♂️: Time for you to go.")
         cprint(f"You have been removed from the casino")
-        print(f"")
+        print("")
         sys.exit()
 
 
-def clearScreen(headerPrint):
+def clear_screen(header_print):
     """Clear the screen."""
     if os.name == "nt":
         os.system("cls")
@@ -94,7 +94,7 @@ def clearScreen(headerPrint):
         os.system("clear && printf \"\\033[3J\"")
     
         # header
-    if headerPrint == 1:
+    if header_print == 1:
         header = """
 ┌───────────────────────────────┐
 │     ♠ B L A C K J A C K ♠     │
@@ -102,10 +102,10 @@ def clearScreen(headerPrint):
 """
         for line in header.splitlines():
             hprint(line)
-        print(f"")
+        print()
 
-# header print
 def hprint(*args, sep=" ", end="\n"):
+    """Header print."""
     # gets center
     terminal_width = shutil.get_terminal_size().columns
     # join args like print does
@@ -113,8 +113,8 @@ def hprint(*args, sep=" ", end="\n"):
     # print centered
     print(text.center(terminal_width), end=end)
 
-# center print
 def cprint(*args, sep=" ", end="\n"):
+    """Center print."""
     terminal_width = shutil.get_terminal_size().columns
     text = sep.join(map(str, args))
 
@@ -122,13 +122,13 @@ def cprint(*args, sep=" ", end="\n"):
     lines = text.splitlines()
     for i, line in enumerate(lines):
         if i < len(lines) - 1:
-            print(line.center(terminal_width))  # add newline for all but last line
+            print(line.center(terminal_width))
         else:
             print(line.center(terminal_width), end=end)
 
 
-# center input
 def cinput(prompt=""):
+    """Center input."""
     terminal_width = shutil.get_terminal_size().columns
     
     # center the whole prompt string
@@ -147,19 +147,20 @@ def cinput(prompt=""):
 
 
 def play_blackjack() -> None:
+    """Play a blackjack game."""
     game = True
     stubborn = 0 # gets to 7 and you're out
 
 
     while game == True:
         # inital clear
-        clearScreen(1)
+        clear_screen(1)
         
         # local variables
-        playerStatus = True
-        dealerStatus = True
-        playerBJ = False
-        dealerBJ = False
+        player_status = True
+        dealer_status = True
+        player_bj = False
+        dealer_bj = False
 
         # two decks of cards (values + string IDs)
         deck = [
@@ -179,153 +180,154 @@ def play_blackjack() -> None:
 
 
         # hands
-        playerHand = []
-        dealerHand = []
+        player_hand = []
+        dealer_hand = []
 
         # initial deal (player first)
         for _ in range(2):
-            dealCard(playerHand, deck)
-            dealCard(dealerHand, deck)
+            deal_card(player_hand, deck)
+            deal_card(dealer_hand, deck)
 
         # player BJ check
-        if total(playerHand) == 21:
-            playerBJ = True
-            playerStatus = False
+        if hand_total(player_hand) == 21:
+            player_bj = True
+            player_status = False
 
         # dealer BJ check
-        if total(dealerHand) == 21:
+        if hand_total(dealer_hand) == 21:
             # dealer blackjack in initial deal
-            dealerBJ = True
-            playerStatus = False
-            dealerStatus = False
+            dealer_bj = True
+            player_status = False
+            dealer_status = False
             cprint("Your hand:")
-            cprint(showDealer(dealerHand)) # ASCII cards printed side by side
+            cprint(show_dealer(dealer_hand)) # ASCII cards printed side by side
             cprint(f"Total: Blackjack")
             cprint("Your hand:")
-            cprint(display(playerHand)) # ASCII cards printed side by side
-            cprint(f"Total: {total(playerHand)}")
+            cprint(display_hand(player_hand)) # ASCII cards printed side by side
+            cprint(f"Total: {hand_total(player_hand)}")
         # player turn
-        while playerStatus:
+        while player_status:
             # display hands
             cprint("Dealer hand:")
-            cprint(showDealer(dealerHand)) # ASCII cards printed side by side
+            cprint(show_dealer(dealer_hand)) # ASCII cards printed side by side
             cprint("Your hand:")
-            cprint(display(playerHand)) # ASCII cards printed side by side
-            cprint(f"Total: {total(playerHand)}")
+            cprint(display_hand(player_hand)) # ASCII cards printed side by side
+            cprint(f"Total: {hand_total(player_hand)}")
 
             # action choice input
             action = cinput(f"[S]tay   [H]it")
-            print(f"")
+            print()
 
             # check valid answer
             while action not in "SsHh" or action == "":
                 stubborn += 1
-                callSecurity(stubborn)
-                clearScreen(1)
+                call_security(stubborn)
+                clear_screen(1)
                 cprint(f"🤵: That's not a choice in this game.\n")
-                cprint(showDealer(dealerHand))
+                cprint(show_dealer(dealer_hand))
                 cprint("Your hand:")
-                cprint(display(playerHand)) # ASCII cards printed side by side
-                cprint(f"Total: {total(playerHand)}")
+                cprint(display_hand(player_hand)) # ASCII cards printed side by side
+                cprint(f"Total: {hand_total(player_hand)}")
                 action = cinput("[S]tay   [H]it")
 
             # clear terminal
-            clearScreen(1)
+            clear_screen(1)
 
             # do action
             if action == "S" or action == "s":
-                playerStatus = False
+                player_status = False
             elif action == "H" or action == "h":
-                dealCard(playerHand, deck)
+                deal_card(player_hand, deck)
             else:
                 raise ValueError(f"Invalid choice: {action}")
 
             # player bust condition
-            if total(playerHand) > 21:
-                playerStatus = False
-                dealerStatus = False
+            if hand_total(player_hand) > 21:
+                player_status = False
+                dealer_status = False
                 # display hands
                 cprint("Dealer hand:")
-                cprint(display(dealerHand))
-                cprint(f"Total: {total(dealerHand)}")
+                cprint(display_hand(dealer_hand))
+                cprint(f"Total: {hand_total(dealer_hand)}")
                 cprint("Your hand:")
-                cprint(display(playerHand))
-                cprint(f"Total: {total(playerHand)}")
+                cprint(display_hand(player_hand))
+                cprint(f"Total: {hand_total(player_hand)}")
 
             # player 21 end condition
-            if total(playerHand) == 21:
-                playerStatus = False
+            if hand_total(player_hand) == 21:
+                player_status = False
 
         # dealer turn
-        while dealerStatus == True:
+        while dealer_status == True:
             # dealer status check/update
-            if total(dealerHand) > 21:
+            if hand_total(dealer_hand) > 21:
                 #display hands
                 cprint("Dealer hand:")
-                cprint(display(dealerHand))
-                cprint(f"Total: {total(dealerHand)}")
-                if playerBJ == False:
+                cprint(display_hand(dealer_hand))
+                cprint(f"Total: {hand_total(dealer_hand)}")
+                if player_bj == False:
                     cprint("Your hand:")
-                    cprint(display(playerHand))
-                    cprint(f"Total: {total(playerHand)}")
+                    cprint(display_hand(player_hand))
+                    cprint(f"Total: {hand_total(player_hand)}")
                 else:
                     cprint("Your hand:")
-                    cprint(display(playerHand))
+                    cprint(display_hand(player_hand))
                     cprint(f"Total: Blackjack")
-                dealerStatus = False
-            elif total(dealerHand) > 16:
+                dealer_status = False
+            elif hand_total(dealer_hand) > 16:
                 # display hands
                 cprint("Dealer hand:")
-                cprint(display(dealerHand))
-                cprint(f"Total: {total(dealerHand)}")
-                if playerBJ == False:
+                cprint(display_hand(dealer_hand))
+                cprint(f"Total: {hand_total(dealer_hand)}")
+                if player_bj == False:
                     cprint("Your hand:")
-                    cprint(display(playerHand))
-                    cprint(f"Total: {total(playerHand)}")
+                    cprint(display_hand(player_hand))
+                    cprint(f"Total: {hand_total(player_hand)}")
                 else:
                     cprint("Your hand:")
-                    cprint(display(playerHand))
+                    cprint(display_hand(player_hand))
                     cprint(f"Total: Blackjack")
-                dealerStatus = False
+                dealer_status = False
             else:
-                dealCard(dealerHand, deck)
+                deal_card(dealer_hand, deck)
 
         ############## WIN CHECKS ##############
-        print(f"")
-        if playerBJ == True and dealerBJ == True:
+        print()
+        if player_bj == True and dealer_bj == True:
             cprint(f"Player and dealer have a blackjack")
             cprint(f"Push")
             # player gets back bet, +1 draw
-        elif playerBJ == False and dealerBJ == True:
+        elif player_bj == False and dealer_bj == True:
             cprint(f"Dealer has a blackjack")
             cprint(f"You lose")
             # player loses bet, +1 loss
-        elif playerBJ == True and dealerBJ == False:
+        elif player_bj == True and dealer_bj == False:
             cprint(f"Player has a blackjack")
             cprint(f"You win")
             # player gets back 2x bet, +1 win, +1 bj counter
-        elif total(playerHand) > 21:
+        elif hand_total(player_hand) > 21:
             cprint(f"You busted")
             cprint(f"Dealer wins")
             # player loses bet, +1 loss
-        elif total(playerHand) <= 21 and total(dealerHand) > 21:
+        elif hand_total(player_hand) <= 21 and hand_total(dealer_hand) > 21:
             cprint(f"Dealer busted")
             cprint(f"You win")
             # player gets back 2x bet, +1 win
-        elif total(playerHand) == total(dealerHand):
+        elif hand_total(player_hand) == hand_total(dealer_hand):
             cprint(f"Player and dealer have same number")
             cprint(f"Push")
             # player gets back bet, +1 draw
-        elif total(playerHand) < total(dealerHand):
+        elif hand_total(player_hand) < hand_total(dealer_hand):
             cprint(f"Dealer wins")
             # player loses bet, +1 loss
-        elif total(playerHand) > total(dealerHand):
+        elif hand_total(player_hand) > hand_total(dealer_hand):
             cprint(f"Player wins")
             # player gets back 2x bet, +1 win
         else:
             raise ValueError(
                 "Unaccounted for win condition!\n"
-                f"Player: {total(playerHand)}   Dealer: {total(dealerHand)}"
+                f"Player: {hand_total(player_hand)}   "
+                f"Dealer: {hand_total(dealer_hand)}"
             )
 
         # game restart?
@@ -334,16 +336,17 @@ def play_blackjack() -> None:
         # check valid answer
         while playAgain not in "YyNn" or playAgain == "":
             stubborn += 1
-            callSecurity(stubborn)
-            clearScreen(1)
+            call_security(stubborn)
+            clear_screen(1)
             cprint(f"🤵: It's a yes or no, pal. You staying?")
             playAgain = cinput("[Y]es   [N]o\n")
 
-        cprint(f"") # clear line
+        cprint("") # clear line
 
         # play / leave
         if playAgain in "Nn":
-            clearScreen(0)
-            print(f"")
+            clear_screen(0)
+            print()
             cprint(f"Thanks for playing.\n")
+            print()
             game = False
