@@ -5,7 +5,8 @@ This is a set of casino games all in terminal. Multiplayer and item stores will 
 ## How to Contribute
 
 1. Create a fork of the branch you'd like to work on
-2. Make something cool
+2. Code up something cool
+3. Make a pull request and wait for approval
 
 ## Current Task
 
