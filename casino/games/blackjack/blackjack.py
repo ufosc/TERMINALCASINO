@@ -3,7 +3,7 @@ import sys
 import os
 import shutil
 
-from card_assets import assignCardArt
+from .card_assets import assignCardArt
 
 
 def dealCard(turn, deck):
@@ -347,7 +347,3 @@ def play_blackjack() -> None:
             print(f"")
             cprint(f"Thanks for playing.\n")
             game = False
-
-
-if __name__ == "__main__":
-    play_blackjack()
