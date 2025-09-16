@@ -15,3 +15,6 @@ Clean up blackjack_animations.py into a structured file format.
 
 #### Future Goals
 Add card slide animations for initial decks and hits.
+
+#### Project Requirements / Design Document
+https://docs.google.com/document/d/1ewN4baNegzGZweMzRXMcEzH38dWIzm8h-eUV6gS6xZc/edit?usp=sharing
