@@ -1,9 +1,10 @@
 import random
-import sys
 import os
 import shutil
 
 from casino.card_assets import assign_card_art
+
+type Card = tuple[int | str, str]
 
 BLACKJACK_HEADER = """
 ┌───────────────────────────────┐
@@ -12,7 +13,14 @@ BLACKJACK_HEADER = """
 
 """
 
-FULL_DECK = [
+SECURITY_GUARD = "👮‍♂️"
+SECURITY_MESSAGE = f"""
+{SECURITY_GUARD}: Time for you to go.
+You have been removed from the casino
+
+"""
+
+FULL_DECK: list[Card] = [
     # Clubs
     (2, "c2"), (3, "c3"), (4, "c4"), (5, "c5"), (6, "c6"), (7, "c7"), (8, "c8"), (9, "c9"), (10, "c10"),
     ("J", "cJ"), ("Q", "cQ"), ("K", "cK"), ("A", "cA"),
@@ -28,22 +36,22 @@ FULL_DECK = [
 ]
 
 
-def deal_card(turn, deck):
+def deal_card(turn: list[Card], deck: list[Card]) -> None:
     """Deal a card to the player."""
     card = random.choice(deck)
     turn.append(card)
     deck.remove(card)
 
 
-def hand_total(turn):
+def hand_total(turn: list[Card]) -> int:
     """Calculate the total of each hand."""
     total = 0
     aces = 0
     for card, _ in turn:
-        if card in range(1, 11):
+        if isinstance(card, int):
             # 1-10
             total += card
-        elif card in ["J", "Q", "K"]:
+        elif card in {"J", "Q", "K"}:
             # face card
             total += 10
         elif card == "A":
@@ -59,22 +67,23 @@ def hand_total(turn):
     return total
 
 
-def show_dealer(dealer_hand):
+def print_dealer_hand(dealer_hand: list[Card]) -> None:
     """Return a string of the dealer's hand."""
     if len(dealer_hand) == 0:
-        return ""
+        cprint("")
     # first card shown, rest hidden
     first_card = assign_card_art(*dealer_hand[0])
     hidden_card = assign_card_art(0, "flipped")
-    return "\n".join([
+    hand_string = "\n".join([
         "  ".join(lines)
         for lines in zip(first_card.strip("\n").splitlines(),
                          hidden_card.strip("\n").splitlines())
     ])
+    cprint(hand_string)
 
 
-def display_hand(hand):
-    """Return a string of cards side by side."""
+def print_hand(hand: list[Card]) -> None:
+    """Print a string of cards side by side."""
     card_lines = [
         assign_card_art(0, card_id).strip("\n").splitlines()
         for _, card_id in hand
@@ -93,18 +102,8 @@ def display_hand(hand):
             "  ".join(card_lines[j][i] for j in range(len(hand)))
         )
     
-    return "\n".join(combined_lines)
-
-
-def call_security(stubborn):
-    """Call the security guard if the player gets too stubborn."""
-    if stubborn >= 13:
-        clear_screen()
-        print("")
-        cprint(f"👮‍♂️: Time for you to go.")
-        cprint(f"You have been removed from the casino")
-        print("")
-        sys.exit()
+    hand_string = "\n".join(combined_lines)
+    cprint(hand_string)
 
 
 def clear_screen() -> None:
@@ -116,8 +115,8 @@ def clear_screen() -> None:
         os.system("clear && printf \"\\033[3J\"")
 
 
-def cprint(*args, sep=" ", end="\n"):
-    """Center print."""
+def cprint(*args, sep: str = " ", end: str = "\n") -> None:
+    """Print text in the center of the screen."""
     terminal_width = shutil.get_terminal_size().columns
     text = sep.join(map(str, args))
 
@@ -130,22 +129,15 @@ def cprint(*args, sep=" ", end="\n"):
             print(line.center(terminal_width), end=end)
 
 
-def cinput(prompt=""):
-    """Center input."""
+def cinput(prompt: str = "") -> str:
+    """Get input from the user in the center of the screen."""
     terminal_width = shutil.get_terminal_size().columns
-    
-    # center the whole prompt string
-    prompt_text = prompt.center(terminal_width)
-    
-    # figure out where the "middle" of the prompt is
-    cursor_padding = (terminal_width // 2) + 1  # +1 to fine-tune alignment
-    
-    # print the centered prompt
-    print(prompt_text)
+    centered_prompt = prompt.center(terminal_width)
+    print(centered_prompt)
     
     # move cursor to the center for input
+    cursor_padding = (terminal_width // 2) + 1
     print(" " * cursor_padding, end="")
-    
     return input().strip()
 
 
@@ -188,18 +180,18 @@ def play_blackjack() -> None:
             player_status = False
             dealer_status = False
             cprint("Your hand:")
-            cprint(show_dealer(dealer_hand))
+            print_dealer_hand(dealer_hand)
             cprint(f"Total: Blackjack")
             cprint("Your hand:")
-            cprint(display_hand(player_hand))
+            print_hand(player_hand)
             cprint(f"Total: {hand_total(player_hand)}")
         # player turn
         while player_status:
             # display hands
             cprint("Dealer hand:")
-            cprint(show_dealer(dealer_hand))
+            print_dealer_hand(dealer_hand)
             cprint("Your hand:")
-            cprint(display_hand(player_hand))
+            print_hand(player_hand)
             cprint(f"Total: {hand_total(player_hand)}")
 
             # action choice input
@@ -209,13 +201,16 @@ def play_blackjack() -> None:
             # check valid answer
             while action not in "SsHh":
                 stubborn += 1
-                call_security(stubborn)
+                if stubborn >= 13:
+                    clear_screen()
+                    cprint(SECURITY_MESSAGE)
+                    return
                 clear_screen()
                 cprint(BLACKJACK_HEADER)
                 cprint(f"🤵: That's not a choice in this game.\n")
-                cprint(show_dealer(dealer_hand))
+                print_dealer_hand(dealer_hand)
                 cprint("Your hand:")
-                cprint(display_hand(player_hand))
+                print_hand(player_hand)
                 cprint(f"Total: {hand_total(player_hand)}")
                 action = cinput("[S]tay   [H]it")
 
@@ -236,10 +231,10 @@ def play_blackjack() -> None:
                 dealer_status = False
                 # display hands
                 cprint("Dealer hand:")
-                cprint(display_hand(dealer_hand))
+                print_hand(dealer_hand)
                 cprint(f"Total: {hand_total(dealer_hand)}")
                 cprint("Your hand:")
-                cprint(display_hand(player_hand))
+                print_hand(player_hand)
                 cprint(f"Total: {hand_total(player_hand)}")
 
             # player 21 end condition
@@ -252,29 +247,29 @@ def play_blackjack() -> None:
             if hand_total(dealer_hand) > 21:
                 #display hands
                 cprint("Dealer hand:")
-                cprint(display_hand(dealer_hand))
+                print_hand(dealer_hand)
                 cprint(f"Total: {hand_total(dealer_hand)}")
                 if player_bj == False:
                     cprint("Your hand:")
-                    cprint(display_hand(player_hand))
+                    print_hand(player_hand)
                     cprint(f"Total: {hand_total(player_hand)}")
                 else:
                     cprint("Your hand:")
-                    cprint(display_hand(player_hand))
+                    print_hand(player_hand)
                     cprint(f"Total: Blackjack")
                 dealer_status = False
             elif hand_total(dealer_hand) > 16:
                 # display hands
                 cprint("Dealer hand:")
-                cprint(display_hand(dealer_hand))
+                print_hand(dealer_hand)
                 cprint(f"Total: {hand_total(dealer_hand)}")
                 if player_bj == False:
                     cprint("Your hand:")
-                    cprint(display_hand(player_hand))
+                    print_hand(player_hand)
                     cprint(f"Total: {hand_total(player_hand)}")
                 else:
                     cprint("Your hand:")
-                    cprint(display_hand(player_hand))
+                    print_hand(player_hand)
                     cprint(f"Total: Blackjack")
                 dealer_status = False
             else:
@@ -325,7 +320,10 @@ def play_blackjack() -> None:
         # check valid answer
         while play_again not in "YyNn" or play_again == "":
             stubborn += 1
-            call_security(stubborn)
+            if stubborn >= 13:
+                clear_screen()
+                cprint(SECURITY_MESSAGE)
+                return
             clear_screen()
             cprint(BLACKJACK_HEADER)
             cprint(f"🤵: It's a yes or no, pal. You staying?")
