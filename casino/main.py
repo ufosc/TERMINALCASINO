@@ -1,4 +1,5 @@
-from casino.games.blackjack import play_blackjack, cprint, cinput, clear_screen
+from casino.games.blackjack import play_blackjack
+from casino.utils import cprint, cinput, clear_screen
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -17,6 +18,7 @@ games = ["blackjack"]
 
 
 def welcome():
+    clear_screen()
     cprint(CASINO_HEADER)
     action = cinput(ENTER_OR_QUIT_PROMPT).lower()
 
