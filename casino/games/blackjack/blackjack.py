@@ -5,6 +5,28 @@ import shutil
 
 from casino.card_assets import assign_card_art
 
+BLACKJACK_HEADER = """
+┌───────────────────────────────┐
+│     ♠ B L A C K J A C K ♠     │
+└───────────────────────────────┘
+
+"""
+
+FULL_DECK = [
+    # Clubs
+    (2, "c2"), (3, "c3"), (4, "c4"), (5, "c5"), (6, "c6"), (7, "c7"), (8, "c8"), (9, "c9"), (10, "c10"),
+    ("J", "cJ"), ("Q", "cQ"), ("K", "cK"), ("A", "cA"),
+    # Diamonds
+    (2, "d2"), (3, "d3"), (4, "d4"), (5, "d5"), (6, "d6"), (7, "d7"), (8, "d8"), (9, "d9"), (10, "d10"),
+    ("J", "dJ"), ("Q", "dQ"), ("K", "dK"), ("A", "dA"),
+    # Hearts
+    (2, "h2"), (3, "h3"), (4, "h4"), (5, "h5"), (6, "h6"), (7, "h7"), (8, "h8"), (9, "h9"), (10, "h10"),
+    ("J", "hJ"), ("Q", "hQ"), ("K", "hK"), ("A", "hA"),
+    # Spades
+    (2, "s2"), (3, "s3"), (4, "s4"), (5, "s5"), (6, "s6"), (7, "s7"), (8, "s8"), (9, "s9"), (10, "s10"),
+    ("J", "sJ"), ("Q", "sQ"), ("K", "sK"), ("A", "sA"),
+]
+
 
 def deal_card(turn, deck):
     """Deal a card to the player."""
@@ -77,7 +99,7 @@ def display_hand(hand):
 def call_security(stubborn):
     """Call the security guard if the player gets too stubborn."""
     if stubborn >= 13:
-        clear_screen(0)
+        clear_screen()
         print("")
         cprint(f"👮‍♂️: Time for you to go.")
         cprint(f"You have been removed from the casino")
@@ -85,40 +107,21 @@ def call_security(stubborn):
         sys.exit()
 
 
-def clear_screen(header_print):
+def clear_screen() -> None:
     """Clear the screen."""
-    if os.name == "nt":
+    if os.name == "nt":  # Windows
         os.system("cls")
-    else:
-        # clear screen + clear scrollback buffer (Linux/macOS)
+    else:  # Unix
+        # clear screen + clear scrollback buffer
         os.system("clear && printf \"\\033[3J\"")
-    
-        # header
-    if header_print == 1:
-        header = """
-┌───────────────────────────────┐
-│     ♠ B L A C K J A C K ♠     │
-└───────────────────────────────┘
-"""
-        for line in header.splitlines():
-            hprint(line)
-        print()
 
-def hprint(*args, sep=" ", end="\n"):
-    """Header print."""
-    # gets center
-    terminal_width = shutil.get_terminal_size().columns
-    # join args like print does
-    text = sep.join(map(str, args))
-    # print centered
-    print(text.center(terminal_width), end=end)
 
 def cprint(*args, sep=" ", end="\n"):
     """Center print."""
     terminal_width = shutil.get_terminal_size().columns
     text = sep.join(map(str, args))
 
-    # splitlines only if there are multiple lines, otherwise just center once
+    # split lines and print each one centered
     lines = text.splitlines()
     for i, line in enumerate(lines):
         if i < len(lines) - 1:
@@ -148,13 +151,12 @@ def cinput(prompt=""):
 
 def play_blackjack() -> None:
     """Play a blackjack game."""
-    game = True
+    continue_game = True
     stubborn = 0 # gets to 7 and you're out
 
-
-    while game == True:
-        # inital clear
-        clear_screen(1)
+    while continue_game:
+        clear_screen()
+        cprint(BLACKJACK_HEADER)
         
         # local variables
         player_status = True
@@ -163,21 +165,7 @@ def play_blackjack() -> None:
         dealer_bj = False
 
         # two decks of cards (values + string IDs)
-        deck = [
-        # Clubs
-        (2, "c2"), (3, "c3"), (4, "c4"), (5, "c5"), (6, "c6"), (7, "c7"), (8, "c8"), (9, "c9"), (10, "c10"),
-        ("J", "cJ"), ("Q", "cQ"), ("K", "cK"), ("A", "cA"),
-        # Diamonds
-        (2, "d2"), (3, "d3"), (4, "d4"), (5, "d5"), (6, "d6"), (7, "d7"), (8, "d8"), (9, "d9"), (10, "d10"),
-        ("J", "dJ"), ("Q", "dQ"), ("K", "dK"), ("A", "dA"),
-        # Hearts
-        (2, "h2"), (3, "h3"), (4, "h4"), (5, "h5"), (6, "h6"), (7, "h7"), (8, "h8"), (9, "h9"), (10, "h10"),
-        ("J", "hJ"), ("Q", "hQ"), ("K", "hK"), ("A", "hA"),
-        # Spades
-        (2, "s2"), (3, "s3"), (4, "s4"), (5, "s5"), (6, "s6"), (7, "s7"), (8, "s8"), (9, "s9"), (10, "s10"),
-        ("J", "sJ"), ("Q", "sQ"), ("K", "sK"), ("A", "sA"),
-        ] * 2  # duplicate for two decks
-
+        deck = FULL_DECK * 2
 
         # hands
         player_hand = []
@@ -200,18 +188,18 @@ def play_blackjack() -> None:
             player_status = False
             dealer_status = False
             cprint("Your hand:")
-            cprint(show_dealer(dealer_hand)) # ASCII cards printed side by side
+            cprint(show_dealer(dealer_hand))
             cprint(f"Total: Blackjack")
             cprint("Your hand:")
-            cprint(display_hand(player_hand)) # ASCII cards printed side by side
+            cprint(display_hand(player_hand))
             cprint(f"Total: {hand_total(player_hand)}")
         # player turn
         while player_status:
             # display hands
             cprint("Dealer hand:")
-            cprint(show_dealer(dealer_hand)) # ASCII cards printed side by side
+            cprint(show_dealer(dealer_hand))
             cprint("Your hand:")
-            cprint(display_hand(player_hand)) # ASCII cards printed side by side
+            cprint(display_hand(player_hand))
             cprint(f"Total: {hand_total(player_hand)}")
 
             # action choice input
@@ -219,24 +207,25 @@ def play_blackjack() -> None:
             print()
 
             # check valid answer
-            while action not in "SsHh" or action == "":
+            while action not in "SsHh":
                 stubborn += 1
                 call_security(stubborn)
-                clear_screen(1)
+                clear_screen()
+                cprint(BLACKJACK_HEADER)
                 cprint(f"🤵: That's not a choice in this game.\n")
                 cprint(show_dealer(dealer_hand))
                 cprint("Your hand:")
-                cprint(display_hand(player_hand)) # ASCII cards printed side by side
+                cprint(display_hand(player_hand))
                 cprint(f"Total: {hand_total(player_hand)}")
                 action = cinput("[S]tay   [H]it")
 
-            # clear terminal
-            clear_screen(1)
+            clear_screen()
+            cprint(BLACKJACK_HEADER)
 
-            # do action
-            if action == "S" or action == "s":
+            # handle action
+            if action.lower() == "s":
                 player_status = False
-            elif action == "H" or action == "h":
+            elif action.lower() == "h":
                 deal_card(player_hand, deck)
             else:
                 raise ValueError(f"Invalid choice: {action}")
@@ -332,21 +321,18 @@ def play_blackjack() -> None:
 
         # game restart?
         cprint(f"🤵: Would you like to stay at the table?")
-        playAgain = cinput(f"[Y]es   [N]o")
+        play_again = cinput(f"[Y]es   [N]o")
         # check valid answer
-        while playAgain not in "YyNn" or playAgain == "":
+        while play_again not in "YyNn" or play_again == "":
             stubborn += 1
             call_security(stubborn)
-            clear_screen(1)
+            clear_screen()
+            cprint(BLACKJACK_HEADER)
             cprint(f"🤵: It's a yes or no, pal. You staying?")
-            playAgain = cinput("[Y]es   [N]o\n")
-
-        cprint("") # clear line
+            play_again = cinput("[Y]es   [N]o\n")
 
         # play / leave
-        if playAgain in "Nn":
-            clear_screen(0)
-            print()
-            cprint(f"Thanks for playing.\n")
-            print()
-            game = False
+        if play_again in "Nn":
+            clear_screen()
+            cprint(f"\nThanks for playing.\n\n")
+            continue_game = False
