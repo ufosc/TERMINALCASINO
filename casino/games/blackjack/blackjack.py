@@ -67,8 +67,8 @@ def hand_total(turn: list[Card]) -> int:
     return total
 
 
-def print_dealer_hand(dealer_hand: list[Card]) -> None:
-    """Return a string of the dealer's hand."""
+def print_dealer_cards(dealer_hand: list[Card]) -> None:
+    """Print the dealer's cards side by side."""
     if len(dealer_hand) == 0:
         cprint("")
     # first card shown, rest hidden
@@ -82,8 +82,8 @@ def print_dealer_hand(dealer_hand: list[Card]) -> None:
     cprint(hand_string)
 
 
-def print_hand(hand: list[Card]) -> None:
-    """Print a string of cards side by side."""
+def print_cards(hand: list[Card]) -> None:
+    """Print the cards side by side."""
     card_lines = [
         assign_card_art(0, card_id).strip("\n").splitlines()
         for _, card_id in hand
@@ -104,6 +104,13 @@ def print_hand(hand: list[Card]) -> None:
     
     hand_string = "\n".join(combined_lines)
     cprint(hand_string)
+
+
+def print_hand_total(hand: list[Card], label: str = "Total") -> None:
+    """Print the total of the hand."""
+    total = hand_total(hand)
+    total_string = "Blackjack" if total == 21 else f"{total}"
+    cprint(f"{label}: {total_string}")
 
 
 def clear_screen() -> None:
@@ -180,26 +187,26 @@ def play_blackjack() -> None:
             player_status = False
             dealer_status = False
             cprint("Your hand:")
-            print_dealer_hand(dealer_hand)
-            cprint(f"Total: Blackjack")
+            print_dealer_cards(dealer_hand)
+            print_hand_total(dealer_hand)
             cprint("Your hand:")
-            print_hand(player_hand)
-            cprint(f"Total: {hand_total(player_hand)}")
+            print_cards(player_hand)
+            print_hand_total(player_hand)
         # player turn
         while player_status:
             # display hands
             cprint("Dealer hand:")
-            print_dealer_hand(dealer_hand)
+            print_dealer_cards(dealer_hand)
             cprint("Your hand:")
-            print_hand(player_hand)
-            cprint(f"Total: {hand_total(player_hand)}")
+            print_cards(player_hand)
+            print_hand_total(player_hand)
 
             # action choice input
             action = cinput(f"[S]tay   [H]it")
             print()
 
             # check valid answer
-            while action not in "SsHh":
+            while action not in "SsHh" and action != "":
                 stubborn += 1
                 if stubborn >= 13:
                     clear_screen()
@@ -208,10 +215,10 @@ def play_blackjack() -> None:
                 clear_screen()
                 cprint(BLACKJACK_HEADER)
                 cprint(f"🤵: That's not a choice in this game.\n")
-                print_dealer_hand(dealer_hand)
+                print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
-                print_hand(player_hand)
-                cprint(f"Total: {hand_total(player_hand)}")
+                print_cards(player_hand)
+                print_hand_total(player_hand)
                 action = cinput("[S]tay   [H]it")
 
             clear_screen()
@@ -231,11 +238,11 @@ def play_blackjack() -> None:
                 dealer_status = False
                 # display hands
                 cprint("Dealer hand:")
-                print_hand(dealer_hand)
-                cprint(f"Total: {hand_total(dealer_hand)}")
+                print_cards(dealer_hand)
+                print_hand_total(dealer_hand)
                 cprint("Your hand:")
-                print_hand(player_hand)
-                cprint(f"Total: {hand_total(player_hand)}")
+                print_cards(player_hand)
+                print_hand_total(player_hand)
 
             # player 21 end condition
             if hand_total(player_hand) == 21:
@@ -247,29 +254,29 @@ def play_blackjack() -> None:
             if hand_total(dealer_hand) > 21:
                 #display hands
                 cprint("Dealer hand:")
-                print_hand(dealer_hand)
-                cprint(f"Total: {hand_total(dealer_hand)}")
+                print_cards(dealer_hand)
+                print_hand_total(dealer_hand)
                 if player_bj == False:
                     cprint("Your hand:")
-                    print_hand(player_hand)
-                    cprint(f"Total: {hand_total(player_hand)}")
+                    print_cards(player_hand)
+                    print_hand_total(player_hand)
                 else:
                     cprint("Your hand:")
-                    print_hand(player_hand)
-                    cprint(f"Total: Blackjack")
+                    print_cards(player_hand)
+                    print_hand_total(player_hand)
                 dealer_status = False
             elif hand_total(dealer_hand) > 16:
                 # display hands
                 cprint("Dealer hand:")
-                print_hand(dealer_hand)
-                cprint(f"Total: {hand_total(dealer_hand)}")
+                print_cards(dealer_hand)
+                print_hand_total(dealer_hand)
                 if player_bj == False:
                     cprint("Your hand:")
-                    print_hand(player_hand)
-                    cprint(f"Total: {hand_total(player_hand)}")
+                    print_cards(player_hand)
+                    print_hand_total(player_hand)
                 else:
                     cprint("Your hand:")
-                    print_hand(player_hand)
+                    print_cards(player_hand)
                     cprint(f"Total: Blackjack")
                 dealer_status = False
             else:
