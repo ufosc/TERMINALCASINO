@@ -1,3 +1,5 @@
+from casino.types import Card
+
 ############## CARD ARTS ##############
 # flipped card (face-down)
 flipped = """
@@ -486,7 +488,7 @@ sK = """
 
 ############## FUNCTIONS / DICT ##############
 # card dictionary for search/return
-card_dict = {
+card_dict: dict[str, str] = {
     # Clubs
     "cA": cA, "c2": c2, "c3": c3, "c4": c4, "c5": c5, "c6": c6,
     "c7": c7, "c8": c8, "c9": c9, "c10": c10, "cJ": cJ, "cQ": cQ, "cK": cK,
@@ -507,6 +509,7 @@ card_dict = {
     "flipped": flipped
 }
 
-def assign_card_art(card, id):
+def assign_card_art(card: Card) -> str:
     """Return card art from dict."""
-    return card_dict[id]
+    _, card_id = card
+    return card_dict[card_id]

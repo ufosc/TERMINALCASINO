@@ -3,8 +3,7 @@ import os
 import shutil
 
 from casino.card_assets import assign_card_art
-
-type Card = tuple[int | str, str]
+from casino.types import Card
 
 BLACKJACK_HEADER = """
 ┌───────────────────────────────┐
@@ -76,8 +75,8 @@ def print_dealer_cards(dealer_hand: list[Card]) -> None:
     if len(dealer_hand) == 0:
         cprint("")
     # first card shown, rest hidden
-    first_card = assign_card_art(*dealer_hand[0])
-    hidden_card = assign_card_art(0, "flipped")
+    first_card = assign_card_art(dealer_hand[0])
+    hidden_card = assign_card_art((0, "flipped"))
     hand_string = "\n".join([
         "  ".join(lines)
         for lines in zip(first_card.strip("\n").splitlines(),
@@ -89,8 +88,8 @@ def print_dealer_cards(dealer_hand: list[Card]) -> None:
 def print_cards(hand: list[Card]) -> None:
     """Print the cards side by side."""
     card_lines = [
-        assign_card_art(0, card_id).strip("\n").splitlines()
-        for _, card_id in hand
+        assign_card_art(card).strip("\n").splitlines()
+        for card in hand
     ]
     max_lines = max(len(lines) for lines in card_lines)
 
