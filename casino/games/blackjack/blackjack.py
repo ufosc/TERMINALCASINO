@@ -14,11 +14,15 @@ BLACKJACK_HEADER = """
 """
 
 SECURITY_GUARD = "👮‍♂️"
-SECURITY_MESSAGE = f"""
+SECURITY_MSG = f"""
 {SECURITY_GUARD}: Time for you to go.
 You have been removed from the casino
 
 """
+YES_OR_NO_PROMPT       = "[Y]es   [N]o"
+INVALID_YES_OR_NO_MSG  = "🤵: It's a yes or no, pal. You staying?"
+STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
+INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
 
 FULL_DECK: list[Card] = [
     # Clubs
@@ -206,15 +210,15 @@ def play_blackjack() -> None:
             print()
 
             # check valid answer
-            while action not in "SsHh" and action != "":
+            while action not in "SsHh" or action == "":
                 stubborn += 1
                 if stubborn >= 13:
                     clear_screen()
-                    cprint(SECURITY_MESSAGE)
+                    cprint(SECURITY_MSG)
                     return
                 clear_screen()
                 cprint(BLACKJACK_HEADER)
-                cprint(f"🤵: That's not a choice in this game.\n")
+                cprint(INVALID_CHOICE_MSG + "\n")
                 print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
                 print_cards(player_hand)
@@ -322,19 +326,19 @@ def play_blackjack() -> None:
             )
 
         # game restart?
-        cprint(f"🤵: Would you like to stay at the table?")
-        play_again = cinput(f"[Y]es   [N]o")
+        cprint(STAY_AT_TABLE_PROMPT)
+        play_again = cinput(YES_OR_NO_PROMPT)
         # check valid answer
         while play_again not in "YyNn" or play_again == "":
             stubborn += 1
             if stubborn >= 13:
                 clear_screen()
-                cprint(SECURITY_MESSAGE)
+                cprint(SECURITY_MSG)
                 return
             clear_screen()
             cprint(BLACKJACK_HEADER)
-            cprint(f"🤵: It's a yes or no, pal. You staying?")
-            play_again = cinput("[Y]es   [N]o\n")
+            cprint(INVALID_YES_OR_NO_MSG)
+            play_again = cinput(YES_OR_NO_PROMPT)
 
         # play / leave
         if play_again in "Nn":
