@@ -14,7 +14,7 @@ ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: \n"
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again. \n\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play:\n"
 
-games = ["blackjack"]
+games = ["blackjack", "slots"]
 
 
 def welcome():
