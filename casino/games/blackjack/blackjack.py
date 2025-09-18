@@ -153,15 +153,13 @@ def play_blackjack(account: Account) -> None:
             bet_str = cinput(BET_PROMPT).strip()
             try:
                 bet = int(bet_str)
-                if bet <= 0 or bet > account.balance:
-                    raise ValueError
+                account.withdraw(bet)
                 break
             except ValueError:
                 clear_screen()
                 display_blackjack_topbar(account, None)
                 cprint(INVALID_BET_MSG)
 
-        account.balance -= bet
         clear_screen()
         display_blackjack_topbar(account, bet)
 
@@ -323,9 +321,9 @@ def play_blackjack(account: Account) -> None:
 
         # update account balance and redisplay
         if player_won:
-            account.balance += bet * 2
+            account.deposit(bet * 2)
         elif not dealer_won: # tie
-            account.balance += bet
+            account.deposit(bet)
         clear_screen()
         display_blackjack_topbar(account, bet)
         cprint("Dealer hand:")
