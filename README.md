@@ -4,10 +4,12 @@ This is a set of casino games all in terminal. Multiplayer and item stores will 
 All games will follow their American rules first.
 
 ## How to Contribute
-
-1. Create a fork of the branch you'd like to work on
-2. Code up something cool
-3. Make a pull request and wait for approval
+1. Find an issue to work on
+2. Comment on the issue and let us assign you
+3. Create a fork of the branch you'd like to work on
+4. Code up something cool
+5. Make a pull request and wait for approval
+* For most issues we prefer to assign only one assignee, but in cases where you and another OSC member would like to work together let us know and we'll make sure to include both of you as assignees. But when working together be careful to not have overlapping 
 
 ## How to Run
 1. Open terminal
