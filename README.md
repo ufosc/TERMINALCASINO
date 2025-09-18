@@ -1,6 +1,7 @@
 # Welcome to Terminal Casino
 
 This is a set of casino games all in terminal. Multiplayer and item stores will eventually be added. This is a 100% Python project.
+All games will follow their American rules first.
 
 ## How to Contribute
 
@@ -12,9 +13,9 @@ This is a set of casino games all in terminal. Multiplayer and item stores will 
 1. Open terminal
 2. cd into your TERMINALCASINO folder
 3. To run:
-'''
+```
 python -m casino.main
-'''
+```
 
 ## Current Task
 
