@@ -1,17 +1,20 @@
 import random
-import os
-import shutil
 
+from casino.accounts import Account
 from casino.card_assets import assign_card_art
 from casino.types import Card
-from casino.utils import clear_screen, cprint, cinput
+from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 BLACKJACK_HEADER = """
 ┌───────────────────────────────┐
 │     ♠ B L A C K J A C K ♠     │
 └───────────────────────────────┘
-
 """
+
+BLACKJACK_HEADER_OPTIONS = {
+    "header": BLACKJACK_HEADER,
+    "margin": 1,
+}
 
 SECURITY_GUARD = "👮‍♂️"
 SECURITY_MSG = f"""
@@ -126,14 +129,14 @@ def print_hand(hand: list[Card], hidden: bool = False) -> None:
         print_hand_total(hand)
 
 
-def play_blackjack() -> None:
+def play_blackjack(account: Account) -> None:
     """Play a blackjack game."""
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
 
     while continue_game:
         clear_screen()
-        cprint(BLACKJACK_HEADER)
+        display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
         
         # local variables
         player_status = True
@@ -189,7 +192,7 @@ def play_blackjack() -> None:
                     cprint(SECURITY_MSG)
                     return
                 clear_screen()
-                cprint(BLACKJACK_HEADER)
+                display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
                 cprint(INVALID_CHOICE_MSG + "\n")
                 print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
@@ -197,7 +200,7 @@ def play_blackjack() -> None:
                 action = cinput("[S]tay   [H]it")
 
             clear_screen()
-            cprint(BLACKJACK_HEADER)
+            display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
 
             # handle action
             if action.lower() == "s":
@@ -291,7 +294,7 @@ def play_blackjack() -> None:
                 cprint(SECURITY_MSG)
                 return
             clear_screen()
-            cprint(BLACKJACK_HEADER)
+            display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
             cprint(INVALID_YES_OR_NO_MSG)
             play_again = cinput(YES_OR_NO_PROMPT)
 

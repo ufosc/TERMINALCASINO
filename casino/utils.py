@@ -1,5 +1,8 @@
 import os
 import shutil
+from typing import Optional
+
+from casino.accounts import Account
 
 
 def clear_screen() -> None:
@@ -35,3 +38,24 @@ def cinput(prompt: str = "") -> str:
     cursor_padding = (terminal_width // 2) + 1
     print(" " * cursor_padding, end="")
     return input().strip()
+
+
+def display_topbar(
+    account: Optional[Account],
+    header: str,
+    margin: int = 1,
+) -> None:
+    """Display the top bar of the game."""
+    cprint(header)
+    if account:
+        header_lines = header.splitlines()
+        header_width = max(len(line) for line in header_lines if line.strip())
+
+        left_text = f"👤 {account.name}"
+        right_text = f"💰 {account.balance}"
+
+        # Space available for padding
+        inner_width = header_width
+        cprint(f"{left_text}{right_text.rjust(inner_width - len(left_text))}")
+    # Add margin after
+    print("\n" * margin, end="")
