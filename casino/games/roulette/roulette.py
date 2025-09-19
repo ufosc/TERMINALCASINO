@@ -42,6 +42,13 @@ class Roulette:
     Abstract base class to play roulette.
 
     Only contains base functions to run roulette.
+
+    Attributes:
+        wheel (list[tuple[str, str]]): The roulette wheel, where each entry is
+            a tuple like ("0", "green").
+        accounts (list[Account]): List of all player accounts.
+        bets (list[tuple[str, str, str]]): Active bets, where each entry is
+            (account_uuid, bet_type, bet_value).
     """
     
     def __init__(self, accounts: List[Account]) -> None:
@@ -49,29 +56,21 @@ class Roulette:
         Initializes roulette
         """
 
-        """
-        Stores cards as a tuple in the following format:
-
-            ("number", "color")
-
-        For example, a green 0 is stored as:
-
-            ("0", "green")
-        """
+        # Will be populated with numbers and colors
         self.wheel = []
 
-        # Stores all accounts
         self.accounts = accounts
 
+        # Current round's bets
+        self.bets = []
+
+    def spin_wheel() -> tuple[str, str]:
         """
-        Stores bets as a tuple in the following format:
+        Pick a winning color and number.
 
-            (account UUID, bet type, bet)
+        """
 
-        where
-            - account UUID is the account's identification number
-            - bet type is either "number" or "color"
-            - bet is the chosen number or color inputted by the user
+
         """
         self.bets = []
 
