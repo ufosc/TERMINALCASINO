@@ -14,6 +14,8 @@ from casino.card_assets import assign_card_art
 from casino.types import Card
 from casino.utils import clear_screen, cprint, cinput
 
+import casino.accounts
+
 ROULETTE_HEADER = """
 ┌─────────────────────────────┐
 │     ♠ R O U L E T T E ♠     │
@@ -37,7 +39,40 @@ FULL_DECK: list[Card] = [
 class Roulette:
     """
     Abstract base class to play roulette.
+
+    Only contains base functions to run roulette.
     """
+    
+    def __init__(self, accounts: List[Account]) -> None:
+        """
+        Initializes roulette
+        """
+
+        """
+        Stores cards as a tuple in the following format:
+
+            ("number", "color")
+
+        For example, a green 0 is stored as:
+
+            ("0", "green")
+        """
+        self.wheel = []
+
+        # Stores all accounts
+        self.accounts = accounts
+
+        """
+        Stores bets as a tuple in the following format:
+
+            (account UUID, bet type, bet)
+
+        where
+            - account UUID is the account's identification number
+            - bet type is either "number" or "color"
+            - bet is the chosen number or color inputted by the user
+        """
+        self.bets = []
 
 def play_roulette() -> None:
     continue_game = True
