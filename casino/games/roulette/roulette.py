@@ -68,11 +68,16 @@ class Roulette:
         """
         Pick a winning color and number.
 
+        Returns:
+            tuple[str, str]: A tuple containing:
+                - str: The winning number (e.g., "28", "00", "0")
+                - str: The winning color (either "red", "green", or "black")
         """
 
+        random_index = random.randint(0, len(self.wheel))
+        return self.wheel[random_index]
 
         """
-        self.bets = []
 
 def play_roulette() -> None:
     continue_game = True
