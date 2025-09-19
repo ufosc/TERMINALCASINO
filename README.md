@@ -1,20 +1,23 @@
 # Welcome to Terminal Casino
 
 This is a set of casino games all in terminal. Multiplayer and item stores will eventually be added. This is a 100% Python project.
+All games will follow their American rules first.
 
 ## How to Contribute
-
-1. Create a fork of the branch you'd like to work on
-2. Code up something cool
-3. Make a pull request and wait for approval
+1. Find an issue to work on
+2. Comment on the issue and let us assign you
+3. Create a fork of the branch you'd like to work on
+4. Code up something cool
+5. Make a pull request and wait for approval
+* If you want to work on an issue in collaboration with multiple OSC members, be careful not to submit overlapping PRs.
 
 ## How to Run
 1. Open terminal
 2. cd into your TERMINALCASINO folder
 3. To run:
-'''
+```
 python -m casino.main
-'''
+```
 
 ## Current Task
 

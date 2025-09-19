@@ -1,18 +1,23 @@
 # Import casino games
+from casino.accounts import Account
 from casino.games.blackjack import play_blackjack
 from casino.games.roulette  import play_roulette
 
 # Import utilities
-from casino.utils import cprint, cinput, clear_screen
+from casino.utils import cprint, cinput, clear_screen, display_topbar
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
 │   ♦ T E R M I N A L  C A S I N O ♦   │
 └──────────────────────────────────────┘
-
-
-
 """
+
+CASINO_HEADER_OPTIONS = {
+    "header": CASINO_HEADER,
+    "margin": 3,
+}
+
+ACCOUNT_STARTING_BALANCE = 100
 
 ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: \n"
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again. \n\n"
@@ -21,34 +26,34 @@ GAME_CHOICE_PROMPT = "Please choose a game to play:\n"
 games = ["blackjack", "roulette"]
 
 
-def welcome():
+def welcome(account: Account) -> None:
     clear_screen()
-    cprint(CASINO_HEADER)
+    display_topbar(account, **CASINO_HEADER_OPTIONS)
     action = cinput(ENTER_OR_QUIT_PROMPT).lower()
 
     while action not in {"e", "q"}:
         clear_screen()
-        cprint(CASINO_HEADER)
+        display_topbar(account, **CASINO_HEADER_OPTIONS)
         cprint(INVALID_CHOICE_PROMPT)
         action = cinput(ENTER_OR_QUIT_PROMPT).strip().lower()
 
     if action == "q":
         clear_screen()
-        cprint(CASINO_HEADER)
+        display_topbar(account, **CASINO_HEADER_OPTIONS)
         cprint("\nGoodbye!")
         return
     elif action == "e":
         clear_screen()
-        choose_game()
+        choose_game(account)
 
 
-def choose_game():
+def choose_game(account: Account) -> None:
     game_names = []
 
     for i, game in enumerate(games):
         game_names.append(f"[{i + 1}] {game.title()}\n")
 
-    cprint(CASINO_HEADER)
+    display_topbar(account, **CASINO_HEADER_OPTIONS)
     for game_name in game_names:
         cprint(game_name)
 
@@ -57,7 +62,7 @@ def choose_game():
     while not action.isdigit() or not (1 <= int(action) <= len(games)):
         clear_screen()
 
-        cprint(CASINO_HEADER)
+        display_topbar(account, **CASINO_HEADER_OPTIONS)
         for game_name in game_names:
             cprint(game_name)
         cprint(INVALID_CHOICE_PROMPT)
@@ -67,18 +72,26 @@ def choose_game():
     clear_screen()
     game = games[int(action) - 1]
 
-    func = f"play_{game}"
 
-    if func in globals():
-        globals()[func]()
-    else:
-        print("No such game!")
+    match game:
+        case "blackjack":
+            play_blackjack(account)
+        case _:
+            print("No such game!")
+            welcome(account)
 
-    welcome()
+    welcome(account)
 
 
 def main():
-    welcome()
+    clear_screen()
+    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
+    name = cinput("Enter your name: ").strip()
+    while not name:
+        clear_screen()
+        name = cinput("Enter your name: ").strip()
+    account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
+    welcome(account)
 
 
 if __name__ == "__main__":
