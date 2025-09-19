@@ -9,6 +9,7 @@ This file integrates with the rest of the casino.
 import random
 import os
 import shutil
+from typing import List
 
 from casino.card_assets import assign_card_art
 from casino.types import Card
