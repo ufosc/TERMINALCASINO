@@ -78,6 +78,14 @@ class Roulette:
         return self.wheel[random_index]
 
         """
+class AmericanRoulette(Roulette):
+    """
+    Plays roulette using American rules
+    """
+
+    def __init__(self, accounts: List[Account]):
+        super().__init__(self, accounts)
+
 
 def play_roulette() -> None:
     continue_game = True
