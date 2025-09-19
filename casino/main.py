@@ -1,5 +1,9 @@
+# Import casino games
 from casino.accounts import Account
 from casino.games.blackjack import play_blackjack
+from casino.games.roulette  import play_roulette
+
+# Import utilities
 from casino.utils import cprint, cinput, clear_screen, display_topbar
 
 CASINO_HEADER = """
@@ -19,7 +23,7 @@ ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: \n"
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again. \n\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play:\n"
 
-games = ["blackjack"]
+games = ["blackjack", "roulette"]
 
 
 def welcome(account: Account) -> None:
