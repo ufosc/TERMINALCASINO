@@ -86,6 +86,48 @@ class AmericanRoulette(Roulette):
     def __init__(self, accounts: List[Account]):
         super().__init__(self, accounts)
 
+        # Use the standard American roulette wheel
+        self.wheel = [
+            ("0", "green"),
+            ("28", "black"),
+            ("9", "red"),
+            ("26", "black"),
+            ("30", "red"),
+            ("11", "black"),
+            ("7", "red"),
+            ("20", "black"),
+            ("32", "red"),
+            ("17", "black"),
+            ("5", "red"),
+            ("22", "black"),
+            ("34", "red"),
+            ("15", "black"),
+            ("3", "red"),
+            ("24", "black"),
+            ("36", "red"),
+            ("13", "black"),
+            ("1", "red"),
+            ("00", "green"),
+            ("27", "red"),
+            ("10", "black"),
+            ("25", "red"),
+            ("29", "black"),
+            ("12", "red"),
+            ("8", "black"),
+            ("19", "red"),
+            ("31", "black"),
+            ("18", "red"),
+            ("6", "black"),
+            ("21", "red"),
+            ("33", "black"),
+            ("16", "red"),
+            ("4", "black"),
+            ("23", "red"),
+            ("35", "black"),
+            ("14", "red"),
+            ("2", "black")
+        ]
+
 
 def play_roulette() -> None:
     continue_game = True
