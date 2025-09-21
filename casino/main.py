@@ -1,4 +1,5 @@
 from casino.games.blackjack import play_blackjack
+from casino.games.poker import play_poker
 from casino.utils import cprint, cinput, clear_screen
 
 CASINO_HEADER = """
@@ -14,7 +15,7 @@ ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: \n"
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again. \n\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play:\n"
 
-games = ["blackjack"]
+games = ["blackjack", "poker"]
 
 
 def welcome():
