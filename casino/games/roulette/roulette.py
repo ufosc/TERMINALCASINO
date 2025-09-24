@@ -3,6 +3,14 @@ roulette.py
 
 This file provides a way to play roulette.
 
+WARNING: do not run this file as main. Instead, change to root directory
+of `TERMINALCASINO/`, and run the following command:
+
+```
+python -m casino.main
+```
+
+Then, pick "Roulette" as the game you want to run.
 """
 
 
