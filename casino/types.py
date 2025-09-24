@@ -1,1 +1,1 @@
-type Card = tuple[int | str, str]
+Card = tuple[int | str, str]
