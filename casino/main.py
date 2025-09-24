@@ -11,15 +11,21 @@ CASINO_HEADER = """
 └──────────────────────────────────────┘
 """
 
-CASINO_HEADER_OPTIONS = {"header": CASINO_HEADER, "margin": 3}
+CASINO_HEADER_OPTIONS = {
+    "header": CASINO_HEADER,
+    "margin": 3,
+}
 ACCOUNT_STARTING_BALANCE = 100
 
 ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: "
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
-games = ["blackjack"]
-GAME_HANDLERS = {"blackjack": play_blackjack}
+# To add a new game, just add a handler function to GAME_HANDLERS
+GAME_HANDLERS: dict[str, Callable[[Account], None]] = {
+    "blackjack": play_blackjack,
+}
+games = list(GAME_HANDLERS.keys())
 
 
 def term_width() -> int:
@@ -33,9 +39,9 @@ def term_width() -> int:
 def prompt_with_refresh(
     render_fn: Callable[[], None],
     prompt: str,
-    validator: Callable[[str], bool],
     error_message: str,
-    transform: Callable[[str], str] = lambda s: s,
+    validator: Callable[[str], bool],
+    transform: Callable[[str], str] = lambda s: s.strip(),
 ) -> str:
     """
     Repeatedly render screen, show last error (if any), ask for input and validate.
@@ -46,11 +52,7 @@ def prompt_with_refresh(
         render_fn()
         if last_error:
             cprint(last_error)
-        try:
-            answer = transform(cinput(prompt))
-        except (KeyboardInterrupt, EOFError):
-            # signal caller to quit gracefully instead of exiting here
-            return "q"
+        answer = transform(cinput(prompt).strip())
         if validator(answer):
             return answer
         last_error = error_message
@@ -69,11 +71,11 @@ def main_menu(account: Account) -> None:
             cprint("")  # spacing
 
         action = prompt_with_refresh(
-            render_welcome,
-            ENTER_OR_QUIT_PROMPT.center(term_width()),
-            lambda x: x in {"e", "q"},
-            INVALID_CHOICE_PROMPT,
-            transform=lambda s: s.strip().lower(),
+            render_fn = render_welcome,
+            prompt = ENTER_OR_QUIT_PROMPT.center(term_width()),
+            error_message = INVALID_CHOICE_PROMPT,
+            validator = lambda x: x.lower() in {"e", "q"},
+            transform = lambda s: s.strip().lower(),
         )
 
         if action == "q":
@@ -92,11 +94,10 @@ def main_menu(account: Account) -> None:
                 cprint(f"[{i}] {name.title()}".center(width) + "\n")
 
         choice = prompt_with_refresh(
-            render_choose_game,
-            GAME_CHOICE_PROMPT.center(term_width()),
-            lambda x: x.isdigit() and 1 <= int(x) <= len(games),
-            INVALID_CHOICE_PROMPT,
-            transform=lambda s: s.strip(),
+            render_fn = render_choose_game,
+            prompt = GAME_CHOICE_PROMPT.center(term_width()),
+            error_message = INVALID_CHOICE_PROMPT,
+            validator = lambda x: x.isdigit() and 1 <= int(x) <= len(games),
         )
 
         selected_game = games[int(choice) - 1]
@@ -129,7 +130,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         clear_screen()
         display_topbar(account=None, **CASINO_HEADER_OPTIONS)
         cprint("\nGoodbye! (Interrupted)\n")
