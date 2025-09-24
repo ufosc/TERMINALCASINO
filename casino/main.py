@@ -26,6 +26,7 @@ GAME_CHOICE_PROMPT = "Please choose a game to play: "
 # To add a new game, just add a handler function to GAME_HANDLERS
 GAME_HANDLERS: dict[str, Callable[[Account], None]] = {
     "blackjack": play_blackjack,
+    "slots": play_slots,
 }
 games = list(GAME_HANDLERS.keys())
 

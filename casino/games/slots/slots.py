@@ -25,8 +25,8 @@ MIN_BET_MSG = f"Each pay line requires at least ${MIN_BET_AMT}."
 
 SEC_BTWN_SPIN = 0.1
 TOTAL_SPINS = 10
-WIN_PROB = 0.3
-HI_VAL_PROB = 0.1
+WIN_PROB = 0.2
+HI_VAL_PROB = 0.05
 
 # Currently 1 pay line, goal is to have several and:
 # - implement pattern patching for wins across lines
@@ -39,10 +39,9 @@ def play_slots(account) -> None:
     while True:
         clear_screen()
         display_topbar(account, **HEADER_OPTIONS)
-        if take_new_bet:
+        if take_new_bet or bet_amount > account.balance:
             bet_amount = get_bet_amount(account)
             take_new_bet = False
-
 
         spin_animation(account)
         clear_screen()
