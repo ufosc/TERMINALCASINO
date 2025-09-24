@@ -86,6 +86,7 @@ class Roulette:
         return self.wheel[random_index]
 
     def submit_bets(self) -> None:
+        """
         Instruct users to submit bets.
 
         This function will ask users if they would like to submit a bet
