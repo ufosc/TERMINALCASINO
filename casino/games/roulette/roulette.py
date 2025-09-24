@@ -85,7 +85,97 @@ class Roulette:
         random_index = random.randint(0, len(self.wheel))
         return self.wheel[random_index]
 
+    def submit_bets(self) -> None:
+        Instruct users to submit bets.
+
+        This function will ask users if they would like to submit a bet
+        on a color or a number.
+
+        - If users pick color, they can pick either red, green, or black
+        - If users pick number, they can pick a number to bet on.
         """
+
+        # Loop over all users
+        i = 0
+        while (i < len(accounts)):
+            will_bet = input("Would you like to bet (y/N): ")
+
+            if will_bet == "" or will_bet.upper() == "N" or will_bet.upper() == "NO":
+                print("User skipped betting. Moving to next user...", end="\n\n")
+                i += 1
+                continue
+            elif will_bet.upper() == "Y" or will_bet.upper() == "YES":
+                pass
+            else:
+                print("Invalid input. Enter either 'Y' for yes or 'N' for no.")
+                continue
+
+            # Input bet amount
+            bet_amount = input("Amount to bet: ")
+
+            # Check bet_amount is a positive integer
+            try:
+                bet_amount = int(bet_amount)
+
+                if (bet_amount < 0):
+                    raise ValueError
+            except ValueError:
+                print(f"ERROR: '{bet_amount}' is not a valid number. Please enter a positive integer.", end="\n\n")
+                continue
+
+            # Check that account has enough money to bet
+            try:
+                accounts[i].withdraw(bet_amount)
+            except ValueError as error:
+                if error.args and error.args[0] == "Insufficient balance":
+                    print(f"Insufficient balance to place bet. Please enter a bet lower than {accounts[i].balance}")
+                continue
+
+            # Ask for desired bet type
+            bet_type = ""
+            valid_bet_types = ["C", "COLOR", "N", "NUMBER"]
+
+            while True:
+                bet_type = input("Would you like to bet on a color or a number? (C or N): ")
+
+                if (bet_type.upper() in valid_bet_types):
+                    break
+                else:
+                    print("Error: Invalid bet type. Choose either 'color' or 'number'.")
+
+            ############################################################
+
+            # Ask for user's specific bet
+            bet_value = ""
+
+            # Color betting
+            if bet_type.upper() == "C" or bet_type.upper() == "COLOR":
+                while True:
+                    bet_value = input("Enter color you want to bet on (Red, Black, Green): ")
+
+                    if bet_value.upper() in self.valid_colors:
+                        break
+                    else:
+                        print("Error: Chosen color is not red, green, or black.")
+            
+            # Number betting
+            else if bet_type.upper() == "N" or bet_type.upper() = "NUMBER":
+                while True:
+                    bet_value = input("Enter number you would like to bet on: ")
+
+                    if bet_value in self.valid_numbers:
+                        break
+                    else:
+                        print("Error: You may only enter one of the following numbers.")
+                        sorted_numbers = sorted(self.valid_numbers, key=roulette_sort_key)
+                        valid_numbers_str = ", ".join(sorted_numbers)
+                        print("\t" + valid_numbers_str)
+         
+            # Once values are successfully chosen, save
+            self.bets.append( (accounts[i].aid, bet_type, bet_value, bet_amount) )
+
+            i += 1  # Move to next user
+
 class AmericanRoulette(Roulette):
     """
     Plays roulette using American rules
