@@ -2,7 +2,7 @@
 roulette.py
 
 This file provides a way to play roulette.
-This file integrates with the rest of the casino.
+
 """
 
 
@@ -137,8 +137,3 @@ def play_roulette() -> None:
 
         # Input to stop loop from running constantly
         cinput("test: ")
-
-if __name__ == "__main__":
-    print("Do not run this file as main. Instead, change to root level of `TERMINALCASINO/`," + 
-          "and run the following command:", end="\n\n")
-    print("\tpython -m casino.main")
