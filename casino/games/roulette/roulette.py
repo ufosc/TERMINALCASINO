@@ -72,7 +72,18 @@ class Roulette:
         # Current round's bets
         self.bets = []
 
-    def spin_wheel() -> tuple[str, str]:
+    @staticmethod
+    def roulette_sort_key(value):
+        """
+        Sorts values in roulette. Used as a key in the `sorted()` function.
+        """
+        if value == "0":
+            return -1
+        elif value == "00":
+            return 0
+        return int(value)
+
+    def spin_wheel(self) -> tuple[str, str]:
         """
         Pick a winning color and number.
 
