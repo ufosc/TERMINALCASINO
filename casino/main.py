@@ -75,7 +75,7 @@ def choose_game(account: Account) -> None:
         case "blackjack":
             play_blackjack(account)
         case "slots":
-            play_slots()
+            play_slots(account)
         case _:
             print("No such game!")
             welcome(account)
