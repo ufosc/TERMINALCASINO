@@ -9,7 +9,7 @@ All games will follow their American rules first.
 3. Create a fork of the branch you'd like to work on
 4. Code up something cool
 5. Make a pull request and wait for approval
-* For most issues we prefer to assign only one assignee, but in cases where you and another OSC member would like to work together let us know and we'll make sure to include both of you as assignees. But when working together be careful to not have overlapping 
+* If you want to work on an issue in collaboration with multiple OSC members, be careful not to submit overlapping PRs.
 
 ## How to Run
 1. Open terminal
