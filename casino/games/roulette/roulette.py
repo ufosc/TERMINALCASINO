@@ -67,6 +67,11 @@ class Roulette:
         # Will be populated with numbers and colors
         self.wheel = []
 
+        # Colors on wheel. Includes initials
+        self.valid_colors = ["RED", "GREEN", "BLACK", "R", "G", "B"]
+
+        self.valid_numbers = []
+
         self.accounts = accounts
 
         # Current round's bets
