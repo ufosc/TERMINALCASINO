@@ -1,4 +1,5 @@
 from casino.games.blackjack import play_blackjack
+from casino.games.slots import play_slots
 from casino.utils import cprint, cinput, clear_screen
 
 CASINO_HEADER = """

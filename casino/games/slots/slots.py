@@ -48,16 +48,22 @@ def play_slots() -> None:
         if player_input in "qQ": 
             clear_screen()
             return
+    
+def get_player_respin_or_quit():
+    prompt = "[R]espin [Q]uit"
+    valid_inputs = {'r', 'q'}
+    player_input = ""
+
+    while player_input.lower().strip() not in valid_inputs:
+        player_input = cinput(prompt)
+    
+    return player_input
 
 def spin_animation(total_spins = TOTAL_SPINS, sec_btwn_spins = SEC_BTWN_SPIN) -> None:
-    spin_n = 0
-
-    while spin_n < total_spins:
-        clear_screen()
+    for _ in range(total_spins):
+        clear_screen() 
         print_spin(*get_rand_items())
-
         time.sleep(sec_btwn_spins)
-        spin_n += 1
 
 def are_items_equal(items) -> bool:
     return len(set(items)) == 1
