@@ -55,8 +55,6 @@ class Roulette:
         wheel (list[tuple[str, str]]): The roulette wheel, where each entry is
             a tuple like ("0", "green").
         accounts (list[Account]): List of all player accounts.
-        bets (list[tuple[str, str, str]]): Active bets, where each entry is
-            (account_uuid, bet_type, bet_value).
     """
     
     def __init__(self, accounts: List[Account]) -> None:
