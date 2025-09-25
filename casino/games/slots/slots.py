@@ -1,8 +1,7 @@
 import random
 import time
 
-from casino.card_assets import assign_card_art
-from casino.types import Card
+from casino.accounts import Account
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 SLOTS_HEADER = """
@@ -10,36 +9,44 @@ SLOTS_HEADER = """
 │         ♠ S L O T S ♠         │
 └───────────────────────────────┘
 """
-HEADER_OPTIONS = {"header": SLOTS_HEADER,
-                  "margin": 1,}
+HEADER_OPTIONS = {
+    "header": SLOTS_HEADER,
+    "margin": 1,
+}
+LOW_ITEMS = ["a", "b", "c"]
+HIGH_ITEMS = ["d"]
+ALL_ITEMS = LOW_ITEMS + HIGH_ITEMS
 
-ITEMS = {"all": "abcd", "low_val": "abc", "high_val": "d"}
-BET_PROMPT = """
-How much would you like to bet?
+PAYOUT_LEGEND = """
 Matching a | b | c  : x1.5
 Matching d          : x5.0
 """
+BET_PROMPT = "How much would you like to bet?"
 INVALID_BET_MSG = "That's not a valid bet."
 MIN_BET_AMT = 10
 MIN_BET_MSG = f"Each pay line requires at least ${MIN_BET_AMT}."
 
 SEC_BTWN_SPIN = 0.1
 TOTAL_SPINS = 10
-WIN_PROB = 0.2
-HI_VAL_PROB = 0.05
+WIN_PROBABILITY = 0.2
+HIGH_VALUE_PROBABILITY = 0.05
 
 # Currently 1 pay line, goal is to have several and:
 # - implement pattern patching for wins across lines
 # - be able to bet across lines independently
 # then maybe special lines
 
-def play_slots(account) -> None:
+
+def play_slots(account: Account) -> None:
+    """Play slots game."""
     take_new_bet = True
     bet_amount = 0
     while True:
         clear_screen()
         display_topbar(account, **HEADER_OPTIONS)
         if take_new_bet or bet_amount > account.balance:
+            if account.balance < MIN_BET_AMT:
+                raise RuntimeError("PLAYER OUT OF MONEY IDK WHAT TO DO")
             bet_amount = get_bet_amount(account)
             take_new_bet = False
 
@@ -49,14 +56,14 @@ def play_slots(account) -> None:
 
         # Display final spin result
         rng = random.random()
-        if rng <= WIN_PROB:
+        if rng <= WIN_PROBABILITY:
             money_gain = 0
-            if rng <= HI_VAL_PROB:
-                win_item = ITEMS["high_val"][random.randint(0, len(ITEMS["high_val"]) - 1)]
+            if rng <= HIGH_VALUE_PROBABILITY:
+                win_item = HIGH_ITEMS[random.randint(0, len(HIGH_ITEMS) - 1)]
                 money_gain = bet_amount * 5
             else:
-                win_item = ITEMS["low_val"][random.randint(0, len(ITEMS["low_val"]) - 1)]
-                money_gain = bet_amount * 1.5
+                win_item = LOW_ITEMS[random.randint(0, len(LOW_ITEMS) - 1)]
+                money_gain = int(bet_amount * 1.5)
 
             account.deposit(money_gain)
             clear_screen()
@@ -80,10 +87,9 @@ def play_slots(account) -> None:
         if choice["change_bet"]:
             take_new_bet = True
 
-def get_bet_amount(account):
-    if account.balance < MIN_BET_AMT:
-        raise RuntimeError("PLAYER OUT OF MONEY IDK WHAT TO DO")
 
+def get_bet_amount(account: Account) -> int:
+    """Prompt user for bet amount."""
     while True:
         bet_str = cinput(BET_PROMPT).strip()
         try:
@@ -99,7 +105,8 @@ def get_bet_amount(account):
             display_topbar(account, **HEADER_OPTIONS)
             cprint(INVALID_BET_MSG)
     
-def get_player_choice():
+def get_player_choice() -> dict[str, bool]:
+    """Prompt user for slots menu choice."""
     player_input = ""
     while player_input not in "rRqQcC" or player_input == "":
         player_input = cinput("[R]espin [C]hange Bet [Q]uit")
@@ -112,15 +119,23 @@ def get_player_choice():
     else:
         return {"quit": False, "change_bet": True}
 
-def spin_animation(account, total_spins = TOTAL_SPINS, sec_btwn_spins = SEC_BTWN_SPIN) -> None:
+
+def spin_animation(
+    account: Account,
+    total_spins: int = TOTAL_SPINS,
+    sec_btwn_spins: float = SEC_BTWN_SPIN,
+) -> None:
+    """Animate the spin of the slot machine."""
     for _ in range(total_spins):
         clear_screen()
         display_topbar(account, **HEADER_OPTIONS)
         print_spin(get_rand_item(), get_rand_item(), get_rand_item())
         time.sleep(sec_btwn_spins)
 
+
 def get_rand_item() -> str:
-    return ITEMS["all"][random.randint(0, len(ITEMS["all"]) - 1)];
+    return random.choice(ALL_ITEMS)
+
 
 def print_spin(item1, item2, item3) -> None:
     cprint(f"""
