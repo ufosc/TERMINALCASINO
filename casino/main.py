@@ -4,6 +4,8 @@ from typing import Callable
 from casino.accounts import Account
 from casino.games.blackjack import play_blackjack
 from casino.utils import cprint, cinput, clear_screen, display_topbar
+from casino.games.slots import play_slots
+from casino.utils import cprint, cinput, clear_screen
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -24,6 +26,7 @@ GAME_CHOICE_PROMPT = "Please choose a game to play: "
 # To add a new game, just add a handler function to GAME_HANDLERS
 GAME_HANDLERS: dict[str, Callable[[Account], None]] = {
     "blackjack": play_blackjack,
+    "slots": play_slots,
 }
 games = list(GAME_HANDLERS.keys())
 
