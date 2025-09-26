@@ -23,14 +23,18 @@ SECURITY_MSG = f"""
 You have been removed from the casino
 
 """
+MIN_BET_AMT = 10
+MIN_BET_MSG            = f"The minimum bet is {MIN_BET_AMT} chips."
 YES_OR_NO_PROMPT       = "[Y]es   [N]o"
-DECK_NUMBER_SELECTION = "🤵: How many decks would you like to play with?"
-DECK_NUMBER_INCORRECT = "🤵: That won't work, please be serious. Try again."
-INVALID_YES_OR_NO_MSG  = "🤵: It's a yes or no, pal. You staying?"
+DECK_NUMBER_SELECTION  = "🤵: How many decks would you like to play with?"
+DECK_NUMBER_BOUNDS_MSG = "🤵: That won't work, please be serious. Try again."
+INVALID_NUMBER_MSG     = "Invalid number. Try again."
+INVALID_YES_OR_NO      = "🤵: It's a yes or no, pal. You staying?"
 STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
 INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
 BET_PROMPT             = "🤵: How much would you like to bet?"
 INVALID_BET_MSG        = "🤵: That's not a valid bet."
+NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
 FULL_DECK: list[Card] = [
     # Clubs
@@ -144,32 +148,47 @@ def play_blackjack(account: Account) -> None:
     """Play a blackjack game."""
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
-    clear_screen()
-    display_blackjack_topbar(account, None)
-    decks_str = cinput(DECK_NUMBER_SELECTION).strip()
-    decks = int(decks_str)
-    while (decks <= 0):
+    err_msg = None
+    while (True):
         clear_screen()
         display_blackjack_topbar(account, None)
-        decks_str = cinput(DECK_NUMBER_INCORRECT).strip()
-        decks = int(decks_str)
+        if err_msg is not None:
+            cprint(err_msg)
+        decks_str = cinput(DECK_NUMBER_SELECTION).strip()
+        try:
+            decks = int(decks_str)
+        except ValueError:
+            err_msg = INVALID_NUMBER_MSG
+            continue
+        if decks <= 0:
+            err_msg = DECK_NUMBER_BOUNDS_MSG
+            continue
+        break
 
     while continue_game:
-        clear_screen()
-        display_blackjack_topbar(account, None)
-        
         # determine the bet amount
-        bet = 0
+        err_msg = None
         while True:
+            clear_screen()
+            display_blackjack_topbar(account, None)
+            if err_msg is not None:
+                cprint(err_msg)
             bet_str = cinput(BET_PROMPT).strip()
             try:
                 bet = int(bet_str)
-                account.withdraw(bet)
-                break
+                if bet < MIN_BET_AMT:
+                    err_msg = MIN_BET_MSG
+                    continue
             except ValueError:
-                clear_screen()
-                display_blackjack_topbar(account, None)
-                cprint(INVALID_BET_MSG)
+                err_msg = INVALID_BET_MSG
+                continue
+            try:
+                account.withdraw(bet)
+            except ValueError:
+                err_msg = "Insufficient funds. " \
+                          f"You only have {account.balance} chips."
+                continue
+            break
 
         clear_screen()
         display_blackjack_topbar(account, bet)
@@ -186,8 +205,6 @@ def play_blackjack(account: Account) -> None:
         # hands
         player_hand = []
         dealer_hand = []
-
-
 
         # initial deal (player first)
         for _ in range(2):
@@ -345,6 +362,11 @@ def play_blackjack(account: Account) -> None:
             cprint(msg)
 
         # game restart?
+        if account.balance < MIN_BET_AMT:
+            cprint(NO_FUNDS_MSG)
+            cinput("Press enter to continue.")
+            continue_game = False
+            continue
         cprint(STAY_AT_TABLE_PROMPT)
         play_again = cinput(YES_OR_NO_PROMPT)
         # check valid answer
@@ -356,7 +378,7 @@ def play_blackjack(account: Account) -> None:
                 return
             clear_screen()
             display_blackjack_topbar(account, bet)
-            cprint(INVALID_YES_OR_NO_MSG)
+            cprint(INVALID_YES_OR_NO)
             play_again = cinput(YES_OR_NO_PROMPT)
 
         # play / leave
