@@ -3,6 +3,7 @@ from typing import Callable
 
 from casino.accounts import Account
 from casino.games.blackjack import play_blackjack
+from casino.types import GameContext
 from casino.utils import cprint, cinput, clear_screen, display_topbar
 from casino.games.slots import play_slots
 from casino.utils import cprint, cinput, clear_screen
@@ -24,7 +25,7 @@ INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
 # To add a new game, just add a handler function to GAME_HANDLERS
-GAME_HANDLERS: dict[str, Callable[[Account], None]] = {
+GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack": play_blackjack,
     "slots": play_slots,
 }
@@ -62,11 +63,12 @@ def prompt_with_refresh(
 
 
 
-def main_menu(account: Account) -> None:
+def main_menu(ctx: GameContext) -> None:
     """
     Main loop: show welcome, then (if chosen) show game menu, call handler,
     then return to top-level menu. No recursion used.
     """
+    account = ctx.account
     while True:
         def render_welcome():
             clear_screen()
@@ -107,7 +109,7 @@ def main_menu(account: Account) -> None:
         handler = GAME_HANDLERS.get(selected_game)
         if handler:
             clear_screen()
-            handler(account)  # returns to loop after game finishes
+            handler(ctx)  # returns to loop after game finishes
         else:
             clear_screen()
             display_topbar(account, **CASINO_HEADER_OPTIONS)
@@ -127,7 +129,8 @@ def main():
 
 
     account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
-    main_menu(account)
+    ctx = GameContext(account=account)
+    main_menu(ctx)
 
 
 if __name__ == "__main__":
