@@ -80,7 +80,7 @@ class Roulette:
         self.wheel = []
 
         # Colors on wheel. Includes initials
-        self.valid_colors = ["RED", "GREEN", "BLACK", "R", "G", "B"]
+        self.valid_colors = ["red", "green", "black", "r", "g", "b"]
 
         self.valid_numbers = []
 
@@ -88,6 +88,44 @@ class Roulette:
 
         # Current round's bets
         self.bets = []
+
+    @staticmethod
+    def normalize_color(input_value: str) -> str:
+        """
+        Standardize color input from user.
+
+        The `Roulette` class permits the user to input a shorthand version of the color,
+        or the name of the color itself. This function standardizes all colors to:
+
+            "red", "green", "black"
+        """
+        color_map = {
+            "r": "red",
+            "red": "red",
+            "g": "green",
+            "green": "green",
+            "b": "black",
+            "black": "black"
+        }
+        return color_map.get(input_value.lower(), input_value)
+
+    @staticmethod
+    def normalize_type(input_value: str) -> str:
+        """
+        Standardize bet type from user.
+
+        The `Roulette` class permits the user to input a shorthand version of the type of bet they want,
+        or the name of the bet type itself. This function standardizes all bet types to:
+
+            "color", "number"
+        """
+        type_map = {
+            "c" : "color",
+            "color" : "color",
+            "n" : "number",
+            "number" : "number"
+        }
+        return type_map.get(input_value.lower(), input_value)
 
     @staticmethod
     def roulette_sort_key(value):
@@ -178,11 +216,11 @@ class Roulette:
             bet_value = ""
 
             # Color betting
-            if bet_type.upper() == "C" or bet_type.upper() == "COLOR":
+            if bet_type.lower() == "c" or bet_type.lower() == "color":
                 while True:
                     bet_value = input("Enter color you want to bet on (Red, Black, Green): ")
 
-                    if bet_value.upper() in self.valid_colors:
+                    if bet_value.lower() in self.valid_colors:
                         break
                     else:
                         print("Error: Chosen color is not red, green, or black.")
