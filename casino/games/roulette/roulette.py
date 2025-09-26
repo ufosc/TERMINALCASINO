@@ -55,8 +55,20 @@ class Roulette:
         wheel (list[tuple[str, str]]): The roulette wheel, where each entry is
             a tuple like ("0", "green").
         accounts (list[Account]): List of all player accounts.
-        bets (list[tuple[str, str, str, str]]): Active bets, where each entry is
-            (account_uuid, bet_type, bet_value, bet_amount).
+        bets (dict[str, dict[str, str, int]]): Maps each account UUID to a bet record.
+
+        Each key is a unique account UUID, and each value is a dictionary with the fields:
+            {
+                "type": bet_type,
+                "value": bet_value,
+                "amount": bet_amount
+            }
+
+        Example:
+            {
+                "uuid_1": {"type": "color", "value": "red", "amount": 100},
+                "uuid_2": {"type": "number", "value": "00", "amount": 50}
+            }
     """
     
     def __init__(self, accounts: List[Account]) -> None:
@@ -188,8 +200,12 @@ class Roulette:
                         valid_numbers_str = ", ".join(sorted_numbers)
                         print("\t" + valid_numbers_str)
          
-            # Once values are successfully chosen, save
-            self.bets.append( (accounts[i].aid, bet_type, bet_value, bet_amount) )
+            # Once values are successfully chosen, save to dictionary
+            self.bets[accounts[i].aid] = {
+                "type"   : Roulette.normalize_type(bet_type.lower()),
+                "value"  : Roulette.normalize_color(bet_value.lower()),
+                "amount" : bet_amount
+            }
 
             i += 1  # Move to next user
 
