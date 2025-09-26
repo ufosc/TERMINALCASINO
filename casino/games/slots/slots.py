@@ -17,11 +17,11 @@ HEADER_OPTIONS = {
     "margin": 1,
 }
 
-BET_PROMPT = "How much would you like to bet?"
-INVALID_BET_MSG = "That's not a valid bet."
+MIN_BET_AMT = 2
+MIN_BET_MSG       = f"Each pay line requires at least {MIN_BET_AMT} chips."
+BET_PROMPT        = "How much would you like to bet?"
+INVALID_BET_MSG   = "That's not a valid bet."
 INVALID_INPUT_MSG = "Invalid input. Please try again."
-MIN_BET_AMT = 10
-MIN_BET_MSG = f"Each pay line requires at least ${MIN_BET_AMT}."
 
 SEC_BTWN_SPIN = 0.1
 TOTAL_SPINS = 10
@@ -101,7 +101,7 @@ def get_bet_amount(account: Account) -> int:
         if bet > account.balance:
             clear_screen()
             display_topbar(account, **HEADER_OPTIONS)
-            cprint(f"You only have ${account.balance}. Please try again.")
+            cprint(f"You only have {account.balance} chips. Please try again.")
             continue
         return bet
 
@@ -184,7 +184,7 @@ def play_slots(account: Account) -> None:
             clear_screen()
             display_topbar(account, **HEADER_OPTIONS)
             print_spin(items)
-            cprint(f"MATCH: +${money_gain}")
+            cprint(f"MATCH: +{money_gain} chips")
         else:
             items = (get_rand_item(), get_rand_item(), get_rand_item())
             while len(set(items)) == 1:
@@ -193,7 +193,7 @@ def play_slots(account: Account) -> None:
             account.withdraw(bet_amount)
             display_topbar(account, **HEADER_OPTIONS)
             print_spin(items)
-            cprint(f"NO MATCH: -${bet_amount}")
+            cprint(f"NO MATCH: -{bet_amount} chips")
 
         # Choose what to do after spin
         choice = get_player_choice(items, bet_amount, account)
