@@ -24,6 +24,8 @@ You have been removed from the casino
 
 """
 YES_OR_NO_PROMPT       = "[Y]es   [N]o"
+DECK_NUMBER_SELECTION = "🤵: How many decks would you like to play with?"
+DECK_NUMBER_INCORRECT = "🤵: That won't work, please be serious. Try again."
 INVALID_YES_OR_NO_MSG  = "🤵: It's a yes or no, pal. You staying?"
 STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
 INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
@@ -142,6 +144,15 @@ def play_blackjack(account: Account) -> None:
     """Play a blackjack game."""
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
+    clear_screen()
+    display_blackjack_topbar(account, None)
+    decks_str = cinput(DECK_NUMBER_SELECTION).strip()
+    decks = int(decks_str)
+    while (decks <= 0):
+        clear_screen()
+        display_blackjack_topbar(account, None)
+        decks_str = cinput(DECK_NUMBER_INCORRECT).strip()
+        decks = int(decks_str)
 
     while continue_game:
         clear_screen()
@@ -170,7 +181,7 @@ def play_blackjack(account: Account) -> None:
         dealer_bj = False
 
         # two decks of cards (values + string IDs)
-        deck = FULL_DECK * 2
+        deck = FULL_DECK * decks
 
         # hands
         player_hand = []
