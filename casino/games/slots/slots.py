@@ -18,8 +18,6 @@ HEADER_OPTIONS = {
     "margin": 1,
 }
 
-MIN_BET_AMT = 2
-MIN_BET_MSG       = f"Each pay line requires at least {MIN_BET_AMT} chips."
 BET_PROMPT        = "How much would you like to bet?"
 INVALID_BET_MSG   = "That's not a valid bet."
 INVALID_INPUT_MSG = "Invalid input. Please try again."
@@ -30,11 +28,11 @@ WIN_PROBABILITY = 0.2
 HIGH_VALUE_PROBABILITY = 0.05
 
 
-def get_slots_menu_prompt(bet_amount: int, account: Account) -> str:
+def get_slots_menu_prompt(ctx: GameContext, bet_amount: int) -> str:
     """Generate slots menu prompt."""
-    if account.balance < MIN_BET_AMT:
+    if ctx.account.balance < ctx.config.slots_min_line_bet:
         return f"[Q]uit"
-    if account.balance < bet_amount:
+    if ctx.account.balance < bet_amount:
         return f"[C]hange Bet [Q]uit"
     else:
         return f"[R]espin [C]hange Bet [Q]uit"
@@ -82,8 +80,10 @@ def print_spin(items: tuple[str, str, str]) -> None:
     """.strip())
 
 
-def get_bet_amount(account: Account) -> int:
+def get_bet_amount(ctx: GameContext) -> int:
     """Prompt user for bet amount."""
+    account = ctx.account
+    min_bet = ctx.config.slots_min_line_bet
     while True:
         cprint(PAYOUT_LEGEND + "\n\n")
         bet_str = cinput(BET_PROMPT).strip()
@@ -94,10 +94,10 @@ def get_bet_amount(account: Account) -> int:
             display_topbar(account, **HEADER_OPTIONS)
             cprint(INVALID_BET_MSG)
             continue
-        if bet < MIN_BET_AMT:
+        if bet < min_bet:
             clear_screen()
             display_topbar(account, **HEADER_OPTIONS)
-            cprint(MIN_BET_MSG)
+            cprint(f"Each pay line requires at least {min_bet} chips.")
             continue
         if bet > account.balance:
             clear_screen()
@@ -108,11 +108,13 @@ def get_bet_amount(account: Account) -> int:
 
 
 def get_player_choice(
+    ctx: GameContext,
     items: tuple[str, str, str],
     bet_amount: int,
-    account: Account,
 ) -> SlotsMenuChoice:
     """Prompt user for slots menu choice."""
+    account = ctx.account
+    min_bet = ctx.config.slots_min_line_bet
     first_iter = True
     while True:
         if not first_iter:
@@ -121,7 +123,7 @@ def get_player_choice(
             print_spin(items)
             cprint(INVALID_INPUT_MSG)
         first_iter = False
-        menu_prompt = get_slots_menu_prompt(bet_amount, account)
+        menu_prompt = get_slots_menu_prompt(ctx, bet_amount)
         player_input = cinput(menu_prompt).strip()
         if player_input == "":
             continue
@@ -132,7 +134,7 @@ def get_player_choice(
                 continue
             return "respin"
         elif player_input in "cC":
-            if account.balance < MIN_BET_AMT:
+            if account.balance < min_bet:
                 continue
             return "change_bet"
 
@@ -153,17 +155,18 @@ def spin_animation(
 def play_slots(ctx: GameContext) -> None:
     """Play slots game."""
     account = ctx.account
+    min_bet = ctx.config.slots_min_line_bet
     take_new_bet = True
     bet_amount = 0
     while True:
         clear_screen()
         display_topbar(account, **HEADER_OPTIONS)
         if take_new_bet or bet_amount > account.balance:
-            if account.balance < MIN_BET_AMT:
+            if account.balance < min_bet:
                 cprint("You don't have enough money to make a bet.\n\n")
                 cinput("Press Enter to continue...")
                 return
-            bet_amount = get_bet_amount(account)
+            bet_amount = get_bet_amount(ctx)
             take_new_bet = False
 
         spin_animation(account)
@@ -198,7 +201,7 @@ def play_slots(ctx: GameContext) -> None:
             cprint(f"NO MATCH: -{bet_amount} chips")
 
         # Choose what to do after spin
-        choice = get_player_choice(items, bet_amount, account)
+        choice = get_player_choice(ctx, items, bet_amount)
         match choice:
             case "quit":
                 return
