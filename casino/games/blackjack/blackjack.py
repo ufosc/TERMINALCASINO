@@ -1,9 +1,8 @@
 import random
 from typing import Optional
 
-from casino.accounts import Account
 from casino.card_assets import assign_card_art
-from casino.types import Card
+from casino.types import Card, GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 BLACKJACK_HEADER = """
@@ -138,20 +137,27 @@ def print_hand(hand: list[Card], hidden: bool = False) -> None:
         print_hand_total(hand)
 
 
-def display_blackjack_topbar(account: Account, bet: Optional[int]) -> None:
-    display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
+def display_blackjack_topbar(ctx: GameContext, bet: Optional[int]) -> None:
+    display_topbar(ctx.account, **BLACKJACK_HEADER_OPTIONS)
     if bet is not None:
         cprint(f"Bet: {bet}")
 
 
-def play_blackjack(account: Account) -> None:
+def play_blackjack(ctx: GameContext) -> None:
     """Play a blackjack game."""
+    account = ctx.account
+    if account.balance < MIN_BET_AMT:
+        clear_screen()
+        display_blackjack_topbar(ctx, None)
+        cprint(NO_FUNDS_MSG)
+        cinput("Press enter to continue.")
+        return
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
     err_msg = None
     while (True):
         clear_screen()
-        display_blackjack_topbar(account, None)
+        display_blackjack_topbar(ctx, None)
         if err_msg is not None:
             cprint(err_msg)
         decks_str = cinput(DECK_NUMBER_SELECTION).strip()
@@ -170,7 +176,7 @@ def play_blackjack(account: Account) -> None:
         err_msg = None
         while True:
             clear_screen()
-            display_blackjack_topbar(account, None)
+            display_blackjack_topbar(ctx, None)
             if err_msg is not None:
                 cprint(err_msg)
             bet_str = cinput(BET_PROMPT).strip()
@@ -191,7 +197,7 @@ def play_blackjack(account: Account) -> None:
             break
 
         clear_screen()
-        display_blackjack_topbar(account, bet)
+        display_blackjack_topbar(ctx, bet)
 
         # local variables
         player_status = True
@@ -247,7 +253,7 @@ def play_blackjack(account: Account) -> None:
                     cprint(SECURITY_MSG)
                     return
                 clear_screen()
-                display_blackjack_topbar(account, bet)
+                display_blackjack_topbar(ctx, bet)
                 cprint(INVALID_CHOICE_MSG + "\n")
                 print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
@@ -255,7 +261,7 @@ def play_blackjack(account: Account) -> None:
                 action = cinput("[S]tay   [H]it")
 
             clear_screen()
-            display_blackjack_topbar(account, bet)
+            display_blackjack_topbar(ctx, bet)
 
             # handle action
             if action.lower() == "s":
@@ -353,7 +359,7 @@ def play_blackjack(account: Account) -> None:
         elif not dealer_won: # tie
             account.deposit(bet)
         clear_screen()
-        display_blackjack_topbar(account, bet)
+        display_blackjack_topbar(ctx, bet)
         cprint("Dealer hand:")
         print_hand(dealer_hand)
         cprint("Your hand:")
@@ -377,7 +383,7 @@ def play_blackjack(account: Account) -> None:
                 cprint(SECURITY_MSG)
                 return
             clear_screen()
-            display_blackjack_topbar(account, bet)
+            display_blackjack_topbar(ctx, bet)
             cprint(INVALID_YES_OR_NO)
             play_again = cinput(YES_OR_NO_PROMPT)
 

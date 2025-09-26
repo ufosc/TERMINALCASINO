@@ -3,6 +3,7 @@ import time
 from typing import Literal
 
 from casino.accounts import Account
+from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 type SlotsMenuChoice = Literal["respin", "change_bet", "quit"]
@@ -149,8 +150,9 @@ def spin_animation(
         time.sleep(sec_btwn_spins)
 
 
-def play_slots(account: Account) -> None:
+def play_slots(ctx: GameContext) -> None:
     """Play slots game."""
+    account = ctx.account
     take_new_bet = True
     bet_amount = 0
     while True:
@@ -158,7 +160,7 @@ def play_slots(account: Account) -> None:
         display_topbar(account, **HEADER_OPTIONS)
         if take_new_bet or bet_amount > account.balance:
             if account.balance < MIN_BET_AMT:
-                cprint("You don't have enough money to make a bet.")
+                cprint("You don't have enough money to make a bet.\n\n")
                 cinput("Press Enter to continue...")
                 return
             bet_amount = get_bet_amount(account)
