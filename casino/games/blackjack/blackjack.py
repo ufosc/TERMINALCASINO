@@ -22,8 +22,6 @@ SECURITY_MSG = f"""
 You have been removed from the casino
 
 """
-MIN_BET_AMT = 10
-MIN_BET_MSG            = f"The minimum bet is {MIN_BET_AMT} chips."
 YES_OR_NO_PROMPT       = "[Y]es   [N]o"
 DECK_NUMBER_SELECTION  = "🤵: How many decks would you like to play with?"
 DECK_NUMBER_BOUNDS_MSG = "🤵: That won't work, please be serious. Try again."
@@ -146,7 +144,8 @@ def display_blackjack_topbar(ctx: GameContext, bet: Optional[int]) -> None:
 def play_blackjack(ctx: GameContext) -> None:
     """Play a blackjack game."""
     account = ctx.account
-    if account.balance < MIN_BET_AMT:
+    min_bet = ctx.config.blackjack_min_bet
+    if account.balance < min_bet:
         clear_screen()
         display_blackjack_topbar(ctx, None)
         cprint(NO_FUNDS_MSG)
@@ -182,8 +181,8 @@ def play_blackjack(ctx: GameContext) -> None:
             bet_str = cinput(BET_PROMPT).strip()
             try:
                 bet = int(bet_str)
-                if bet < MIN_BET_AMT:
-                    err_msg = MIN_BET_MSG
+                if bet < min_bet:
+                    err_msg = f"The minimum bet is {min_bet} chips."
                     continue
             except ValueError:
                 err_msg = INVALID_BET_MSG
@@ -191,8 +190,8 @@ def play_blackjack(ctx: GameContext) -> None:
             try:
                 account.withdraw(bet)
             except ValueError:
-                err_msg = "Insufficient funds. " \
-                          f"You only have {account.balance} chips."
+                err_msg = \
+                    "Insufficient funds. You only have {account.balance} chips."
                 continue
             break
 
@@ -368,7 +367,7 @@ def play_blackjack(ctx: GameContext) -> None:
             cprint(msg)
 
         # game restart?
-        if account.balance < MIN_BET_AMT:
+        if account.balance < min_bet:
             cprint(NO_FUNDS_MSG)
             cinput("Press enter to continue.")
             continue_game = False
