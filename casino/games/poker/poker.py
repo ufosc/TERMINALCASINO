@@ -3,7 +3,7 @@ import os
 import shutil
 
 from casino.card_assets import assign_card_art
-from casino.types import Card
+from casino.types import Card, GameContext
 from casino.utils import clear_screen, cprint, cinput
 
 from itertools import combinations
@@ -27,6 +27,7 @@ YES_OR_NO_PROMPT       = "[Y]es   [N]o"
 INVALID_YES_OR_NO_MSG  = "🤵: It's a yes or no, pal. You staying?"
 STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
 INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
+NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
 FULL_DECK: list[Card] = [
     # Clubs
@@ -197,8 +198,13 @@ def print_hand(hand: list[Card], hidden: bool = False) -> None:
 
 
 
-def play_poker() -> None:
+def play_poker(ctx: GameContext) -> None:
     """Play a poker game."""
+    account = ctx.account
+    if account.balance == 0:
+        clear_screen()
+        cprint(NO_FUNDS_MSG)
+        return
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
 
@@ -210,8 +216,8 @@ def play_poker() -> None:
         opponent_status = True
         player_chips = 1000
         opponent_chips = 1000
-        pot = 30 # small blind + big blind (10 + 20)
-        current_bet = 20
+        pot = 10 # small blind 
+        current_bet = 20 #  + big blind (10 + 20)
         player_folded = False
 
         deck = FULL_DECK.copy()
@@ -237,11 +243,12 @@ def play_poker() -> None:
             print_hand(player_hand)
             cprint(f"Your current hand type: {hand_name(hand_score(player_hand,board))}")
             cprint(f"Pot: {pot} chips")
+            cprint(f"Your balance: {account.balance} chips\n")
 
             action = cinput(f"[F]old   [C]all {current_bet}   [R]aise\n")
 
             #get a proper action from the player
-            while action not in "FfCcRr" or action == "":
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50) or (action.lower() == "c" and account.balance < current_bet):
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
@@ -250,7 +257,12 @@ def play_poker() -> None:
                     return
                 clear_screen()
                 cprint(POKER_HEADER)
-                cprint(INVALID_CHOICE_MSG + "\n")
+                if (action.lower() == "r" and account.balance < 50):
+                    cprint("🤵: You don't have enough chips to raise that much.")
+                if (action.lower() == "c" and account.balance < current_bet):
+                    cprint(f"🤵: You don't have enough chips to call {current_bet}.")
+                if action not in "FfCcRr" or action == "":
+                    cprint(INVALID_CHOICE_MSG + "\n")
                 cprint("Opponent hand:")
                 print_hand(opponent_hand, hidden=True)
                 cprint("Board:")
@@ -262,6 +274,7 @@ def play_poker() -> None:
                 print_hand(player_hand)
                 cprint(f"Your current hand type: {hand_name(hand_score(player_hand,board))}")
                 cprint(f"Pot: {pot} chips")
+                cprint(f"Your balance: {account.balance} chips\n")
                 action = cinput(f"[F]old   [C]all {current_bet}   [R]aise\n")
 
             clear_screen()
@@ -272,13 +285,13 @@ def play_poker() -> None:
                 player_status = False
                 opponent_status = False
             elif action.lower() == "c":
-                player_chips -= current_bet
+                account.withdraw(current_bet)
                 pot += current_bet
                 player_status = False
             elif action.lower() == "r":
                 raise_amount = 50
                 current_bet += raise_amount
-                player_chips -= current_bet
+                account.withdraw(current_bet)
                 pot += current_bet
 
                 # as of right now, i will make the bot always call a raise
@@ -309,24 +322,32 @@ def play_poker() -> None:
             print_hand(player_hand)
             cprint(f"Your current hand type: {hand_name(hand_score(player_hand,board))}")
             cprint(f"Pot: {pot} chips")
+            cprint(f"Your balance: {account.balance} chips\n")
 
             action = cinput("[F]old   [C]heck   [R]aise 50\n")
-            while action not in "FfCcRr" or action == "":
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50):
+                if (action.lower() == "r" and account.balance < 50):
+                    cprint("🤵: You don't have enough chips to raise that much.")
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     return
                 action = cinput("[F]old   [C]heck   [R]aise 50\n")
+            current_bet = 0
             if action.lower() == "f":
                 player_folded = True
                 player_status = False
                 opponent_status = False
             elif action.lower() == "c":
+                account.withdraw(current_bet)
+                pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                player_chips -= 50
-                pot += 50
+                raise_amount = 50
+                current_bet += raise_amount
+                account.withdraw(current_bet)
+                pot += current_bet
 
                 # as of right now, i will make the bot always call a raise
                 opponent_chips -= 50
@@ -354,24 +375,32 @@ def play_poker() -> None:
             print_hand(player_hand)
             cprint(f"Your current hand type: {hand_name(hand_score(player_hand,board))}")
             cprint(f"Pot: {pot} chips")
+            cprint(f"Your balance: {account.balance} chips\n")
 
             action = cinput("[F]old   [C]heck   [R]aise 50\n")
-            while action not in "FfCcRr" or action == "":
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50):
+                if (action.lower() == "r" and account.balance < 50):
+                    cprint("🤵: You don't have enough chips to raise that much.")
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     return
                 action = cinput("[F]old   [C]heck   [R]aise 50\n")
+            current_bet = 0
             if action.lower() == "f":
                 player_folded = True
                 player_status = False
                 opponent_status = False
             elif action.lower() == "c":
+                account.withdraw(current_bet)
+                pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                player_chips -= 50
-                pot += 50
+                raise_amount = 50
+                current_bet += raise_amount
+                account.withdraw(current_bet)
+                pot += current_bet
 
                 # as of right now, i will make the bot always call a raise
                 opponent_chips -= 50
@@ -398,24 +427,32 @@ def play_poker() -> None:
             print_hand(player_hand)
             cprint(f"Your current hand type: {hand_name(hand_score(player_hand,board))}")
             cprint(f"Pot: {pot} chips")
+            cprint(f"Your balance: {account.balance} chips\n")
 
             action = cinput("[F]old   [C]heck   [R]aise 50\n")
-            while action not in "FfCcRr" or action == "":
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50):
+                if (action.lower() == "r" and account.balance < 50):
+                    cprint("🤵: You don't have enough chips to raise that much.")
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     return
                 action = cinput("[F]old   [C]heck   [R]aise 50\n")
+            current_bet = 0
             if action.lower() == "f":
                 player_folded = True
                 player_status = False
                 opponent_status = False
             elif action.lower() == "c":
+                account.withdraw(current_bet)
+                pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                player_chips -= 50
-                pot += 50
+                raise_amount = 50
+                current_bet += raise_amount
+                account.withdraw(current_bet)
+                pot += current_bet
 
                 # as of right now, i will make the bot always call a raise
                 opponent_chips -= 50
@@ -442,19 +479,22 @@ def play_poker() -> None:
 
             if player_score > opponent_score:
                 cprint(f"You win with a {hand_name(player_score)}!")
-                player_chips += pot
+                account.deposit(pot)
             elif opponent_score > player_score:
                 cprint(f"Opponent wins with a {hand_name(opponent_score)}.")
                 opponent_chips += pot
             else:
                 cprint(f"It's a tie with both players having a {hand_name(player_score)}.")
-                player_chips += pot // 2
+                account.deposit(pot//2)
                 opponent_chips += pot // 2
+                
+            cprint(f"Your balance: {account.balance} chips\n")
         else:
             clear_screen()
             cprint(POKER_HEADER)
             cprint("You folded. Opponent wins the pot.")
             opponent_chips += pot
+            cprint(f"Your balance: {account.balance} chips\n")
         
         
         # game restart?
