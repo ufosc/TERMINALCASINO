@@ -3,6 +3,7 @@ from typing import Callable
 
 from . import games
 from .accounts import Account
+from casino.games.poker import play_poker
 from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar
@@ -27,6 +28,7 @@ GAME_CHOICE_PROMPT = "Please choose a game to play: "
 GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack": games.blackjack.play_blackjack,
     "slots": games.slots.play_slots,
+    "poker": games.poker.play_poker,
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
 
