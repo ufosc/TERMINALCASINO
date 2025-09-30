@@ -1,3 +1,3 @@
-from . import blackjack, slots
+from . import blackjack, slots, poker
 
-__all__ = ["blackjack", "slots"]
+__all__ = ["blackjack", "slots", "poker"]
