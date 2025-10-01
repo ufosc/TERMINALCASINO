@@ -245,7 +245,7 @@ class Roulette:
             # Color betting
             if bet_type.lower() == "c" or bet_type.lower() == "color":
                 while True:
-                    bet_value = input("Enter color you want to bet on (Red, Black, Green): ")
+                    bet_value = input("Enter color you want to bet on (red, black, green): ")
 
                     if bet_value.lower() in self.valid_colors:
                         break
