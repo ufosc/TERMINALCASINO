@@ -253,7 +253,7 @@ class AmericanRoulette(Roulette):
     """
 
     def __init__(self, accounts: List[Account]):
-        super().__init__(self, accounts)
+        super().__init__(accounts)
 
         # Use the standard American roulette wheel
         self.wheel = [
