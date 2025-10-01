@@ -216,10 +216,10 @@ class Roulette:
 
             # Check that account has enough money to bet
             try:
-                accounts[i].withdraw(bet_amount)
+                self.accounts[i].withdraw(bet_amount)
             except ValueError as error:
                 if error.args and error.args[0] == "Insufficient balance":
-                    print(f"Insufficient balance to place bet. Please enter a bet lower than {accounts[i].balance}")
+                    print(f"Insufficient balance to place bet. Please enter a bet less thanor equal to {self.accounts[i].balance}")
                 continue
 
             # Ask for desired bet type
@@ -263,7 +263,8 @@ class Roulette:
                         print("\t" + valid_numbers_str)
          
             # Once values are successfully chosen, save to dictionary
-            self.bets[accounts[i].aid] = {
+            account_id = str(self.accounts[i].aid)
+            self.bets[account_id] = {
                 "type"   : Roulette.normalize_type(bet_type.lower()),
                 "value"  : Roulette.normalize_color(bet_value.lower()),
                 "amount" : bet_amount
