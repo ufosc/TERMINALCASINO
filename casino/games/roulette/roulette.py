@@ -128,7 +128,7 @@ class Roulette:
         return type_map.get(input_value.lower(), input_value)
 
     @staticmethod
-    def roulette_sort_key(value):
+    def roulette_sort_key(value : str) -> int:
         """
         Sorts values in roulette. Used as a key in the `sorted()` function.
         """
