@@ -175,8 +175,21 @@ class Roulette:
 
         # Loop over all users
         i = 0
-        while (i < len(accounts)):
             will_bet = input("Would you like to bet (y/N): ")
+        while (i < len(self.accounts)):
+            player_balances = 0
+            for account in self.accounts:
+                player_balances += account.balance
+            
+            if player_balances == 0:
+                print("ERROR: All players have gone bankrupt. You cannot play any more roulette.")
+                sleep(3)
+                return "BANKRUPT"
+
+            if (self.accounts[i].balance == 0):
+                print(f"Skipping player {i+1} because of empty balance...")
+                continue
+
 
             if will_bet == "" or will_bet.upper() == "N" or will_bet.upper() == "NO":
                 print("User skipped betting. Moving to next user...", end="\n\n")
