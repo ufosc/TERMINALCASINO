@@ -149,8 +149,19 @@ class Roulette:
                 - str: The winning color (either "red", "green", or "black")
         """
 
+        print("Spinning wheel...")
+
         random_index = random.randint(0, len(self.wheel))
-        return self.wheel[random_index]
+        self.winning_value = self.wheel[random_index]
+
+        winning_number = self.winning_value[0]
+        winning_color  = self.winning_value[1]
+
+        print(f"Winning values:")
+        print(f"\tWinning number: {winning_number}")
+        print(f"\tWinning color:  {winning_color}")
+
+        return self.winning_value
 
     def submit_bets(self) -> None:
         """
