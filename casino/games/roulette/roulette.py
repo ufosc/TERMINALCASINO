@@ -87,7 +87,7 @@ class Roulette:
         self.accounts = accounts
 
         # Current round's bets
-        self.bets = []
+        self.bets = {}
 
     @staticmethod
     def normalize_color(input_value: str) -> str:
@@ -246,6 +246,44 @@ class Roulette:
             }
 
             i += 1  # Move to next user
+
+    def payout(self) -> None:
+        """
+        Pay out all players who picked the right color or number.
+        """
+        winning_number = self.winning_value[0]
+        winning_color  = self.winning_value[1]
+
+        print("Paying out all winners...")
+
+        i = 0
+        for account_id, bet in self.bets.items():
+            bet_type   = bet["type"]
+            bet_value  = bet["value"]
+            bet_amount = bet["amount"]
+
+            win_multiplier = 1
+            # Check if user won
+            if bet_type == "color" and bet_value == winning_color:
+                if bet_type == "green":
+                    win_multiplier += 35
+                else:
+                    # Find account and pay back two times original bet
+                    win_multiplier += 1
+            elif bet_type == "number" and bet_value == winning_number:
+                # Find account and pay back 36 times original amount
+                win_multiplier += 35
+
+            if win_multiplier > 1:
+                self.accounts[i].deposit(bet_amount * win_multiplier)
+                print(f"\tPlayer {i+1}: Won {bet_amount * win_multiplier} coins.")
+            else:
+                print(f"\tPlayer {i+1}: Lost {bet_amount} coins.")
+            
+            i += 1
+
+        print("Finished payout.")
+
 
 class AmericanRoulette(Roulette):
     """
