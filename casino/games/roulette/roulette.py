@@ -202,7 +202,7 @@ class Roulette:
                 continue
 
             # Input bet amount
-            bet_amount = input("Amount to bet: ")
+            bet_amount = input(f"Player {i+1}'s Bet: ")
 
             # Check bet_amount is a positive integer
             try:
@@ -221,6 +221,9 @@ class Roulette:
                 if error.args and error.args[0] == "Insufficient balance":
                     print(f"Insufficient balance to place bet. Please enter a bet less thanor equal to {self.accounts[i].balance}")
                 continue
+
+            print(f"Successfully withdrew {bet_amount} coins from Player {i+1}.")
+            print(f"\tPlayer {i+1} remaining balance: {self.accounts[i].balance} coins.")
 
             # Ask for desired bet type
             bet_type = ""
