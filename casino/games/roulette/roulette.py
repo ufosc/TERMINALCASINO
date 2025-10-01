@@ -81,7 +81,6 @@ class Roulette:
 
         # Colors on wheel. Includes initials
         self.valid_colors = ["red", "green", "black", "r", "g", "b"]
-
         self.valid_numbers = []
 
         self.accounts = accounts
