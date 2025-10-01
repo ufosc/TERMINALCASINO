@@ -163,7 +163,7 @@ class Roulette:
 
         return self.winning_value
 
-    def submit_bets(self) -> None:
+    def submit_bets(self) -> None | str:
         """
         Instruct users to submit bets.
 
