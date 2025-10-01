@@ -298,11 +298,51 @@ class AmericanRoulette(Roulette):
         ]
 
 
-def play_roulette() -> None:
+def play_roulette(accounts : List[Account]) -> None:
     continue_game = True
+
+    # Temporary fix
+    # TODO: fix account type
+    accounts = [accounts]
+
+    if type(accounts) != list:
+        raise ValueError(f"accounts is not a list. accounts is a {type(accounts)}")
+
+    roulette = AmericanRoulette(accounts)
     while continue_game:
         clear_screen()
         cprint(ROULETTE_HEADER)
 
         # Input to stop loop from running constantly
-        cinput("test: ")
+        choice = cinput("Press [Enter] to start a new round and [q] to quit: ")
+
+        if choice.upper() == "q" or choice.upper() == "QUIT":
+            continue_game = False
+            break
+
+        status = roulette.submit_bets()
+        if status == "BANKRUPT":
+            break
+
+        roulette.spin_wheel()
+        roulette.payout()
+
+        play_again = None
+
+        while True:
+            valid_choices = ["N", "NO", "Y", "YES", ""]
+            play_again = input("Would you like to play another round (Y/n): ")
+
+            if play_again.upper() not in valid_choices:
+                print("Please enter 'Yes' or 'No'.")
+                continue
+            if play_again.upper() == "N" or play_again.upper() == "NO":
+                print("Quitting roulette...")
+                continue_game = False
+                break
+            elif play_again.upper() == "" or play_again.upper() == "Y" or play_again.upper() == "YES":
+                continue_game = True
+                break
+
+    print("Exiting roulette...")
+    sleep(0.5)
