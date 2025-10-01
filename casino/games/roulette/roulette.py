@@ -363,6 +363,8 @@ class AmericanRoulette(Roulette):
             ("2", "black")
         ]
 
+        self.valid_numbers = [number for (number, color) in self.wheel]
+
 
 def play_roulette(accounts : List[Account]) -> None:
     continue_game = True
