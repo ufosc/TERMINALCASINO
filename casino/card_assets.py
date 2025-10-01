@@ -1,4 +1,4 @@
-from casino.types import Card
+import os
 
 ############## CARD ARTS ##############
 # flipped card (face-down)
@@ -521,7 +521,40 @@ card_dict: dict[str, str] = {
     "flipped": flipped
 }
 
-def assign_card_art(card: Card) -> str:
+suit_map = {
+    "c" : "clubs",
+    "d" : "diamonds",
+    "h" : "hearts",
+    "s" : "spades",
+}
+
+def export():
+    # Exports all assets in card_assets.py
+    output_dir = "./assets/cards/standard"
+    os.makedirs(output_dir, exist_ok=True)
+
+    for card_id, art in card_dict.items():
+        # Remove newline at beginning
+        art = art[1:]
+
+        suit_letter = card_id[0]
+        rank = card_id[1:]
+
+        if card_id == "flipped":
+            filename = "flipped.txt"
+        else:
+            suit = suit_map[suit_letter]
+            filename = f"{rank}_of_{suit}.txt"
+
+        path = os.path.join(output_dir, filename)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(art)
+
+    print("All card arts exported.")
+
+def assign_card_art(card) -> str:
     """Return card art from dict."""
     _, card_id = card
     return card_dict[card_id]
+
+export()
