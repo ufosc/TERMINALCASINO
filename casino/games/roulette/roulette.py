@@ -88,6 +88,7 @@ class Roulette:
 
         # Current round's bets
         self.bets = {}
+        self.winning_value = None
 
     @staticmethod
     def normalize_color(input_value: str) -> str:
