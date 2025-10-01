@@ -253,7 +253,7 @@ class Roulette:
                         print("Error: Chosen color is not red, green, or black.")
             
             # Number betting
-            else if bet_type.upper() == "N" or bet_type.upper() = "NUMBER":
+            elif bet_type.upper() == "N" or bet_type.upper() == "NUMBER":
                 while True:
                     bet_value = input("Enter number you would like to bet on: ")
 
