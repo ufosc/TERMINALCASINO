@@ -498,6 +498,11 @@ def play_poker(ctx: GameContext) -> None:
         
         
         # game restart?
+        if account.balance < 20: # The starting bet pre-flop
+            cprint(NO_FUNDS_MSG)
+            cinput("Press enter to continue.")
+            continue_game = False
+            continue
         cprint(STAY_AT_TABLE_PROMPT)
         play_again = cinput(YES_OR_NO_PROMPT)
         # check valid answer
