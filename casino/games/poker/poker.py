@@ -4,7 +4,7 @@ import shutil
 
 from casino.card_assets import assign_card_art
 from casino.types import Card, GameContext
-from casino.utils import clear_screen, cprint, cinput
+from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 from itertools import combinations
 from collections import Counter
@@ -14,8 +14,12 @@ POKER_HEADER = """
 ┌───────────────────────────────┐
 │         ♥ P O K E R ♥         │
 └───────────────────────────────┘
-
 """
+
+HEADER_OPTIONS = {
+    "header": POKER_HEADER,
+    "margin": 1,
+}
 
 SECURITY_GUARD = "👮‍♂️"
 SECURITY_MSG = f"""
@@ -201,9 +205,11 @@ def print_hand(hand: list[Card], hidden: bool = False) -> None:
 def play_poker(ctx: GameContext) -> None:
     """Play a poker game."""
     account = ctx.account
-    if account.balance == 0:
+    if account.balance < 20:
         clear_screen()
+        display_topbar(account, **HEADER_OPTIONS)
         cprint(NO_FUNDS_MSG)
+        cinput("Press enter to continue.")
         return
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
