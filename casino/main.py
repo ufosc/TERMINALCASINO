@@ -12,6 +12,16 @@ CASINO_HEADER = """
 │   ♦ T E R M I N A L  C A S I N O ♦   │
 └──────────────────────────────────────┘
 """
+upper_bar = """┌──────────────────────────────────────┐"""
+
+empty_bar = """│                                      │"""
+
+BLACKJACK_HEADER = """│     ♦ [1] B L A C K J A C K [1] ♦    │"""
+
+SLOTS_HEADER = """│        ♦ [2] S L O T S [2] ♦         │"""
+
+lower_bar = """└──────────────────────────────────────┘"""
+
 
 CASINO_HEADER_OPTIONS = {
     "header": CASINO_HEADER,
@@ -25,8 +35,8 @@ GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
 # To add a new game, just add a handler function to GAME_HANDLERS
 GAME_HANDLERS: dict[str, Callable[[Account], None]] = {
-    "blackjack": play_blackjack,
-    "slots": play_slots,
+    BLACKJACK_HEADER: play_blackjack,
+    SLOTS_HEADER: play_slots,
 }
 games = list(GAME_HANDLERS.keys())
 
@@ -93,8 +103,12 @@ def main_menu(account: Account) -> None:
             display_topbar(account, **CASINO_HEADER_OPTIONS)
             cprint("")  # spacing
             width = term_width()
+            cprint(upper_bar.center(width))
             for i, name in enumerate(games, start=1):
-                cprint(f"[{i}] {name.title()}".center(width) + "\n")
+                cprint(empty_bar.center(width))
+                cprint(f"{name.title()}".center(width) + "\n")
+            cprint(empty_bar.center(width))
+            cprint(lower_bar.center(width))
 
         choice = prompt_with_refresh(
             render_fn = render_choose_game,
