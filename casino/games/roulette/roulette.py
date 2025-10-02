@@ -21,7 +21,7 @@ from typing import List
 from time import sleep
 
 from casino.card_assets import assign_card_art
-from casino.types import Card
+from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput
 from casino.accounts import Account
 
@@ -353,12 +353,15 @@ class AmericanRoulette(Roulette):
         self.valid_numbers = [number for (number, color) in self.wheel]
 
 
-def play_roulette(accounts : List[Account]) -> None:
+def play_roulette(contexts : List[GameContext]) -> None:
     continue_game = True
 
     # Temporary fix
-    # TODO: fix account type
-    accounts = [accounts]
+    # TODO: fix argument in play_roulette to only except `List[GameContext]` and not `GameContext`
+    contexts = [contexts]
+
+    # Access account data
+    accounts = [account.account for account in accounts]
 
     if type(accounts) != list:
         raise ValueError(f"accounts is not a list. accounts is a {type(accounts)}")
