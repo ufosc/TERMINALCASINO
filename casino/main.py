@@ -1,11 +1,13 @@
 import shutil
 from typing import Callable
 
-from casino.accounts import Account
-from casino.games.blackjack import play_blackjack
-from casino.utils import cprint, cinput, clear_screen, display_topbar
-from casino.games.slots import play_slots
-from casino.utils import cprint, cinput, clear_screen
+from . import games
+from .accounts import Account
+from casino.games.poker import play_poker
+from .config import Config
+from .types import GameContext
+from .utils import cprint, cinput, clear_screen, display_topbar
+
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -34,11 +36,15 @@ INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
 # To add a new game, just add a handler function to GAME_HANDLERS
-GAME_HANDLERS: dict[str, Callable[[Account], None]] = {
-    BLACKJACK_HEADER: play_blackjack,
-    SLOTS_HEADER: play_slots,
+
+GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
+    "blackjack": games.blackjack.play_blackjack,
+    "slots": games.slots.play_slots,
+    "poker": games.poker.play_poker,
+    "roulette": games.roulette.play_roulette
+
 }
-games = list(GAME_HANDLERS.keys())
+ALL_GAMES = list(GAME_HANDLERS.keys())
 
 
 def term_width() -> int:
@@ -72,11 +78,12 @@ def prompt_with_refresh(
 
 
 
-def main_menu(account: Account) -> None:
+def main_menu(ctx: GameContext) -> None:
     """
     Main loop: show welcome, then (if chosen) show game menu, call handler,
     then return to top-level menu. No recursion used.
     """
+    account = ctx.account
     while True:
         def render_welcome():
             clear_screen()
@@ -103,25 +110,23 @@ def main_menu(account: Account) -> None:
             display_topbar(account, **CASINO_HEADER_OPTIONS)
             cprint("")  # spacing
             width = term_width()
-            cprint(upper_bar.center(width))
-            for i, name in enumerate(games, start=1):
-                cprint(empty_bar.center(width))
-                cprint(f"{name.title()}".center(width) + "\n")
-            cprint(empty_bar.center(width))
-            cprint(lower_bar.center(width))
+
+            for i, name in enumerate(ALL_GAMES, start=1):
+                cprint(f"[{i}] {name.title()}".center(width) + "\n")
+
 
         choice = prompt_with_refresh(
             render_fn = render_choose_game,
             prompt = GAME_CHOICE_PROMPT.center(term_width()),
             error_message = INVALID_CHOICE_PROMPT,
-            validator = lambda x: x.isdigit() and 1 <= int(x) <= len(games),
+            validator = lambda x: x.isdigit() and 1 <= int(x) <= len(ALL_GAMES),
         )
 
-        selected_game = games[int(choice) - 1]
+        selected_game = ALL_GAMES[int(choice) - 1]
         handler = GAME_HANDLERS.get(selected_game)
         if handler:
             clear_screen()
-            handler(account)  # returns to loop after game finishes
+            handler(ctx)  # returns to loop after game finishes
         else:
             clear_screen()
             display_topbar(account, **CASINO_HEADER_OPTIONS)
@@ -141,7 +146,9 @@ def main():
 
 
     account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
-    main_menu(account)
+    config = Config.default()
+    ctx = GameContext(account=account, config=config)
+    main_menu(ctx)
 
 
 if __name__ == "__main__":
