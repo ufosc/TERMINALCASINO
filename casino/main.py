@@ -8,6 +8,7 @@ from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar
 
+
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
 │   ♦ T E R M I N A L  C A S I N O ♦   │
@@ -29,6 +30,7 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack": games.blackjack.play_blackjack,
     "slots": games.slots.play_slots,
     "poker": games.poker.play_poker,
+    "roulette": games.roulette.play_roulette
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
 
