@@ -25,12 +25,13 @@ You have been removed from the casino
 YES_OR_NO_PROMPT       = "[Y]es   [N]o"
 DECK_NUMBER_SELECTION  = "🤵: How many decks would you like to play with?"
 DECK_NUMBER_BOUNDS_MSG = "🤵: That won't work, please be serious. Try again."
-INVALID_NUMBER_MSG     = "Invalid number. Try again."
+INVALID_NUMBER_MSG     = "🤵: Invalid number. Try again."
 INVALID_YES_OR_NO      = "🤵: It's a yes or no, pal. You staying?"
 STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
 INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
 BET_PROMPT             = "🤵: How much would you like to bet?"
 INVALID_BET_MSG        = "🤵: That's not a valid bet."
+# Updated NO_FUNDS to allow user to continue playing, will be changed later once persistent state is implemented
 NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
 FULL_DECK: list[Card] = [
@@ -157,6 +158,7 @@ def play_blackjack(ctx: GameContext) -> None:
     while (True):
         clear_screen()
         display_blackjack_topbar(ctx, None)
+        # let user choose number of decks being dealt
         if err_msg is not None:
             cprint(err_msg)
         decks_str = cinput(DECK_NUMBER_SELECTION).strip()
