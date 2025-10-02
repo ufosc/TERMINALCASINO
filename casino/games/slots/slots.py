@@ -6,7 +6,7 @@ from casino.accounts import Account
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
-type SlotsMenuChoice = Literal["respin", "change_bet", "quit"]
+SlotsMenuChoice = Literal["respin", "change_bet", "quit"]
 
 SLOTS_HEADER = """
 ┌───────────────────────────────┐
