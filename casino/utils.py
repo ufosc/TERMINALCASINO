@@ -22,22 +22,38 @@ def load_theme(name: str) -> dict[str, str]:
 # gets chosen theme
 def get_theme():
     global theme
-    cprint(f"Please choose a theme number below")
-    choice = cinput(f"1.Black   2.Blue   3.Cyan")
-    if choice == '1':
-        cprint(f"Would you like the bright version?")
-        choice_bright = cinput(f"[Y]es   [N]o")
-        if choice_bright == 'Y' or choice_bright == 'y':
-            theme = load_theme("bright_black_theme")
+    
+    # choose from original 16 terminal colors or custom colors
+    cprint(f"Please choose a theme folder below")
+    folder = cinput(f"1.Original Terminal   2.Custom Colors")
+
+    # original 16
+    if folder == '1':
+        cprint(f"Please choose a theme number below")
+        color = cinput(f"1.Black   2.Blue   3.Cyan .....")
+        # check for bright option
+        if color == '1':
+            cprint(f"Would you like the bright version?")
+            choice = cinput(f"[Y]es   [N]o")
+            if choice == 'Y' or choice == 'y':
+                theme = load_theme("bright_black_theme")
+            else:
+                theme = load_theme("black_theme")
+        elif color == '2':
+            cprint(f"Would you like the bright version?")
+            choice = cinput(f"[Y]es   [N]o")
+            if choice == 'Y' or choice == 'y':
+                theme = load_theme("bright_blue_theme")
+            else:
+                theme = load_theme("blue_theme")
         else:
-            theme = load_theme("black_theme")
-    elif choice == '2':
-        cprint(f"Would you like the bright version?")
-        choice_bright = cinput(f"[Y]es   [N]o")
-        if choice_bright == 'Y' or choice_bright == 'y':
-            theme = load_theme("bright_blue_theme")
-        else:
-            theme = load_theme("blue_theme")
+            # doesn't print because screen immediately cleared
+            cprint(f"Invalid choice. Default theme chosen.")
+    # custom user added colors
+    elif folder == '2':
+        # custom choices here
+        cprint(f"No choices here yet")
+    # neither chosen, defualt used
     else:
         # doesn't print because screen immediately cleared
         cprint(f"Invalid choice. Default theme chosen.")
