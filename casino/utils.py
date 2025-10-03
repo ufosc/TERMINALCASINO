@@ -1,9 +1,62 @@
 import os
 import shutil
+import json
+
 from typing import Optional
-
 from casino.accounts import Account
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+THEME_DIR = BASE_DIR / "themes"
+
+#default fallback so theme is always defined
+theme = {"color": "", "reset": ""}
+
+# loads theme from json file
+def load_theme(name: str) -> dict[str, str]:
+    """Load a theme by name from themes folder"""
+    theme_path = THEME_DIR / f"{name}.json"
+    with open(theme_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# gets chosen theme
+def get_theme():
+    global theme
+    
+    # choose from original 16 terminal colors or custom colors
+    cprint(f"Please choose a theme folder below")
+    folder = cinput(f"1.Original Terminal   2.Custom Colors")
+
+    # original 16
+    if folder == '1':
+        cprint(f"Please choose a theme number below")
+        color = cinput(f"1.Black   2.Blue   3.Cyan .....")
+        # check for bright option
+        if color == '1':
+            cprint(f"Would you like the bright version?")
+            choice = cinput(f"[Y]es   [N]o")
+            if choice == 'Y' or choice == 'y':
+                theme = load_theme("bright_black_theme")
+            else:
+                theme = load_theme("black_theme")
+        elif color == '2':
+            cprint(f"Would you like the bright version?")
+            choice = cinput(f"[Y]es   [N]o")
+            if choice == 'Y' or choice == 'y':
+                theme = load_theme("bright_blue_theme")
+            else:
+                theme = load_theme("blue_theme")
+        else:
+            # doesn't print because screen immediately cleared
+            cprint(f"Invalid choice. Default theme chosen.")
+    # custom user added colors
+    elif folder == '2':
+        # custom choices here
+        cprint(f"No choices here yet")
+    # neither chosen, defualt used
+    else:
+        # doesn't print because screen immediately cleared
+        cprint(f"Invalid choice. Default theme chosen.")
 
 def clear_screen() -> None:
     """Clear the screen."""
@@ -22,17 +75,19 @@ def cprint(*args, sep: str = " ", end: str = "\n") -> None:
     # split lines and print each one centered
     lines = text.splitlines()
     for i, line in enumerate(lines):
+        colored_line = f"{theme['color']}{line}{theme['reset']}"
         if i < len(lines) - 1:
-            print(line.center(terminal_width))
+            print(colored_line.center(terminal_width))
         else:
-            print(line.center(terminal_width), end=end)
+            print(colored_line.center(terminal_width), end=end)
 
 
 def cinput(prompt: str = "") -> str:
     """Get input from the user in the center of the screen."""
     terminal_width = shutil.get_terminal_size().columns
-    centered_prompt = prompt.center(terminal_width)
-    print(centered_prompt)
+    colored_prompt = f"{theme['color']}{prompt}{theme['reset']}"
+    colored_center_prompt = colored_prompt.center(terminal_width)
+    print(colored_center_prompt)
 
     # move cursor to the center for input
     cursor_padding = (terminal_width // 2) + 1
