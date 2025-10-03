@@ -192,7 +192,7 @@ def play_blackjack(ctx: GameContext) -> None:
                 account.withdraw(bet)
             except ValueError:
                 err_msg = \
-                    "Insufficient funds. You only have {account.balance} chips."
+                    f"Insufficient funds. You only have {account.balance} chips."
                 continue
             break
 
@@ -228,7 +228,7 @@ def play_blackjack(ctx: GameContext) -> None:
             dealer_bj = True
             player_status = False
             dealer_status = False
-            cprint("Your hand:")
+            cprint("Dealer hand:")
             print_hand(dealer_hand)
             cprint("Your hand:")
             print_hand(player_hand)
@@ -315,8 +315,12 @@ def play_blackjack(ctx: GameContext) -> None:
             win_msgs.append("Push\n")
             # player gets back bet, +1 draw
         elif not player_bj and dealer_bj:
-            win_msgs.append("Dealer has a blackjack\n")
-            win_msgs.append(f"You lose: -{bet} chips\n")
+            if len(dealer_hand) == 2:
+                win_msgs.append("Dealer has a blackjack\n")
+                win_msgs.append(f"You lose: -{bet} chips\n")
+            else:
+                win_msgs.append(f"Dealer has {hand_total(dealer_hand)}\n")
+                win_msgs.append(f"You lose: -{bet} chips\n")
             dealer_won = True
             # player loses bet, +1 loss
         elif player_bj and not dealer_bj:
