@@ -6,7 +6,7 @@ from .accounts import Account
 from casino.games.poker import play_poker
 from .config import Config
 from .types import GameContext
-from .utils import cprint, cinput, clear_screen, display_topbar
+from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
 
 
 CASINO_HEADER = """
@@ -129,6 +129,11 @@ def main():
         display_topbar(account=None, **CASINO_HEADER_OPTIONS)
         cprint("\nInvalid input. Please enter a valid name.\n")
         name = cinput("Enter your name: ").strip()
+    
+    # theme selection
+    clear_screen()
+    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
+    get_theme()
 
 
     account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
