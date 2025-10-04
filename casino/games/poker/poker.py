@@ -200,6 +200,8 @@ def print_hand(hand: list[Card], hidden: bool = False) -> None:
     else:
         print_cards(hand)
 
+def display_poker_topbar(ctx: GameContext) -> None:
+    display_topbar(ctx.account, **HEADER_OPTIONS)
 
 
 def play_poker(ctx: GameContext) -> None:
@@ -207,7 +209,7 @@ def play_poker(ctx: GameContext) -> None:
     account = ctx.account
     if account.balance < 20:
         clear_screen()
-        display_topbar(account, **HEADER_OPTIONS)
+        display_poker_topbar(ctx)
         cprint(NO_FUNDS_MSG)
         cinput("Press enter to continue.")
         return
@@ -216,7 +218,7 @@ def play_poker(ctx: GameContext) -> None:
 
     while continue_game:
         clear_screen()
-        cprint(POKER_HEADER)
+        display_poker_topbar(ctx)
         
         player_status = True
         opponent_status = True
@@ -262,7 +264,7 @@ def play_poker(ctx: GameContext) -> None:
                     cprint("You have been banned from the casino for being too stubborn.")
                     return
                 clear_screen()
-                cprint(POKER_HEADER)
+                display_poker_topbar(ctx)
                 if (action.lower() == "r" and account.balance < 50):
                     cprint("🤵: You don't have enough chips to raise that much.")
                 if (action.lower() == "c" and account.balance < current_bet):
@@ -284,7 +286,7 @@ def play_poker(ctx: GameContext) -> None:
                 action = cinput(f"[F]old   [C]all {current_bet}   [R]aise\n")
 
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
 
             if action.lower() == "f":
                 player_folded = True
@@ -318,7 +320,7 @@ def play_poker(ctx: GameContext) -> None:
                 deal_card(board, deck)
             
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== FLOP ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=True)
@@ -371,7 +373,7 @@ def play_poker(ctx: GameContext) -> None:
             deal_card(board, deck)
             
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== TURN ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=True)
@@ -423,7 +425,7 @@ def play_poker(ctx: GameContext) -> None:
             deal_card(board, deck)
             
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== RIVER ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=True)
@@ -468,7 +470,7 @@ def play_poker(ctx: GameContext) -> None:
         #showdown
         if not player_folded:
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== SHOWDOWN ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=False)
@@ -497,7 +499,7 @@ def play_poker(ctx: GameContext) -> None:
             cprint(f"Your balance: {account.balance} chips\n")
         else:
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("You folded. Opponent wins the pot.")
             opponent_chips += pot
             cprint(f"Your balance: {account.balance} chips\n")
@@ -519,7 +521,7 @@ def play_poker(ctx: GameContext) -> None:
                 cprint(SECURITY_MSG)
                 return
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint(INVALID_YES_OR_NO_MSG)
             play_again = cinput(YES_OR_NO_PROMPT)
 
