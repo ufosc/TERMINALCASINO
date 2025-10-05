@@ -122,7 +122,10 @@ def print_cards(hand: list[Card]) -> None:
 def print_hand_total(hand: list[Card], label: str = "Total") -> None:
     """Print the total of the hand."""
     total = hand_total(hand)
-    total_string = "Blackjack" if total == 21 else f"{total}"
+    if total == 21 and len(hand) == 2:
+        total_string = "Blackjack"
+    else: 
+        total_string = f"{total}"
     cprint(f"{label}: {total_string}")
 
 
@@ -191,8 +194,7 @@ def play_blackjack(ctx: GameContext) -> None:
             try:
                 account.withdraw(bet)
             except ValueError:
-                err_msg = \
-                    "Insufficient funds. You only have {account.balance} chips."
+                err_msg = f"Insufficient funds. You only have {account.balance} chips."
                 continue
             break
 
