@@ -361,7 +361,7 @@ def play_roulette(contexts : List[GameContext]) -> None:
     contexts = [contexts]
 
     # Access account data
-    accounts = [account.account for account in accounts]
+    accounts = [account.account for account in contexts]
 
     if type(accounts) != list:
         raise ValueError(f"accounts is not a list. accounts is a {type(accounts)}")
