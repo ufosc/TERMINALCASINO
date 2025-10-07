@@ -530,7 +530,7 @@ suit_map = {
 
 def export():
     # Exports all assets in card_assets.py
-    output_dir = "./assets/cards/standard"
+    output_dir = ".casino/assets/cards/standard"
     os.makedirs(output_dir, exist_ok=True)
 
     for card_id, art in card_dict.items():
@@ -557,4 +557,4 @@ def assign_card_art(card) -> str:
     _, card_id = card
     return card_dict[card_id]
 
-export()
+#export()
