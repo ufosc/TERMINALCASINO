@@ -3,7 +3,7 @@ from typing import Optional
 
 from casino.accounts import Account
 from casino.card_assets import assign_card_art
-from casino.types import Card
+from casino.game_types import Card
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 BLACKJACK_HEADER = """

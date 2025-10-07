@@ -3,13 +3,12 @@ from dataclasses import dataclass
 from .accounts import Account
 from .config import Config
 from typing import Tuple
-from .cards import Card
+from .cards import *
 
-Card = tuple[int | str, str]
+Card = Tuple[int | str, str]
 
 
 @dataclass
 class GameContext:
     account: Account
     config: Config
-Card = tuple[int | str, str]
