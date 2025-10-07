@@ -20,7 +20,7 @@ class Card(ABC):
         return ""
 
 
-class Deck:
+class Deck(ABC):
     def __init__(self, cards):
         self.cards : List[Card] = cards
 
