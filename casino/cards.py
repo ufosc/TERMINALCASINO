@@ -5,6 +5,8 @@ Classes for cards that will be used in all card games.
 from abc import ABC, abstractmethod
 import random
 from typing import List
+import os
+from pathlib import Path
 
 
 class Card(ABC):
@@ -31,5 +33,46 @@ class Deck:
 
     def draw(self) -> Card:
         return self.cards.pop()
+
+
+class StandardCard(Card):
+    def __init__(self, rank: str, suit: str):
+        super().__init__(suit, rank)
+
+        self.string = ""
+
+        # Get file of card containing display of card
+        FOLDER = "./casino/assets/cards/standard/"
+        FILE = FOLDER + f"{rank}_of_{suit}.txt"
+
+        # Resolve absolute file path (cross-platform)
+        FILE = Path(FILE).resolve()
+        FILE = str(FILE)
+
+        with open(FILE, "r", encoding="utf-8") as file:
+            self.string = file.read()
+
+    def __repr__(self):
+        return self.string
+
+
+class StandardDeck(Deck):
+    SUITS = ["clubs", "diamonds", "hearts", "spades"]
+    RANKS = [str(n) for n in range(2, 11)] + ["J", "Q", "K", "A"]
+
+    def __init__(self):
+        self.cards = []
+        self.generate_deck()
+
+        super().__init__(self.cards)
+
+    def generate_deck(self) -> List[Card]:
+        self.cards = [
+            StandardCard(suit, rank)
+            for suit in __class__.SUITS
+            for rank in __class__.RANKS
+        ]
+
+        return self.cards
 
 
