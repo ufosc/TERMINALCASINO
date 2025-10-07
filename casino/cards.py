@@ -40,10 +40,15 @@ class StandardCard(Card):
         super().__init__(suit, rank)
 
         self.string = ""
+        self.load_art()
 
+    def load_art(self) -> None:
+        """
+        Loads ASCII art of `StandardCard`
+        """
         # Get file of card containing display of card
         FOLDER = "./casino/assets/cards/standard/"
-        FILE = FOLDER + f"{rank}_of_{suit}.txt"
+        FILE = FOLDER + f"{self.identifier}_of_{self.category}.txt"
 
         # Resolve absolute file path (cross-platform)
         FILE = Path(FILE).resolve()
