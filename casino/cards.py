@@ -90,3 +90,46 @@ class StandardDeck(Deck):
         return self.cards
 
 
+class UnoCard(Card):
+    def __init__(self, color: str, rank: str):
+        super().__init__(color, rank)
+        self.color = color
+        self.rank  = rank
+
+    def get_file(self):
+        """
+        Loads ASCII art of `UnoCard`
+        """
+        # Get file of card containing display of card
+        FOLDER = "./casino/assets/cards/uno/"
+
+        if self.color != "wild":
+            FILE = FOLDER + f"{self.category}_{self.identifier}.txt"
+        else:
+            FILE = FOLDER + f"{self.rank}.txt"
+
+        self.load_art(FILE)
+
+
+class UnoDeck(Deck):
+    COLORS = ["red", "green", "blue", "yellow"]
+    RANKS  = [str(n) for n in range(0, 11)] + ["draw_2", "skip", "reverse"]
+    SPECIAL_CARDS = ["wild", "wild_draw_4"]
+
+    def __init__(self):
+        self.cards = []
+        self.generate_deck()
+
+        super().__init__(self.cards)
+
+    def generate_deck(self) -> List[Card]:
+        self.cards = [
+            UnoCard(color, rank)
+            for color in __class__.COLORS
+            for rank  in __class__.RANKS
+        ]
+        
+        for card in SPECIAL_CARDS:
+            self.cards.append(UnoCard("wild", card))
+
+        return self.cards
