@@ -1,9 +1,8 @@
 import random
 from typing import Optional
 
-from casino.accounts import Account
 from casino.card_assets import assign_card_art
-from casino.game_types import Card
+from casino.types import Card, GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 BLACKJACK_HEADER = """
@@ -24,11 +23,15 @@ You have been removed from the casino
 
 """
 YES_OR_NO_PROMPT       = "[Y]es   [N]o"
-INVALID_YES_OR_NO_MSG  = "🤵: It's a yes or no, pal. You staying?"
+DECK_NUMBER_SELECTION  = "🤵: How many decks would you like to play with?"
+DECK_NUMBER_BOUNDS_MSG = "🤵: That won't work, please be serious. Try again."
+INVALID_NUMBER_MSG     = "🤵: Invalid number. Try again."
+INVALID_YES_OR_NO      = "🤵: It's a yes or no, pal. You staying?"
 STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
 INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
 BET_PROMPT             = "🤵: How much would you like to bet?"
 INVALID_BET_MSG        = "🤵: That's not a valid bet."
+NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
 FULL_DECK: list[Card] = [
     # Clubs
@@ -132,36 +135,69 @@ def print_hand(hand: list[Card], hidden: bool = False) -> None:
         print_hand_total(hand)
 
 
-def display_blackjack_topbar(account: Account, bet: Optional[int]) -> None:
-    display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
+def display_blackjack_topbar(ctx: GameContext, bet: Optional[int]) -> None:
+    display_topbar(ctx.account, **BLACKJACK_HEADER_OPTIONS)
     if bet is not None:
         cprint(f"Bet: {bet}")
 
 
-def play_blackjack(account: Account) -> None:
+def play_blackjack(ctx: GameContext) -> None:
     """Play a blackjack game."""
+    account = ctx.account
+    min_bet = ctx.config.blackjack_min_bet
+    if account.balance < min_bet:
+        clear_screen()
+        display_blackjack_topbar(ctx, None)
+        cprint(NO_FUNDS_MSG)
+        cinput("Press enter to continue.")
+        return
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
+    err_msg = None
+    while (True):
+        clear_screen()
+        display_blackjack_topbar(ctx, None)
+        # let user choose number of decks being dealt
+        if err_msg is not None:
+            cprint(err_msg)
+        decks_str = cinput(DECK_NUMBER_SELECTION).strip()
+        try:
+            decks = int(decks_str)
+        except ValueError:
+            err_msg = INVALID_NUMBER_MSG
+            continue
+        if decks <= 0:
+            err_msg = DECK_NUMBER_BOUNDS_MSG
+            continue
+        break
 
     while continue_game:
-        clear_screen()
-        display_blackjack_topbar(account, None)
-        
         # determine the bet amount
-        bet = 0
+        err_msg = None
         while True:
+            clear_screen()
+            display_blackjack_topbar(ctx, None)
+            if err_msg is not None:
+                cprint(err_msg)
             bet_str = cinput(BET_PROMPT).strip()
             try:
                 bet = int(bet_str)
-                account.withdraw(bet)
-                break
+                if bet < min_bet:
+                    err_msg = f"The minimum bet is {min_bet} chips."
+                    continue
             except ValueError:
-                clear_screen()
-                display_blackjack_topbar(account, None)
-                cprint(INVALID_BET_MSG)
+                err_msg = INVALID_BET_MSG
+                continue
+            try:
+                account.withdraw(bet)
+            except ValueError:
+                err_msg = \
+                    "Insufficient funds. You only have {account.balance} chips."
+                continue
+            break
 
         clear_screen()
-        display_blackjack_topbar(account, bet)
+        display_blackjack_topbar(ctx, bet)
 
         # local variables
         player_status = True
@@ -170,13 +206,11 @@ def play_blackjack(account: Account) -> None:
         dealer_bj = False
 
         # two decks of cards (values + string IDs)
-        deck = FULL_DECK * 2
+        deck = FULL_DECK * decks
 
         # hands
         player_hand = []
         dealer_hand = []
-
-
 
         # initial deal (player first)
         for _ in range(2):
@@ -219,7 +253,7 @@ def play_blackjack(account: Account) -> None:
                     cprint(SECURITY_MSG)
                     return
                 clear_screen()
-                display_blackjack_topbar(account, bet)
+                display_blackjack_topbar(ctx, bet)
                 cprint(INVALID_CHOICE_MSG + "\n")
                 print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
@@ -227,7 +261,7 @@ def play_blackjack(account: Account) -> None:
                 action = cinput("[S]tay   [H]it")
 
             clear_screen()
-            display_blackjack_topbar(account, bet)
+            display_blackjack_topbar(ctx, bet)
 
             # handle action
             if action.lower() == "s":
@@ -325,7 +359,7 @@ def play_blackjack(account: Account) -> None:
         elif not dealer_won: # tie
             account.deposit(bet)
         clear_screen()
-        display_blackjack_topbar(account, bet)
+        display_blackjack_topbar(ctx, bet)
         cprint("Dealer hand:")
         print_hand(dealer_hand)
         cprint("Your hand:")
@@ -334,6 +368,11 @@ def play_blackjack(account: Account) -> None:
             cprint(msg)
 
         # game restart?
+        if account.balance < min_bet:
+            cprint(NO_FUNDS_MSG)
+            cinput("Press enter to continue.")
+            continue_game = False
+            continue
         cprint(STAY_AT_TABLE_PROMPT)
         play_again = cinput(YES_OR_NO_PROMPT)
         # check valid answer
@@ -344,8 +383,8 @@ def play_blackjack(account: Account) -> None:
                 cprint(SECURITY_MSG)
                 return
             clear_screen()
-            display_blackjack_topbar(account, bet)
-            cprint(INVALID_YES_OR_NO_MSG)
+            display_blackjack_topbar(ctx, bet)
+            cprint(INVALID_YES_OR_NO)
             play_again = cinput(YES_OR_NO_PROMPT)
 
         # play / leave
