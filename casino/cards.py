@@ -73,7 +73,7 @@ class StandardDeck(Deck):
 
     def generate_deck(self) -> List[Card]:
         self.cards = [
-            StandardCard(suit, rank)
+            StandardCard(rank, suit)
             for suit in __class__.SUITS
             for rank in __class__.RANKS
         ]
