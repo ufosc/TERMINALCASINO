@@ -14,10 +14,26 @@ class Card(ABC):
         self.category   = category
         self.identifier = identifier
 
-    @abstractmethod
-    def __repr__(self):
+        self.string = ""
+
+    def load_art(self, FILE_PATH: str):
+        """
+        Loads ASCII art for all cards.
+
+        Arguments:
+            - FILE_PATH: file path to file containing ASCII art. Must be
+                relative to the project root directory `TERMINALCASINO`.
+        """
+        # Resolve absolute file path (cross-platform)
+        FILE_PATH = Path(FILE_PATH).resolve()
+        FILE_PATH = str(FILE_PATH)
+
+        with open(FILE_PATH, "r", encoding="utf-8") as file:
+            self.string = file.read()
+
+    def __repr__(self) -> str:
         # What the Card object will return when `print()` is called on it
-        return ""
+        return self.string
 
 
 class Deck(ABC):
@@ -37,12 +53,13 @@ class Deck(ABC):
 
 class StandardCard(Card):
     def __init__(self, rank: str, suit: str):
+        self.rank = rank
+        self.suit = suit
+
         super().__init__(suit, rank)
+        self.get_file()
 
-        self.string = ""
-        self.load_art()
-
-    def load_art(self) -> None:
+    def get_file(self) -> None:
         """
         Loads ASCII art of `StandardCard`
         """
@@ -50,15 +67,7 @@ class StandardCard(Card):
         FOLDER = "./casino/assets/cards/standard/"
         FILE = FOLDER + f"{self.identifier}_of_{self.category}.txt"
 
-        # Resolve absolute file path (cross-platform)
-        FILE = Path(FILE).resolve()
-        FILE = str(FILE)
-
-        with open(FILE, "r", encoding="utf-8") as file:
-            self.string = file.read()
-
-    def __repr__(self):
-        return self.string
+        self.load_art(FILE)
 
 
 class StandardDeck(Deck):
