@@ -3,7 +3,6 @@ from typing import Callable
 
 from . import games
 from .accounts import Account
-from casino.games.poker import play_poker
 from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
@@ -30,7 +29,7 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack": games.blackjack.play_blackjack,
     "slots": games.slots.play_slots,
     "poker": games.poker.play_poker,
-    "roulette": games.roulette.play_roulette
+    "roulette": games.roulette.play_roulette,
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
 
