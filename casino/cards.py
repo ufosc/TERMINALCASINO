@@ -119,6 +119,8 @@ class UnoCard(Card):
         self.color = color
         self.rank  = rank
 
+        self.get_file()
+
     def get_file(self, FOLDER = "./casino/assets/cards/uno/"):
         """
         Loads ASCII art of `UnoCard`
