@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 class Card(ABC):
-    def __init__(self, category : str, identifier):
+    def __init__(self, category: str, identifier: int | str):
         self.category   = category
         self.identifier = identifier
 
