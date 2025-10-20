@@ -32,6 +32,13 @@ class Card(ABC):
             self.string = file.read()
 
     def __repr__(self) -> str:
+        # Developer-friendly information for Card object
+        return (
+            f"{self.__class__.__name__}("
+            f"rank={self.rank!r}, suit={self.suit!r}, hidden={self.hidden!r})"
+        )
+
+    def __str__(self) -> str:
         # What the Card object will return when `print()` is called on it
         return self.string
 
@@ -96,13 +103,12 @@ class UnoCard(Card):
         self.color = color
         self.rank  = rank
 
-    def get_file(self):
+    def get_file(self, FOLDER = "./casino/assets/cards/uno/"):
         """
         Loads ASCII art of `UnoCard`
         """
-        # Get file of card containing display of card
-        FOLDER = "./casino/assets/cards/uno/"
 
+        # Get file of card containing display of card
         if self.color != "wild":
             FILE = FOLDER + f"{self.category}_{self.identifier}.txt"
         else:
