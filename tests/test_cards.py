@@ -9,6 +9,7 @@ from casino.cards import *
 class TestStandardCardClass(unittest.TestCase):
     def test_cards(self):
         card = StandardCard("9", "diamonds")
+        card.hidden = False
 
         comparison = """
 ┌─────────┐
@@ -25,9 +26,26 @@ class TestStandardCardClass(unittest.TestCase):
     def test_deck(self):
         deck = StandardDeck()
 
+    def test_back(self):
+        card = StandardCard("9", "diamonds")
+
+        comparison = """
+┌─────────┐
+|░░░░░░░░░|
+|░░░░░░░░░|
+|░░░░░░░░░|
+|░░░░░░░░░|
+|░░░░░░░░░|
+└─────────┘
+""".lstrip("\n")
+
+        self.assertEqual(card.back, comparison)
+
 class TestUnoCardClass(unittest.TestCase):
     def test_cards(self):
         card = UnoCard("yellow", "3")
+        card.hidden = False
+        
         comparison = """
 ┌─────────┐
 |3        |
