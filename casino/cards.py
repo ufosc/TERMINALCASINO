@@ -76,10 +76,11 @@ class Deck(ABC):
 
 class StandardCard(Card):
     def __init__(self, rank: str, suit: str):
+        super().__init__(suit, rank)
+        
         self.rank = rank
         self.suit = suit
 
-        super().__init__(suit, rank)
         self.get_file()
 
     def get_file(self) -> None:
@@ -116,6 +117,7 @@ class StandardDeck(Deck):
 class UnoCard(Card):
     def __init__(self, color: str, rank: str):
         super().__init__(color, rank)
+        
         self.color = color
         self.rank  = rank
 
