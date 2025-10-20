@@ -14,7 +14,10 @@ class Card(ABC):
         self.category   = category
         self.identifier = identifier
 
-        self.string = ""
+        self.front = ""  # Face/value side. Shows value of card
+        self.back  = ""  # Hidden side. Does not show value of card
+
+        self.hidden: bool = True
 
     def load_art(self, FILE_PATH: str):
         """
@@ -26,10 +29,20 @@ class Card(ABC):
         """
         # Resolve absolute file path (cross-platform)
         FILE_PATH = Path(FILE_PATH).resolve()
-        FILE_PATH = str(FILE_PATH)
 
-        with open(FILE_PATH, "r", encoding="utf-8") as file:
-            self.string = file.read()
+        # Get front contents
+        with open(str(FILE_PATH), "r", encoding="utf-8") as file:
+            self.front = file.read()
+
+        # Get back contents
+        folder = FILE_PATH.parent
+        flipped_card_file = "flipped.txt"
+
+        # In pathlib.Path, `/` is overloaded to join paths
+        flipped_card_path = str(folder / flipped_card_file)
+
+        with open(flipped_card_path, "r", encoding="utf-8") as file:
+            self.back = file.read()
 
     def __repr__(self) -> str:
         # Developer-friendly information for Card object
@@ -40,7 +53,10 @@ class Card(ABC):
 
     def __str__(self) -> str:
         # What the Card object will return when `print()` is called on it
-        return self.string
+        if self.hidden:
+            return self.back
+        else:
+            return self.front
 
 
 class Deck(ABC):
