@@ -45,7 +45,14 @@ class Card(ABC):
             self.back = file.read()
 
     def __repr__(self) -> str:
-        # Developer-friendly information for Card object
+        """
+        Return an unambiguous string representation of the `Card` object.
+
+        This developer-oriented representation includes the class name
+        and key internal state (rank, suit, and hidden status). This is
+        useful for debugging and logging
+        """
+
         return (
             f"{self.__class__.__name__}("
             f"rank={self.rank!r}, suit={self.suit!r}, hidden={self.hidden!r})"
