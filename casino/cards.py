@@ -79,6 +79,12 @@ class Deck(ABC):
 
     def draw(self) -> Card:
         return self.cards.pop()
+    
+    def append(self, card: Card) -> None:
+        self.cards.append(card)
+
+    def remove(self, card: Card) -> None:
+        self.cards.remove(card) 
 
 
 class StandardCard(Card):
@@ -105,20 +111,23 @@ class StandardDeck(Deck):
     SUITS = ["clubs", "diamonds", "hearts", "spades"]
     RANKS = [str(n) for n in range(2, 11)] + ["J", "Q", "K", "A"]
 
-    def __init__(self):
+    def __init__(self, num_decks: int = 1):
+        if num_decks < 1:
+            raise ValueError("Number of decks must be at least 1")
         self.cards = []
-        self.generate_deck()
-
+        self.generate_deck(num_decks)
         super().__init__(self.cards)
 
-    def generate_deck(self) -> List[Card]:
-        self.cards = [
+    def generate_deck(self, num_decks: int = 1) -> List[Card]:
+        single_deck = [
             StandardCard(rank, suit)
-            for suit in __class__.SUITS
-            for rank in __class__.RANKS
+            for suit in self.SUITS
+            for rank in self.RANKS
         ]
-
+        self.cards = single_deck * num_decks  # Repeat the deck num_decks times
+        self.shuffle()
         return self.cards
+
 
 
 class UnoCard(Card):
