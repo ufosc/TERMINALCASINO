@@ -1,8 +1,10 @@
-import random
 from enum import nonmember
+import time
+import random
 
-from casino.types import Card
-from casino.utils import clear_screen, cprint, cinput
+from casino.games.uno.player import Player
+from casino.types import Card, GameContext
+from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 UNO_HEADER = """
 ┌───────────────────────────────┐
@@ -29,18 +31,74 @@ FULL_DECK: list[Card] = [
     (5, "green"), (5, "green"), (6, "green"), (6, "green"), (7, "green"), (7, "green"), (8, "green"), (8, "green"), (9, "green"),
     (9, "green"), ("reverse", "green"), ("reverse", "green"), ("+2", "green"), ("+2", "green"), ("skip", "green"), ("skip", "green"),
     # yellows, two of each except zero
-    (0, "yellows"), (1, "yellows"), (1, "yellows"), (2, "yellows"), (2, "yellows"), (3, "yellows"), (3, "yellows"), (4, "yellows"), (4, "yellows"),
-    (5, "yellows"), (5, "yellows"), (6, "yellows"), (6, "yellows"), (7, "yellows"), (7, "yellows"), (8, "yellows"), (8, "yellows"), (9, "yellows"),
-    (9, "yellows"), ("reverse", "yellows"), ("reverse", "yellows"), ("+2", "yellows"), ("+2", "yellows"), ("skip", "yellows"), ("skip", "yellows"),
+    (0, "yellow"), (1, "yellow"), (1, "yellow"), (2, "yellow"), (2, "yellow"), (3, "yellow"), (3, "yellow"), (4, "yellow"), (4, "yellow"),
+    (5, "yellow"), (5, "yellow"), (6, "yellow"), (6, "yellow"), (7, "yellow"), (7, "yellow"), (8, "yellow"), (8, "yellow"), (9, "yellow"),
+    (9, "yellow"), ("reverse", "yellow"), ("reverse", "yellow"), ("+2", "yellow"), ("+2", "yellow"), ("skip", "yellow"), ("skip", "yellow"),
     # black/special cards
     ("+4","black"), ("+4","black"), ("+4","black"), ("+4","black"),
     ("wild", "black"), ("wild", "black"), ("wild", "black"), ("wild", "black"),
 ]
 
-def draw(hand : list[Card], deck: list[Card]) -> None:
-    c = random.choice(deck)
-    hand.append(c)
-    deck.remove(c)
+players: list[Player] = []
+current_deck = FULL_DECK 
+discard = [] # tracked so deck can be reshuffled when it runs out
 
-def begin_uno() -> None:
-    cprint("Implement Here")
+
+def display_uno_topbar(ctx: GameContext, margin = None) :
+    display_topbar(ctx.account, UNO_HEADER)    
+
+#warning to look away when cards switch
+def player_switch_warning(ctx: GameContext, current_player) : 
+    for i in range(5) :
+        cprint("SWITCHING TO PLAYER " + current_player.name + " IN " + str(5-i) + " SECONDS")
+        time.sleep(1)
+        clear_screen()
+        display_uno_topbar(ctx)
+
+#check if deck is empty and reshuffle from discard
+def check_deck(deck = current_deck, disc = discard) :
+    if len(deck) == 0 :
+        deck = disc
+        random.shuffle(deck)
+        disc = []
+
+def draw() -> Card:
+    c = random.choice(current_deck)
+    current_deck.remove(c)
+    check_deck()
+    return c
+
+def play_uno(ctx: GameContext) -> None:
+    display_uno_topbar(ctx)
+
+    # thinking hotseat multiplayer until socket stuff is added
+    playernum = int(cinput("Input number of players:"))
+    clear_screen()
+    display_uno_topbar(ctx)
+
+    for i in range(playernum) :  
+        name = cinput("Player " + str(i + 1) + " Name: ")
+        players.append(Player(i,name))
+        clear_screen()
+        display_uno_topbar(ctx)
+    
+    for i in range(7) :
+        for j in players :
+            j.draw(current_deck)
+            check_deck()
+    
+    current_card = draw()
+
+    continueGame = True
+    while(continueGame) :
+        for i in players :
+            player_switch_warning(ctx, i)
+            cprint("Player: " + i.name + "\n\nTop card of the Discard pile: " + str(current_card) + "\n\nYour hand:\n")
+            i.print_hand()
+            cinput("\n" + "Press enter when ready to switch players")
+            clear_screen()
+            display_uno_topbar(ctx)
+        continueGame = False
+        
+
+    
