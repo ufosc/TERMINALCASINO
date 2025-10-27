@@ -3,7 +3,8 @@ import os
 import shutil
 
 from casino.card_assets import assign_card_art
-from casino.types import Card, GameContext
+from casino.cards import Deck, StandardDeck, StandardCard
+from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput
 
 from itertools import combinations
@@ -29,29 +30,15 @@ STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
 INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
 NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
-FULL_DECK: list[Card] = [
-    # Clubs
-    (2, "c2"), (3, "c3"), (4, "c4"), (5, "c5"), (6, "c6"), (7, "c7"), (8, "c8"), (9, "c9"), (10, "c10"),
-    ("J", "cJ"), ("Q", "cQ"), ("K", "cK"), ("A", "cA"),
-    # Diamonds
-    (2, "d2"), (3, "d3"), (4, "d4"), (5, "d5"), (6, "d6"), (7, "d7"), (8, "d8"), (9, "d9"), (10, "d10"),
-    ("J", "dJ"), ("Q", "dQ"), ("K", "dK"), ("A", "dA"),
-    # Hearts
-    (2, "h2"), (3, "h3"), (4, "h4"), (5, "h5"), (6, "h6"), (7, "h7"), (8, "h8"), (9, "h9"), (10, "h10"),
-    ("J", "hJ"), ("Q", "hQ"), ("K", "hK"), ("A", "hA"),
-    # Spades
-    (2, "s2"), (3, "s3"), (4, "s4"), (5, "s5"), (6, "s6"), (7, "s7"), (8, "s8"), (9, "s9"), (10, "s10"),
-    ("J", "sJ"), ("Q", "sQ"), ("K", "sK"), ("A", "sA"),
-]
+FULL_DECK: StandardDeck = StandardDeck()
 
 
-def deal_card(turn: list[Card], deck: list[Card]) -> None:
+def deal_card(turn: list[StandardCard], deck: StandardDeck) -> None:
     """Deal a card to the player."""
-    card = random.choice(deck)
+    card = deck.draw()
     turn.append(card)
-    deck.remove(card)
 
-def hand_score(hand: list[Card], board: list[Card]) -> int:
+def hand_score(hand: list[StandardCard], board: list[StandardCard]) -> int:
     """Calculate the score of a poker hand."""
 
     all_cards = hand + board
@@ -68,9 +55,9 @@ def hand_score(hand: list[Card], board: list[Card]) -> int:
 
     return score
 
-def evaluate_hand(cards: list[Card]) -> int:
-    ranks = [get_card_value(card[0]) for card in cards]
-    suits = [card[1][0] for card in cards]
+def evaluate_hand(cards: list[StandardCard]) -> int:
+    ranks = [get_card_value(card.rank) for card in cards]
+    suits = [card.suit for card in cards]
 
     rank_counts = Counter(ranks)
     suit_counts = Counter(suits)
@@ -101,12 +88,12 @@ def evaluate_hand(cards: list[Card]) -> int:
     else:
         return 1  # High Card
 
-def get_partial_hand_score(hand: list[Card]) -> int:
+def get_partial_hand_score(hand: list[StandardCard]) -> int:
     """Evaluate hands with less than 5 cards"""
     if len(hand) < 2:
         return 1  # High Card
     
-    ranks = [get_card_value(card[0]) for card in hand]
+    ranks = [card.rank for card in hand]
     rank_counts = Counter(ranks)
     count_values = sorted(rank_counts.values(), reverse=True)
 
@@ -151,25 +138,25 @@ def hand_name(score: int) -> str:
     }
     return names.get(score, "Unknown Hand")
 
-def print_opponent_cards(opponent_hand: list[Card]) -> None:
+def print_opponent_cards(opponent_hand: list[StandardCard]) -> None:
     """Print the opponent's cards face down."""
     if len(opponent_hand) == 0:
         cprint("")
         return
     
-    hidden_cards = [assign_card_art((0, "flipped")) for _ in opponent_hand]
+    hidden_cards = [card.back for card in opponent_hand]
     hand_string = "\n".join([
         "  ".join(lines)
         for lines in zip(*[card.strip("\n").splitlines() for card in hidden_cards])
     ])
     cprint(hand_string)
 
-def print_cards(hand: list[Card]) -> None:
+def print_cards(hand: list[StandardCard]) -> None:
     """Print the cards side by side."""
     if len(hand) == 0:
         return
     card_lines = [
-        assign_card_art(card).strip("\n").splitlines()
+        card.front.strip("\n").splitlines()
         for card in hand
     ]
     max_lines = max(len(lines) for lines in card_lines)
@@ -189,7 +176,7 @@ def print_cards(hand: list[Card]) -> None:
 
 
 
-def print_hand(hand: list[Card], hidden: bool = False) -> None:
+def print_hand(hand: list[StandardCard], hidden: bool = False) -> None:
     """Print a blackjack hand."""
     if hidden:
         print_opponent_cards(hand)
@@ -220,7 +207,7 @@ def play_poker(ctx: GameContext) -> None:
         current_bet = 20 #  + big blind (10 + 20)
         player_folded = False
 
-        deck = FULL_DECK.copy()
+        deck = FULL_DECK
 
         player_hand = []
         opponent_hand = []
@@ -305,7 +292,7 @@ def play_poker(ctx: GameContext) -> None:
         if not player_folded:
             
             # burn a card (standard in most casinos)
-            deal_card([], deck)
+            deck.draw()
 
             # deal flop (3 cards)
             for _ in range(3):
@@ -411,7 +398,7 @@ def play_poker(ctx: GameContext) -> None:
         #river
         if not player_folded:
             # burn a card (standard in most casinos)
-            deal_card([], deck)
+            deck.draw()
 
             # deal river (1 card)
             deal_card(board, deck)

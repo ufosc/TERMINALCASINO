@@ -2,7 +2,8 @@ import random
 from typing import Optional
 
 from casino.card_assets import assign_card_art
-from casino.types import Card, GameContext
+from casino.cards import StandardCard, StandardDeck, Card
+from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 BLACKJACK_HEADER = """
@@ -33,60 +34,43 @@ BET_PROMPT             = "🤵: How much would you like to bet?"
 INVALID_BET_MSG        = "🤵: That's not a valid bet."
 NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
-FULL_DECK: list[Card] = [
-    # Clubs
-    (2, "c2"), (3, "c3"), (4, "c4"), (5, "c5"), (6, "c6"), (7, "c7"), (8, "c8"), (9, "c9"), (10, "c10"),
-    ("J", "cJ"), ("Q", "cQ"), ("K", "cK"), ("A", "cA"),
-    # Diamonds
-    (2, "d2"), (3, "d3"), (4, "d4"), (5, "d5"), (6, "d6"), (7, "d7"), (8, "d8"), (9, "d9"), (10, "d10"),
-    ("J", "dJ"), ("Q", "dQ"), ("K", "dK"), ("A", "dA"),
-    # Hearts
-    (2, "h2"), (3, "h3"), (4, "h4"), (5, "h5"), (6, "h6"), (7, "h7"), (8, "h8"), (9, "h9"), (10, "h10"),
-    ("J", "hJ"), ("Q", "hQ"), ("K", "hK"), ("A", "hA"),
-    # Spades
-    (2, "s2"), (3, "s3"), (4, "s4"), (5, "s5"), (6, "s6"), (7, "s7"), (8, "s8"), (9, "s9"), (10, "s10"),
-    ("J", "sJ"), ("Q", "sQ"), ("K", "sK"), ("A", "sA"),
-]
+FULL_DECK: StandardDeck = StandardDeck()
 
-
-def deal_card(turn: list[Card], deck: list[Card]) -> None:
+def deal_card(turn: list[Card], deck: StandardDeck) -> None:
     """Deal a card to the player."""
-    card = random.choice(deck)
+    card = deck.draw()
     turn.append(card)
-    deck.remove(card)
 
-
-def hand_total(turn: list[Card]) -> int:
+def hand_total(turn: list[StandardCard]) -> int:
     """Calculate the total of each hand."""
     total = 0
     aces = 0
-    for card, _ in turn:
-        if isinstance(card, int):
-            # 1-10
-            total += card
-        elif card in {"J", "Q", "K"}:
-            # face card
+    for card in turn:
+        if not isinstance(card, StandardCard):
+            raise ValueError(f"Expected StandardCard, got {type(card)}")
+        if card.rank in {"J", "Q", "K"}:
+            # Face card
             total += 10
-        elif card == "A":
-            # A special case
+        elif card.rank == "A":
+            # Ace special case
             total += 11
             aces += 1
         else:
-            raise ValueError(f"Invalid card: {card}")
-    # aces adjustment
+            # Numeric card (2-10)
+            total += int(card.rank)
+    # Ace adjustment
     while aces > 0 and total > 21:
         total -= 10
         aces -= 1
     return total
-
 
 def print_dealer_cards(dealer_hand: list[Card]) -> None:
     """Print the dealer's cards side by side."""
     if len(dealer_hand) == 0:
         cprint("")
     # first card shown, rest hidden
-    first_card = assign_card_art(dealer_hand[0])
-    hidden_card = assign_card_art((0, "flipped"))
+    first_card = dealer_hand[0].front
+    hidden_card = dealer_hand[1].back
     hand_string = "\n".join([
         "  ".join(lines)
         for lines in zip(first_card.strip("\n").splitlines(),
@@ -98,7 +82,7 @@ def print_dealer_cards(dealer_hand: list[Card]) -> None:
 def print_cards(hand: list[Card]) -> None:
     """Print the cards side by side."""
     card_lines = [
-        assign_card_art(card).strip("\n").splitlines()
+        card.front.strip("\n").splitlines()
         for card in hand
     ]
     max_lines = max(len(lines) for lines in card_lines)
@@ -206,7 +190,8 @@ def play_blackjack(ctx: GameContext) -> None:
         dealer_bj = False
 
         # two decks of cards (values + string IDs)
-        deck = FULL_DECK * decks
+        FULL_DECK = StandardDeck(decks)
+        deck = FULL_DECK
 
         # hands
         player_hand = []
