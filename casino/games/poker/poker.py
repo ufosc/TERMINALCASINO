@@ -15,8 +15,12 @@ POKER_HEADER = """
 ┌───────────────────────────────┐
 │         ♥ P O K E R ♥         │
 └───────────────────────────────┘
-
 """
+
+HEADER_OPTIONS = {
+    "header": POKER_HEADER,
+    "margin": 1,
+}
 
 SECURITY_GUARD = "👮‍♂️"
 SECURITY_MSG = f"""
@@ -183,21 +187,41 @@ def print_hand(hand: list[StandardCard], hidden: bool = False) -> None:
     else:
         print_cards(hand)
 
+def display_poker_topbar(ctx: GameContext) -> None:
+    display_topbar(ctx.account, **HEADER_OPTIONS)
 
+def get_raise_amount(min_raise):
+    while (True):
+        err_msg = "Raise amount must be number"
+        raise_amount = cinput("Raise amount:")
+        try:
+            raise_amount_int = int(raise_amount)
+            if (raise_amount_int <= 0):
+                err_msg = "Raise must be positive number"
+                raise Exception("")
+            elif (raise_amount_int < min_raise):
+                err_msg = f"Raise must be at least {min_raise}"
+                raise Exception("")
+            return raise_amount_int
+        except:
+            cprint(f"{err_msg}")
 
 def play_poker(ctx: GameContext) -> None:
     """Play a poker game."""
     account = ctx.account
-    if account.balance == 0:
+    min_raise = ctx.config.poker_min_raise
+    if account.balance < 20:
         clear_screen()
+        display_poker_topbar(ctx)
         cprint(NO_FUNDS_MSG)
+        cinput("Press enter to continue.")
         return
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
 
     while continue_game:
         clear_screen()
-        cprint(POKER_HEADER)
+        display_poker_topbar(ctx)
         
         player_status = True
         opponent_status = True
@@ -233,18 +257,27 @@ def play_poker(ctx: GameContext) -> None:
             cprint(f"Your balance: {account.balance} chips\n")
 
             action = cinput(f"[F]old   [C]all {current_bet}   [R]aise\n")
+            raise_amount = 0
 
             #get a proper action from the player
-            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50) or (action.lower() == "c" and account.balance < current_bet):
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r") or (action.lower() == "c" and account.balance < current_bet):
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     cprint("You have been banned from the casino for being too stubborn.")
                     return
+
+                if (action.lower() == "r"):
+                    raise_amount = get_raise_amount(min_raise)
+
                 clear_screen()
-                cprint(POKER_HEADER)
-                if (action.lower() == "r" and account.balance < 50):
+                display_poker_topbar(ctx)
+
+                if (action.lower() == "r" and account.balance > raise_amount + current_bet):
+                    break
+
+                if (action.lower() == "r" and account.balance < raise_amount + current_bet):
                     cprint("🤵: You don't have enough chips to raise that much.")
                 if (action.lower() == "c" and account.balance < current_bet):
                     cprint(f"🤵: You don't have enough chips to call {current_bet}.")
@@ -265,7 +298,7 @@ def play_poker(ctx: GameContext) -> None:
                 action = cinput(f"[F]old   [C]all {current_bet}   [R]aise\n")
 
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
 
             if action.lower() == "f":
                 player_folded = True
@@ -276,7 +309,6 @@ def play_poker(ctx: GameContext) -> None:
                 pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                raise_amount = 50
                 current_bet += raise_amount
                 account.withdraw(current_bet)
                 pot += current_bet
@@ -299,7 +331,7 @@ def play_poker(ctx: GameContext) -> None:
                 deal_card(board, deck)
             
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== FLOP ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=True)
@@ -311,16 +343,23 @@ def play_poker(ctx: GameContext) -> None:
             cprint(f"Pot: {pot} chips")
             cprint(f"Your balance: {account.balance} chips\n")
 
-            action = cinput("[F]old   [C]heck   [R]aise 50\n")
-            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50):
-                if (action.lower() == "r" and account.balance < 50):
+            action = cinput("[F]old   [C]heck   [R]aise\n")
+            raise_amount = 0
+
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r"):
+                if (action.lower() == "r"):
+                    raise_amount = get_raise_amount(min_raise)
+
+                if (action.lower() == "r" and account.balance > raise_amount):
+                    break
+                elif (action.lower() == "r" and account.balance < raise_amount):
                     cprint("🤵: You don't have enough chips to raise that much.")
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     return
-                action = cinput("[F]old   [C]heck   [R]aise 50\n")
+                action = cinput("[F]old   [C]heck   [R]aise\n")
             current_bet = 0
             if action.lower() == "f":
                 player_folded = True
@@ -331,7 +370,6 @@ def play_poker(ctx: GameContext) -> None:
                 pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                raise_amount = 50
                 current_bet += raise_amount
                 account.withdraw(current_bet)
                 pot += current_bet
@@ -352,7 +390,7 @@ def play_poker(ctx: GameContext) -> None:
             deal_card(board, deck)
             
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== TURN ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=True)
@@ -364,16 +402,22 @@ def play_poker(ctx: GameContext) -> None:
             cprint(f"Pot: {pot} chips")
             cprint(f"Your balance: {account.balance} chips\n")
 
-            action = cinput("[F]old   [C]heck   [R]aise 50\n")
-            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50):
-                if (action.lower() == "r" and account.balance < 50):
+            action = cinput("[F]old   [C]heck   [R]aise\n")
+            raise_amount = 0
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r"):
+                if (action.lower() == "r"):
+                    raise_amount = get_raise_amount(min_raise)
+
+                if (action.lower() == "r" and account.balance > raise_amount):
+                    break
+                elif (action.lower() == "r" and account.balance < raise_amount):
                     cprint("🤵: You don't have enough chips to raise that much.")
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     return
-                action = cinput("[F]old   [C]heck   [R]aise 50\n")
+                action = cinput("[F]old   [C]heck   [R]aise\n")
             current_bet = 0
             if action.lower() == "f":
                 player_folded = True
@@ -384,7 +428,6 @@ def play_poker(ctx: GameContext) -> None:
                 pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                raise_amount = 50
                 current_bet += raise_amount
                 account.withdraw(current_bet)
                 pot += current_bet
@@ -404,7 +447,7 @@ def play_poker(ctx: GameContext) -> None:
             deal_card(board, deck)
             
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== RIVER ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=True)
@@ -416,16 +459,22 @@ def play_poker(ctx: GameContext) -> None:
             cprint(f"Pot: {pot} chips")
             cprint(f"Your balance: {account.balance} chips\n")
 
-            action = cinput("[F]old   [C]heck   [R]aise 50\n")
-            while action not in "FfCcRr" or action == "" or (action.lower() == "r" and account.balance < 50):
-                if (action.lower() == "r" and account.balance < 50):
+            action = cinput("[F]old   [C]heck   [R]aise\n")
+            raise_amount = 0
+            while action not in "FfCcRr" or action == "" or (action.lower() == "r"):
+                if (action.lower() == "r"):
+                    raise_amount = get_raise_amount(min_raise)
+
+                if (action.lower() == "r" and account.balance > raise_amount):
+                    break
+                if (action.lower() == "r" and account.balance < raise_amount):
                     cprint("🤵: You don't have enough chips to raise that much.")
                 stubborn += 1
                 if stubborn >= 7:
                     clear_screen()
                     cprint(SECURITY_MSG)
                     return
-                action = cinput("[F]old   [C]heck   [R]aise 50\n")
+                action = cinput("[F]old   [C]heck   [R]aise\n")
             current_bet = 0
             if action.lower() == "f":
                 player_folded = True
@@ -436,7 +485,6 @@ def play_poker(ctx: GameContext) -> None:
                 pot += current_bet
                 player_status = False
             elif action.lower() == "r":
-                raise_amount = 50
                 current_bet += raise_amount
                 account.withdraw(current_bet)
                 pot += current_bet
@@ -449,7 +497,7 @@ def play_poker(ctx: GameContext) -> None:
         #showdown
         if not player_folded:
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("=== SHOWDOWN ===\n")
             cprint("Opponent hand:")
             print_hand(opponent_hand, hidden=False)
@@ -478,13 +526,18 @@ def play_poker(ctx: GameContext) -> None:
             cprint(f"Your balance: {account.balance} chips\n")
         else:
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint("You folded. Opponent wins the pot.")
             opponent_chips += pot
             cprint(f"Your balance: {account.balance} chips\n")
         
         
         # game restart?
+        if account.balance < 20: # The starting bet pre-flop
+            cprint(NO_FUNDS_MSG)
+            cinput("Press enter to continue.")
+            continue_game = False
+            continue
         cprint(STAY_AT_TABLE_PROMPT)
         play_again = cinput(YES_OR_NO_PROMPT)
         # check valid answer
@@ -495,7 +548,7 @@ def play_poker(ctx: GameContext) -> None:
                 cprint(SECURITY_MSG)
                 return
             clear_screen()
-            cprint(POKER_HEADER)
+            display_poker_topbar(ctx)
             cprint(INVALID_YES_OR_NO_MSG)
             play_again = cinput(YES_OR_NO_PROMPT)
 
