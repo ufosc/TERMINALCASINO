@@ -12,10 +12,9 @@ UNO_HEADER = """
 └───────────────────────────────┘
 """
 
-DRAW_PROMPT = "🤡: Would you like to draw a card or play a card?"
-WHICH_CARD_PROMPT = "🤡: Which card would you like to play?"
+DRAW_PROMPT = "Would you like to: [D]raw a card or [P]lay a card?"
+WHICH_CARD_PROMPT = "\nWhich card would you like to play?\n\nEnter card suite and number\nEx: \"red 2\", \"red skip\", \"red reverse\", \"red +2\"\nFor special cards, only enter \"+4\" or \"wild\"\n"
 INVALID_CARD_MSG = "You can't play that card! Would you like to draw a card instead?"
-
 
 FULL_DECK: list[Card] = [
     # reds, two of each except zero
@@ -45,6 +44,7 @@ discard = [] # tracked so deck can be reshuffled when it runs out
 
 
 def display_uno_topbar(ctx: GameContext, margin = None) :
+    clear_screen()
     display_topbar(ctx.account, UNO_HEADER)    
 
 #warning to look away when cards switch
@@ -52,7 +52,6 @@ def player_switch_warning(ctx: GameContext, current_player) :
     for i in range(5) :
         cprint("SWITCHING TO PLAYER " + current_player.name + " IN " + str(5-i) + " SECONDS")
         time.sleep(1)
-        clear_screen()
         display_uno_topbar(ctx)
 
 #check if deck is empty and reshuffle from discard
@@ -73,13 +72,11 @@ def play_uno(ctx: GameContext) -> None:
 
     # thinking hotseat multiplayer until socket stuff is added
     playernum = int(cinput("Input number of players:"))
-    clear_screen()
     display_uno_topbar(ctx)
 
     for i in range(playernum) :  
         name = cinput("Player " + str(i + 1) + " Name: ")
         players.append(Player(i,name))
-        clear_screen()
         display_uno_topbar(ctx)
     
     for i in range(7) :
@@ -87,7 +84,12 @@ def play_uno(ctx: GameContext) -> None:
             j.draw(current_deck)
             check_deck()
     
-    current_card = draw()
+    #draws until first card on discard pile is regular number/color, not black, or card with special rules 
+    while True :
+        current_card = draw()
+        if (isinstance(current_card, tuple) and list(map(type, current_card)) == [int, str]) :
+            break
+
 
     continueGame = True
     while(continueGame) :
@@ -95,8 +97,16 @@ def play_uno(ctx: GameContext) -> None:
             player_switch_warning(ctx, i)
             cprint("Player: " + i.name + "\n\nTop card of the Discard pile: " + str(current_card) + "\n\nYour hand:\n")
             i.print_hand()
-            cinput("\n" + "Press enter when ready to switch players")
-            clear_screen()
+            cprint("\nCards from your hand that can be played:\n" + str(i.playable_cards(current_card)) + "\n")
+            
+            answer = cinput(DRAW_PROMPT)
+            if (answer == "D" or answer == "d") :
+                new_card = i.draw(current_deck)
+                cprint("You drew " + str(new_card) + " from the pile.")
+                cinput("Press enter when ready to switch to the next player")
+            elif (answer == "P" or answer == "p") :
+                played_card = cinput(WHICH_CARD_PROMPT)
+                #not implemented yet
             display_uno_topbar(ctx)
         continueGame = False
         
