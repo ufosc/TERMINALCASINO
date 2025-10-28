@@ -3,7 +3,6 @@ from typing import Callable
 
 from . import games
 from .accounts import Account
-from casino.games.poker import play_poker
 from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar
@@ -18,12 +17,7 @@ upper_bar = """┌────────────────────�
 
 empty_bar = """│                                      │"""
 
-BLACKJACK_HEADER = """│     ♦ [1] B L A C K J A C K [1] ♦    │"""
-
-SLOTS_HEADER = """│        ♦ [2] S L O T S [2] ♦         │"""
-
 lower_bar = """└──────────────────────────────────────┘"""
-
 
 CASINO_HEADER_OPTIONS = {
     "header": CASINO_HEADER,
@@ -42,10 +36,8 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "slots": games.slots.play_slots,
     "poker": games.poker.play_poker,
     "roulette": games.roulette.play_roulette
-
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
-
 
 def term_width() -> int:
     """Safe terminal width fallback."""
@@ -110,9 +102,14 @@ def main_menu(ctx: GameContext) -> None:
             display_topbar(account, **CASINO_HEADER_OPTIONS)
             cprint("")  # spacing
             width = term_width()
-
+            max_length = max(map(len, ALL_GAMES))
+            cprint("┌" + "─" * 30 + "┐")
+            cprint("│" + " " * 30 + "│")
             for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(f"[{i}] {name.title()}".center(width) + "\n")
+                cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
+            cprint("│" + " " * 30 + "│")
+            cprint("└" + "─" * 30 + "┘")
+
 
 
         choice = prompt_with_refresh(
