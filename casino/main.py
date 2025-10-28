@@ -13,11 +13,6 @@ CASINO_HEADER = """
 │   ♦ T E R M I N A L  C A S I N O ♦   │
 └──────────────────────────────────────┘
 """
-upper_bar = """┌──────────────────────────────────────┐"""
-
-empty_bar = """│                                      │"""
-
-lower_bar = """└──────────────────────────────────────┘"""
 
 CASINO_HEADER_OPTIONS = {
     "header": CASINO_HEADER,
