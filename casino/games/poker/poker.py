@@ -5,7 +5,7 @@ import shutil
 from casino.card_assets import assign_card_art
 from casino.cards import Deck, StandardDeck, StandardCard
 from casino.types import GameContext
-from casino.utils import clear_screen, cprint, cinput
+from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 from itertools import combinations
 from collections import Counter
