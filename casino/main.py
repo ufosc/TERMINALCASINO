@@ -25,6 +25,7 @@ INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
 # To add a new game, just add a handler function to GAME_HANDLERS
+
 GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack": games.blackjack.play_blackjack,
     "slots": games.slots.play_slots,
@@ -32,7 +33,6 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "roulette": games.roulette.play_roulette,
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
-
 
 def term_width() -> int:
     """Safe terminal width fallback."""
@@ -97,8 +97,15 @@ def main_menu(ctx: GameContext) -> None:
             display_topbar(account, **CASINO_HEADER_OPTIONS)
             cprint("")  # spacing
             width = term_width()
+            max_length = max(map(len, ALL_GAMES))
+            cprint("┌" + "─" * 30 + "┐")
+            cprint("│" + " " * 30 + "│")
             for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(f"[{i}] {name.title()}".center(width) + "\n")
+                cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
+            cprint("│" + " " * 30 + "│")
+            cprint("└" + "─" * 30 + "┘")
+
+
 
         choice = prompt_with_refresh(
             render_fn = render_choose_game,
