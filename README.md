@@ -14,7 +14,7 @@ All games will follow their American rules first.
 ## How to Run
 1. Open terminal
 2. cd into your TERMINALCASINO folder
-3. To run:
+3. To run the program:
 ```
 python -m casino.main
 ```
