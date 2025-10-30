@@ -25,7 +25,7 @@ def get_theme():
     global theme
     
     # choose from original 16 terminal colors or custom colors
-    cprint(f"Please choose a theme folder below")
+    cprint(f"Please choose a theme folder below, or press enter to use default")
     folder = cinput(f"1.Original Terminal   2.Custom Colors")
 
     # original 16
