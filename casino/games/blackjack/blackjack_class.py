@@ -1,0 +1,165 @@
+import random
+from typing import Optional, List
+
+from casino.cards import StandardCard, StandardDeck, Card
+from casino.types import GameContext
+from accounts import Account
+
+from casino.utils import clear_screen, cprint, cinput, display_topbar
+
+from CONSTANTS import *
+
+
+class Player:
+    """
+    Defines a player in a blackjack game.
+    """
+
+    def __init__(self, account: GameContext.account) -> None:
+        self.cards: List[StandardCard] = []
+
+        # Define Player object's attributes in terms of the Account object's attributes
+        self.name = account.name
+        self.balance = account.balance
+
+        self.bet = 0
+
+        # Special flags
+        self.has_blackjack: bool = False
+        self.skip: bool = False
+
+    def reveal_hand(self) -> None:
+        for card in self.cards:
+            print(card)
+
+    def update_account(self) -> GameContext.account:
+        """
+        Update Account object's balance
+        """
+        account.balance = self.balance
+        return account
+
+
+class Blackjack:
+    """
+    Abstract base class that sets up Blackjack.
+    
+    To create a variant of blackjack, inherit from this class.
+    """
+    
+    def __init__(self, ctx: GameContext) -> None:
+        self.deck: StandardDeck = StandardDeck()
+        self.players: List[Player] = []
+        self.context = ctx
+        self.configurations = ctx.config
+
+        # Define a single player
+        # NOTE: This must be updated if local multiplayer is added
+        player = Player(ctx.account)
+        self.players.append(player)
+
+    @staticmethod
+    def display_topbar(ctx: GameContext, bet: Optional[int]) -> None:
+        """
+        Prints top bar for player to view how much they bet.
+        """
+        display_topbar(ctx.account, **BLACKJACK_HEADER_OPTIONS)
+        if bet is not None:
+            cprint(f"Bet: {bet}")
+
+    def bet(self):
+        """
+        Asks all users to submit a bet.
+        """
+        MINIMUM_BET = self.configurations.blackjack_min_bet
+        error_msg = ""
+
+        for player in self.players:
+            if player.balance < MINIMUM_BET:
+                clear_screen()
+                display_blackjack_topbar(self.context, None)
+                cprint(NO_FUNDS_MSG)
+                cinput("Press [Enter] to continue.")
+                continue
+
+            # Determine player's bet
+            while True:
+                clear_screen()
+                display_blackjack_topbar(self.context, None)
+
+                if error_msg != "":
+                    cprint(error_msg)
+                
+                # Ask user how much to bet
+                bet_str = cinput(BET_PROMPT).strip()
+
+                # Check that input is a number
+                try:
+                    bet = int(bet_str)
+                    if bet < MINIMUM_BET:
+                        error_msg = f"The minimum bet is {MINIMUM_BET} chips."
+                        continue
+                except ValueError:
+                    error_msg = INVALID_BET_MSG
+                    continue
+
+                # Check that user has enough money in account to bet
+                try:
+                    account.withdraw(bet)
+                except ValueError:
+                    error_msg = f"Insufficient funds. You only have {player.balance} chips."
+                    continue
+                break
+
+        def deal_cards(self):
+            pass
+
+        def player_decision(self):
+            """
+            Phase of blackjack where players make decision.
+            """
+            pass
+
+        def dealer_draw(self):
+            """
+            Phase of blackjack where dealer draws cards.
+            """
+            pass
+
+        def check_win(self):
+            """
+            Phase of blackjack where game checks who won.
+            """
+
+        def payout(self):
+            """
+            Phase of blackjack where winners get paid.
+            """
+            pass
+        
+        def display_results(self) -> None:
+            """
+            Displays final result of game, including who won or lost.
+            """
+            pass
+
+        def play_again(self) -> bool:
+            """
+            Asks user if they would like to play again.
+            """
+            for player in self.players:
+                if player.balance < self.MINIMUM_BET:
+                    cprint(NO_FUNDS_MSG)
+                    cinput("Press [Enter] to continue")
+                    return False
+
+                # Ask user if they would like to stay at the table  
+                cprint(STAY_AT_TABLE_PROMPT)
+                play_again = CINPUT(YES_OR_NO_PROMPT)
+
+                if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
+                    return True
+                elif play_again.upper() == "NO" or play_again == "N":
+                    clear_screen()
+                    cprint("\nThanks for playing!\n\n")
+                    return False
