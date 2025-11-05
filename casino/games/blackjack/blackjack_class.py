@@ -111,55 +111,55 @@ class Blackjack:
                     continue
                 break
 
-        def deal_cards(self):
-            pass
+    def deal_cards(self):
+        pass
 
-        def player_decision(self):
-            """
-            Phase of blackjack where players make decision.
-            """
-            pass
+    def player_decision(self):
+        """
+        Phase of blackjack where players make decision.
+        """
+        pass
 
-        def dealer_draw(self):
-            """
-            Phase of blackjack where dealer draws cards.
-            """
-            pass
+    def dealer_draw(self):
+        """
+        Phase of blackjack where dealer draws cards.
+        """
+        pass
 
-        def check_win(self):
-            """
-            Phase of blackjack where game checks who won.
-            """
+    def check_win(self):
+        """
+        Phase of blackjack where game checks who won.
+        """
 
-        def payout(self):
-            """
-            Phase of blackjack where winners get paid.
-            """
-            pass
-        
-        def display_results(self) -> None:
-            """
-            Displays final result of game, including who won or lost.
-            """
-            pass
+    def payout(self):
+        """
+        Phase of blackjack where winners get paid.
+        """
+        pass
+    
+    def display_results(self) -> None:
+        """
+        Displays final result of game, including who won or lost.
+        """
+        pass
 
-        def play_again(self) -> bool:
-            """
-            Asks user if they would like to play again.
-            """
-            for player in self.players:
-                if player.balance < self.MINIMUM_BET:
-                    cprint(NO_FUNDS_MSG)
-                    cinput("Press [Enter] to continue")
-                    return False
+    def play_again(self) -> bool:
+        """
+        Asks user if they would like to play again.
+        """
+        for player in self.players:
+            if player.balance < self.MINIMUM_BET:
+                cprint(NO_FUNDS_MSG)
+                cinput("Press [Enter] to continue")
+                return False
 
-                # Ask user if they would like to stay at the table  
-                cprint(STAY_AT_TABLE_PROMPT)
-                play_again = CINPUT(YES_OR_NO_PROMPT)
+            # Ask user if they would like to stay at the table  
+            cprint(STAY_AT_TABLE_PROMPT)
+            play_again = CINPUT(YES_OR_NO_PROMPT)
 
-                if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
-                    return True
-                elif play_again.upper() == "NO" or play_again == "N":
-                    clear_screen()
-                    cprint("\nThanks for playing!\n\n")
-                    return False
+            if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
+                return True
+            elif play_again.upper() == "NO" or play_again == "N":
+                clear_screen()
+                cprint("\nThanks for playing!\n\n")
+                return False
