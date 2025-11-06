@@ -66,18 +66,94 @@ def get_rand_item() -> str:
     return random.choice(ALL_ITEMS)
 
 
-def print_spin(items: tuple[str, str, str]) -> None:
-    cprint(f"""
-┌────────────────────────┐
-|                        |
-|                        |
-|                        |
-|{items[0]:^8}{items[1]:^8}{items[2]:^8}|
-|                        |
-|                        |
-|                        |
-└────────────────────────┘
-    """.strip())
+def print_spin(items: tuple[str, str, str], frame: int) -> None:
+    legend_lines = PAYOUT_LEGEND.splitlines()
+    low_line = legend_lines[0] if len(legend_lines) > 0 else ""
+    high_line = legend_lines[1] if len(legend_lines) > 1 else ""
+
+    def pad_line(line: str, width: int = 38) -> str:
+        return line.ljust(width)
+
+    low_line = pad_line(low_line)
+    high_line = pad_line(high_line)
+
+    match frame:
+        case 0 | 5:
+            cprint(f"""
+┌───────────────────────────────────────┐
+│   ♦ T E R M I N A L  C A S I N O ♦    │
+│───────────────────────────────────────│
+    │                                       │┌───┐
+    │   ┌───────┐   ┌───────┐   ┌───────┐   ││   │
+    │   │       │   │       │   │       │   │└───┘
+    │   └───────┘   └───────┘   └───────┘   │ │ │
+    │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
+    │ - │{items[0].center(7)}│   │{items[1].center(7)}│   │{items[2].center(7)}│ - │ │ │
+    │   └───────┘   └───────┘   └───────┘   │ │ │
+    │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
+    │   │       │   │       │   │       │   │─┘ │
+    │   └───────┘   └───────┘   └───────┘   │───┘
+│                                       │
+│───────────────────────────────────────│
+│                PAYOUTS                │
+│                                       │
+│ {low_line}│
+│ {high_line}│
+│                                       │
+└───────────────────────────────────────┘
+            """.strip())
+
+        case 1 | 4:
+            cprint(f"""
+┌───────────────────────────────────────┐
+│   ♦ T E R M I N A L  C A S I N O ♦    │
+│───────────────────────────────────────│
+│                                       │
+│   ┌───────┐   ┌───────┐   ┌───────┐   │
+    │   │       │   │       │   │       │   │┌───┐
+    │   └───────┘   └───────┘   └───────┘   ││   │
+    │   ┌───────┐   ┌───────┐   ┌───────┐   │└───┘
+    │ - │{items[0].center(7)}│   │{items[1].center(7)}│   │{items[2].center(7)}│ - │ │ │
+    │   └───────┘   └───────┘   └───────┘   │ │ │
+    │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
+    │   │       │   │       │   │       │   │─┘ │
+    │   └───────┘   └───────┘   └───────┘   │───┘
+│                                       │
+│───────────────────────────────────────│
+│                PAYOUTS                │
+│                                       │
+│ {low_line}│
+│ {high_line}│
+│                                       │
+└───────────────────────────────────────┘
+            """.strip())
+
+        case 2 | 3:
+            cprint(f"""
+┌───────────────────────────────────────┐
+│   ♦ T E R M I N A L  C A S I N O ♦    │
+│───────────────────────────────────────│
+│                                       │
+│   ┌───────┐   ┌───────┐   ┌───────┐   │
+│   │       │   │       │   │       │   │
+│   └───────┘   └───────┘   └───────┘   │
+│   ┌───────┐   ┌───────┐   ┌───────┐   │
+    │ - │{items[0].center(7)}│   │{items[1].center(7)}│   │{items[2].center(7)}│ - │┌───┐
+    │   └───────┘   └───────┘   └───────┘   ││   │
+    │   ┌───────┐   ┌───────┐   ┌───────┐   │└───┘
+    │   │       │   │       │   │       │   │─┘ │
+    │   └───────┘   └───────┘   └───────┘   │───┘
+│                                       │
+│───────────────────────────────────────│
+│                PAYOUTS                │
+│                                       │
+│ {low_line}│
+│ {high_line}│
+│                                       │
+└───────────────────────────────────────┘
+            """.strip())
+
+    
 
 
 def get_bet_amount(ctx: GameContext) -> int:
@@ -120,7 +196,7 @@ def get_player_choice(
         if not first_iter:
             clear_screen()
             display_topbar(account, **HEADER_OPTIONS)
-            print_spin(items)
+            print_spin(items, 0)
             cprint(INVALID_INPUT_MSG)
         first_iter = False
         menu_prompt = get_slots_menu_prompt(ctx, bet_amount)
@@ -145,10 +221,17 @@ def spin_animation(
     sec_btwn_spins: float = SEC_BTWN_SPIN,
 ) -> None:
     """Animate the spin of the slot machine."""
+    # Animate pulling the arm
+    for i in range(5):
+        clear_screen()
+        display_topbar(account, **HEADER_OPTIONS)
+        print_spin((get_rand_item(), get_rand_item(), get_rand_item()), i)
+        time.sleep(sec_btwn_spins)
+    # Animate the slots spinning
     for _ in range(total_spins):
         clear_screen()
         display_topbar(account, **HEADER_OPTIONS)
-        print_spin((get_rand_item(), get_rand_item(), get_rand_item()))
+        print_spin((get_rand_item(), get_rand_item(), get_rand_item()), 0)
         time.sleep(sec_btwn_spins)
 
 
@@ -188,7 +271,7 @@ def play_slots(ctx: GameContext) -> None:
             account.deposit(money_gain)
             clear_screen()
             display_topbar(account, **HEADER_OPTIONS)
-            print_spin(items)
+            print_spin(items, 0)
             cprint(f"MATCH: +{money_gain} chips")
         else:
             items = (get_rand_item(), get_rand_item(), get_rand_item())
@@ -197,7 +280,7 @@ def play_slots(ctx: GameContext) -> None:
             clear_screen()
             account.withdraw(bet_amount)
             display_topbar(account, **HEADER_OPTIONS)
-            print_spin(items)
+            print_spin(items, 0)
             cprint(f"NO MATCH: -{bet_amount} chips")
 
         # Choose what to do after spin
