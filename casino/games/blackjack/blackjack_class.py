@@ -16,7 +16,7 @@ class Player:
     """
 
     def __init__(self, account: GameContext.account) -> None:
-        self.cards: List[StandardCard] = []
+        self.hand: List[StandardCard] = []
 
         # Define Player object's attributes in terms of the Account object's attributes
         self.name = account.name
@@ -29,7 +29,7 @@ class Player:
         self.skip: bool = False
 
     def reveal_hand(self) -> None:
-        for card in self.cards:
+        for card in self.hand:
             print(card)
 
     def update_account(self) -> GameContext.account:
