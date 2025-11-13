@@ -76,6 +76,34 @@ class Blackjack:
         if bet is not None:
             cprint(f"Bet: {bet}")
 
+    @staticmethod
+    def calc_hand_total(hand: list[StandardCard]) -> int:
+        """
+        Calculate the total value of a hand.
+        """
+        total = 0
+        aces  = 0
+
+        for card in hand:
+            if not isinstance(card, StandardCard):
+                raise ValueError(f"Expected StandardCard, got {type(card)}.")
+            if card.rank in {"J", "Q", "K"}:
+                # Face card
+                total += 10
+            elif card.rank == "A":
+                # Special case: Ace card
+                total += 11
+                aces += 1
+            else:
+                total += int(card.rank)
+        
+        # Adjust Ace card value if exceeding 21
+        while aces > 0 and total > 21:
+            total -= 10
+            aces  -= 1
+        
+        return total
+
     def bet(self):
         """
         Asks all users to submit a bet.
