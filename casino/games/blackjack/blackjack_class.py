@@ -69,6 +69,13 @@ class Blackjack:
         player = Player(ctx.account)
         self.players.append(player)
 
+        self.FACE_CARD_VALUES: dict[str, int | List[int]] = {
+            "J": 10,
+            "Q": 10,
+            "K": 10,
+            "A": [1, 11]
+        }
+
     @staticmethod
     def display_topbar(ctx: GameContext, bet: Optional[int]) -> None:
         """
