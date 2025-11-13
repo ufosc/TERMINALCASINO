@@ -151,6 +151,22 @@ class Blackjack:
                 break
 
     def deal_cards(self):
+        """
+        Deals cards out to all players and dealer.
+        """
+        # Deal cards to players
+        for player in self.players:
+            cards = [deck.draw(), deck.draw()]
+            for card in cards:
+                card.hidden = False
+            
+            player.hand = cards
+
+        # Deal cards to dealer
+        cards = [deck.draw(), deck.draw()]
+        cards[0].hidden = False
+        dealer.hand = cards
+
         pass
 
     def player_decision(self):
