@@ -58,9 +58,11 @@ class Blackjack:
     
     def __init__(self, ctx: GameContext) -> None:
         self.deck: StandardDeck = StandardDeck()
-        self.players: List[Player] = []
         self.context = ctx
         self.configurations = ctx.config
+
+        self.players: List[Player] = []
+        self.dealer: Dealer = Dealer()
 
         # Define a single player
         # NOTE: This must be updated if local multiplayer is added
