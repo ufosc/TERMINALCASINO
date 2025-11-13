@@ -40,6 +40,15 @@ class Player:
         return account
 
 
+class Dealer:
+    """
+    Defines dealer in blackjack
+    """
+    
+    def __init__(self) -> None:
+        self.has_blackjack: bool = False
+        self.hand: List[StandardCard] = []
+
 class Blackjack:
     """
     Abstract base class that sets up Blackjack.
