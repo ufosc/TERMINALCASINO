@@ -159,11 +159,28 @@ class Blackjack:
         """
         pass
 
-    def dealer_draw(self):
+    def dealer_draw(self) -> None:
         """
         Phase of blackjack where dealer draws cards.
+
+        Note that this function uses "soft 17" as a rule due to the
+        implementation of Blackjack.calc_hand_total().
+        
+        "Soft 17" refers to a situation where the dealer has an
+        Ace and a 6.
+        In that situation, Ace = 11, which means Ace + 6 = 17. 
+        Since the dealer must stand on 17, they will stand in this
+        specific situation.
         """
-        pass
+        dealer_total = self.calc_hand_total(self.dealer.hand)
+
+        for card in dealer.hand:
+            card.hidden = False
+
+        while dealer_total < 17:
+            new_card: StandardCard = deck.draw()
+            new_card.hidden = False
+            dealer.hand.append(new_card)
 
     def check_win(self):
         """
