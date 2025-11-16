@@ -240,7 +240,7 @@ def play_blackjack(ctx: GameContext) -> None:
 
             # conditional actions
             account = ctx.account
-            if initial_hand and hand_total(player_hand) > 8 and hand_total(player_hand) < 12 and account.balance > bet:
+            if initial_hand and account.balance > bet:
                 actions_str = "[S]tay   [H]it   [D]ouble Down"
                 actions = "SsHhDd"
             else:
