@@ -41,6 +41,14 @@ def deal_card(turn: list[Card], deck: StandardDeck) -> None:
     card = deck.draw()
     turn.append(card)
 
+def double_down(ctx: GameContext, player_hand: list[Card], deck: StandardDeck, bet: int) -> int:
+    account = ctx.account
+    account.withdraw(bet)
+    bet = bet * 2
+    deal_card(player_hand, deck)
+    return bet
+
+
 def hand_total(turn: list[StandardCard]) -> int:
     """Calculate the total of each hand."""
     total = 0
@@ -160,6 +168,7 @@ def play_blackjack(ctx: GameContext) -> None:
 
     while continue_game:
         # determine the bet amount
+        initial_hand = True
         err_msg = None
         while True:
             clear_screen()
@@ -176,6 +185,7 @@ def play_blackjack(ctx: GameContext) -> None:
                 err_msg = INVALID_BET_MSG
                 continue
             try:
+                initial_bet = bet
                 account.withdraw(bet)
             except ValueError:
                 err_msg = f"Insufficient funds. You only have {account.balance} chips."
@@ -228,12 +238,23 @@ def play_blackjack(ctx: GameContext) -> None:
             cprint("Your hand:")
             print_hand(player_hand)
 
+            # conditional actions
+            account = ctx.account
+            if initial_hand and account.balance > bet:
+                actions_str = "[S]tay   [H]it   [D]ouble Down"
+                actions = "SsHhDd"
+            else:
+                actions_str = "[S]tay   [H]it"
+                actions = "SsHh"
+
+            initial_hand = False
+
             # action choice input
-            action = cinput(f"[S]tay   [H]it")
+            action = cinput(actions_str)
             print()
 
             # check valid answer
-            while action not in "SsHh" or action == "":
+            while action not in actions or action == "":
                 stubborn += 1
                 if stubborn >= 13:
                     clear_screen()
@@ -245,7 +266,7 @@ def play_blackjack(ctx: GameContext) -> None:
                 print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
                 print_hand(player_hand)
-                action = cinput("[S]tay   [H]it")
+                action = cinput(actions_str)
 
             clear_screen()
             display_blackjack_topbar(ctx, bet)
@@ -255,6 +276,10 @@ def play_blackjack(ctx: GameContext) -> None:
                 player_status = False
             elif action.lower() == "h":
                 deal_card(player_hand, deck)
+            elif action.lower() == "d":
+                bet = double_down(ctx, player_hand, deck, bet)
+                clear_screen()
+                display_blackjack_topbar(ctx, bet)
             else:
                 raise ValueError(f"Invalid choice: {action}")
 
