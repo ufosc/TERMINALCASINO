@@ -1,9 +1,10 @@
 import random
 from typing import List, Optional
 from time import sleep
+import time
 
 from casino.types import GameContext
-from casino.utils import clear_screen, cprint, cinput
+from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
 
 ROULETTE_HEADER = """
@@ -13,46 +14,51 @@ ROULETTE_HEADER = """
 """
 
 STANDARD_AMERICAN_ROULETTE_WHEEL = [
-    ("0", "green"),
-    ("28", "black"),
-    ("9", "red"),
-    ("26", "black"),
-    ("30", "red"),
-    ("11", "black"),
-    ("7", "red"),
-    ("20", "black"),
-    ("32", "red"),
-    ("17", "black"),
-    ("5", "red"),
-    ("22", "black"),
-    ("34", "red"),
-    ("15", "black"),
-    ("3", "red"),
-    ("24", "black"),
-    ("36", "red"),
-    ("13", "black"),
-    ("1", "red"),
-    ("00", "green"),
-    ("27", "red"),
-    ("10", "black"),
-    ("25", "red"),
-    ("29", "black"),
-    ("12", "red"),
-    ("8", "black"),
-    ("19", "red"),
-    ("31", "black"),
-    ("18", "red"),
-    ("6", "black"),
-    ("21", "red"),
-    ("33", "black"),
-    ("16", "red"),
-    ("4", "black"),
-    ("23", "red"),
-    ("35", "black"),
-    ("14", "red"),
-    ("2", "black")
+    ("0", "green", 0, 13),
+    ("28", "black", 0, 16),
+    ("9", "red", 0, 19),
+    ("26", "black", 1, 24),
+    ("30", "red", 2, 26),
+    ("11", "black", 3, 27),
+    ("7", "red", 4, 28),
+    ("20", "black", 5, 29),
+    ("32", "red", 6, 30),
+    ("17", "black", 7, 30),
+    ("5", "red", 8, 30),
+    ("22", "black", 9, 30),
+    ("34", "red", 10, 30),
+    ("15", "black", 11, 29),
+    ("3", "red", 12, 28),
+    ("24", "black", 13, 27),
+    ("36", "red", 14, 26),
+    ("13", "black", 15, 24),
+    ("1", "red", 16, 19),
+    ("00", "green", 16, 16),
+    ("27", "red", 16, 13),
+    ("10", "black", 16, 10),
+    ("25", "red", 15, 7),
+    ("29", "black", 14, 6),
+    ("12", "red", 13, 4),
+    ("8", "black", 12, 3),
+    ("19", "red", 11, 2),
+    ("31", "black", 10, 2),
+    ("18", "red", 9, 2),
+    ("6", "black", 8, 1),
+    ("21", "red", 7, 2),
+    ("33", "black", 6, 2),
+    ("16", "red", 5, 3),
+    ("4", "black", 4, 3),
+    ("23", "red", 3, 5),
+    ("35", "black", 2, 6),
+    ("14", "red", 1, 8),
+    ("2", "black", 0, 10)
 ]
 
+TOTAL_ROTATIONS = 2
+SEC_BTWN_SPIN = 0.03
+
+ROWS, COLS= 17, 32
+ROULETTE_GRID = [['  ' for _ in range(COLS)] for _ in range(ROWS)]
 
 class Roulette:
     """
@@ -85,7 +91,7 @@ class Roulette:
         Initializes roulette
         """
         # Will be populated with numbers and colors
-        self.wheel = list[tuple[str, str]]()
+        self.wheel = list[tuple[str, str, int, int]]()
 
         # Colors on wheel. Includes initials
         self.valid_colors = ["red", "green", "black", "r", "g", "b"]
@@ -146,6 +152,38 @@ class Roulette:
             return 0
         return int(value)
 
+    def print_wheel(self, highlighted_num = None) -> None:
+        # clear current grid
+        for row in range(len(ROULETTE_GRID)):
+            for col in range(len(ROULETTE_GRID[0])):
+                ROULETTE_GRID[row][col] = ' ' # each empty spot is 2 spaces
+
+        for (num_str, color, row, col) in STANDARD_AMERICAN_ROULETTE_WHEEL:
+            if num_str != "00" and int(num_str.strip()) < 10:
+                num_str = " " + num_str
+            if num_str.strip() == highlighted_num.strip():
+                # the spot in the column before and column after the number become *'s
+                ROULETTE_GRID[row][col-1] = "*"
+                ROULETTE_GRID[row][col+1] = "*"
+
+            if color == "green":
+                ROULETTE_GRID[row][col] = f"\x1b[32m{num_str}\x1b[0m"
+            elif color == "black":
+                ROULETTE_GRID[row][col] = f"\x1b[30m{num_str}\x1b[0m"
+            else:
+                ROULETTE_GRID[row][col] = f"\x1b[31m{num_str}\x1b[0m"
+
+        # printing the wheel
+        for row in ROULETTE_GRID:
+            print("".join(row))
+
+    def wheel_animation(self, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
+        for num in sequence:
+            clear_screen()
+            cprint(ROULETTE_HEADER)
+            self.print_wheel(highlighted_num = num)
+            time.sleep(sec_btwn_spins)
+
     def spin_wheel(self) -> tuple[str, str]:
         """
         Pick a winning color and number.
@@ -160,6 +198,12 @@ class Roulette:
 
         random_index = random.randint(0, len(self.wheel))
         self.winning_value = self.wheel[random_index]
+
+        wheel_sequence = [num for num, _, _, _ in self.wheel]
+
+        # do 3 full rotations before landing on winner
+        sequence = (wheel_sequence * TOTAL_ROTATIONS) + wheel_sequence[:random_index + 1]
+        self.wheel_animation(sequence)
 
         winning_number = self.winning_value[0]
         winning_color  = self.winning_value[1]
@@ -337,7 +381,7 @@ class AmericanRoulette(Roulette):
     def __init__(self, accounts: List[Account]):
         super().__init__(accounts)
         self.wheel = STANDARD_AMERICAN_ROULETTE_WHEEL
-        self.valid_numbers = [number for (number, _) in self.wheel]
+        self.valid_numbers = [number for (number, _, _, _) in self.wheel]
 
 
 def play_roulette(context: GameContext) -> None:
