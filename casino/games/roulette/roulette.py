@@ -54,6 +54,16 @@ STANDARD_AMERICAN_ROULETTE_WHEEL = [
     ("2", "black", 0, 10)
 ]
 
+ROULETTE_TABLE = """
+┌────────────────────────────────────────────────────────────────┐
+│    │  3 │  6 │  9 │ 12 │ 15 │ 18 │ 21 │ 24 │ 27 │ 30 │ 33 │ 36 │
+│ 00 │────│────│────│────│────│────│────│────│────│────│────│────│
+│────│  2 │  5 │  8 │ 11 │ 14 │ 17 │ 20 │ 23 │ 26 │ 29 │ 32 │ 35 │
+│  0 │────│────│────│────│────│────│────│────│────│────│────│────│
+│    │  1 │  4 │  7 │ 10 │ 13 │ 16 │ 19 │ 22 │ 25 │ 28 │ 31 │ 34 │
+└────────────────────────────────────────────────────────────────┘
+"""
+
 TOTAL_ROTATIONS = 2
 SEC_BTWN_SPIN = 0.04
 
@@ -152,15 +162,6 @@ class Roulette:
             return 0
         return int(value)
 
-    def print_table(self):
-        cprint("0  00")
-        row_str = ""
-        for i in range(1, 38):
-            row_str += f"{i} "
-            if i % 3 == 0:
-                cprint(row_str.strip())
-                row_str = ""
-
     def print_wheel(self, highlighted_num = None) -> None:
         # clear current grid
         for row in range(len(ROULETTE_GRID)):
@@ -205,12 +206,12 @@ class Roulette:
 
         #cprint("Spinning wheel...")
 
-        random_index = random.randint(0, len(self.wheel))
+        random_index = random.randint(0, len(self.wheel) - 1)
         self.winning_value = self.wheel[random_index]
 
         wheel_sequence = [num for num, _, _, _ in self.wheel]
 
-        # do 3 full rotations before landing on winner
+        # do TOTAL_ROTATIONS number of rotations before landing on number
         sequence = (wheel_sequence * TOTAL_ROTATIONS) + wheel_sequence[:random_index + 1]
         self.wheel_animation(sequence)
 
@@ -330,8 +331,7 @@ class Roulette:
             # Number betting
             elif bet_type.lower() in {"n", "number"}:
                 while True:
-                    cprint("Roulette Table:")
-                    self.print_table()
+                    cprint(ROULETTE_TABLE)
                     bet_value = cinput("Enter number you would like to bet on: ")
 
                     if bet_value in self.valid_numbers:
