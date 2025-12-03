@@ -268,8 +268,64 @@ class Blackjack:
 
     def check_win(self):
         """
-        Phase of blackjack where game checks who won.
+        Phase of blackjack where game checks who won and pays out to users.
         """
+        
+        win_msgs: List[str] = []
+        dealer_won = False
+        dealer_total: int = self.calc_hand_total(dealer.hand)
+        # Alias for quickly evaluating totals
+        d = dealer_total
+
+        # Tracks which player won, lost, or tied with dealer
+        player_win_status: List[bool] = [None] * len(self.players)
+
+        for player in self.players:
+            win_msg: List[str] = []
+            
+            # Player total
+            p: int = self.calc_hand_total(player.hand)
+
+            player_won: bool = None
+            tie = False
+
+            if player_bj and dealer_bj:
+                tie = True
+                result = "blackjack_tie"
+            elif dealer_bj:
+                player_won = False
+                result = "dealer_blackjack"
+            elif player_bj:
+                player_won = True
+                result = "player_blackjack"
+            elif p > 21:
+                player_won = False
+                result = "player_bust"
+            elif d > 21:
+                player_won = True
+                result = "dealer_bust"
+            elif p == d:
+                tie = True
+                result = "tie"
+            elif p < d:
+                player_won = False
+                result = "dealer_wins"
+            elif p > d:
+                player_won = True
+                result = "player_wins"
+
+            win_msg: str = result
+            win_msg = "\n".join(outcome_msg(result, player.bet))
+
+            if player_won:
+                player.balance += player.bet
+                player.update_account()
+            elif player_won == False:
+                player.balance -= player.bet
+                player.update_account()
+        
+            # Print final result to player
+            print(win_msg)
 
     def payout(self):
         """
