@@ -344,7 +344,7 @@ class Blackjack:
             self.player_win_status.append(win_status)
         
             # Print final result to player
-            print(win_msg)
+            cprint(win_msg)
 
     def payout(self):
         """
