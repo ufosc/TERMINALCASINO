@@ -397,6 +397,9 @@ class Blackjack:
         """
         Asks user if they would like to play again.
         """
+        clear_screen()
+        display_blackjack_topbar()
+
         for player in self.players:
             if player.balance < self.MINIMUM_BET:
                 cprint(NO_FUNDS_MSG)
