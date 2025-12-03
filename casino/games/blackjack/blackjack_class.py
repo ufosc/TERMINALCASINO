@@ -175,7 +175,42 @@ class Blackjack:
         cards[0].hidden = False
         dealer.hand = cards
 
-        pass
+    def blackjack_check(self) -> None:
+        """
+        Check hands for potential blackjack.
+
+        A blackjack is when:
+
+            - A player has an Ace and a card worth 10 (10, Jack, Queen, King)
+            - The dealer has an Ace as its face-up card and a card worth 10 (10, J, Q, K) as its face-down card
+        """
+
+        # Check for player blackjacks
+        for player in self.players:
+            if len(player.hand) != 2:
+                player.has_blackjack = False
+                continue
+            else:
+                # Get the name of the cards in the player's hand
+                player_ranks = set([card.rank for card in player.hand])
+
+                if "A" in player_ranks:
+                    # Check for face card or 10
+                    if any(rank in player_ranks for rank in (10, "J", "Q", "K")):
+                        player.has_blackjack = True
+                
+                if player.has_blackjack:
+                    continue
+        
+        # Check for dealer blackjack
+        if len(dealer.hand != 2):
+            dealer.has_blackjack = False
+            return
+        
+        face_up = dealer.hand[0]
+        hidden  = dealer.hand[1]
+        dealer.has_blackjack = face_up.rank == "A" and hidden.rank in [10, "J", "Q", "K"]
+        
 
     def player_decision(self):
         """
