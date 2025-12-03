@@ -247,24 +247,49 @@ class Blackjack:
         and if they won or lost.
         """
 
-        if result == "blackjack_tie":
-            return ["Player and dealer have a blackjack", "Push"]
-        if result == "dealer_blackjack":
-            return ["Dealer has a blackjack", f"You lose: -{bet} chips"]
-        if result == "player_blackjack":
-            return ["Player has a blackjack", f"You win: +{bet} chips"]
-        if result == "player_bust":
-            return ["You busted", f"Dealer wins: -{bet} chips"]
-        if result == "dealer_bust":
-            return ["Dealer busted", f"You win: +{bet} chips"]
-        if result == "tie":
-            return ["Player and dealer have the same amount!", "Push"]
-        if result == "dealer_wins":
-            return [f"Dealer wins: -{bet} chips"]
-        if result == "player_wins":
-            return [f"Player wins: +{bet} chips"]
+        OUTCOME_MESSAGES = {
+            "blackjack_tie": {
+                "message": "Player and dealer have a blackjack",
+                "bet_result": "Push",
+            },
+            "tie": {
+                "message": "Player and dealer have the same amount!",
+                "bet_result": "Push",
+            },
+            "dealer_blackjack": {
+                "message": "Dealer has a blackjack",
+                "bet_result": "You lose: -{bet} chips",
+            },
+            "player_blackjack": {
+                "message": "Player has a blackjack",
+                "bet_result": "You win: +{bet} chips",
+            },
+            "player_bust": {
+                "message": "You busted.",
+                "bet_result": "You lose: -{bet} chips",
+            },
+            "dealer_bust": {
+                "message": "Dealer busted",
+                "bet_result": "You win: +{bet} chips",
+            },
+            "dealer_wins": {
+                "message": "Dealer wins",
+                "bet_result": "You lose: -{bet} chips",
+            },
+            "player_wins": {
+                "message": "Player wins",
+                "bet_result": "You win: +{bet} chips",
+            },
+        }
 
-        raise ValueError("Undefined outcome code")
+        if result not in OUTCOME_MESSAGES:
+            raise KeyError(f"Undefined outcome key: {result}")
+        if not isinstance(bet, int):
+            raise TypeError(f"bet must be `int`. bet data type: {type(bet)}")
+        if bet <= 0:
+            raise ValueError(f"bet must be greater than 0. bet = {bet}")
+
+        return OUTCOME_MESSAGES[result]
 
     def check_win(self):
         """
