@@ -240,6 +240,32 @@ class Blackjack:
             new_card.hidden = False
             dealer.hand.append(new_card)
 
+    @staticmethod
+    def outcome_msg(result: str, bet: int) -> List[str]:
+        """
+        Returns a message that notifies the player of the game's status,
+        and if they won or lost.
+        """
+
+        if result == "blackjack_tie":
+            return ["Player and dealer have a blackjack", "Push"]
+        if result == "dealer_blackjack":
+            return ["Dealer has a blackjack", f"You lose: -{bet} chips"]
+        if result == "player_blackjack":
+            return ["Player has a blackjack", f"You win: +{bet} chips"]
+        if result == "player_bust":
+            return ["You busted", f"Dealer wins: -{bet} chips"]
+        if result == "dealer_bust":
+            return ["Dealer busted", f"You win: +{bet} chips"]
+        if result == "tie":
+            return ["Player and dealer have the same amount!", "Push"]
+        if result == "dealer_wins":
+            return [f"Dealer wins: -{bet} chips"]
+        if result == "player_wins":
+            return [f"Player wins: +{bet} chips"]
+
+        raise ValueError("Undefined outcome code")
+
     def check_win(self):
         """
         Phase of blackjack where game checks who won.
