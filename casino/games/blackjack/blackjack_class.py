@@ -211,7 +211,6 @@ class Blackjack:
         hidden  = dealer.hand[1]
         dealer.has_blackjack = face_up.rank == "A" and hidden.rank in [10, "J", "Q", "K"]
         
-
     def player_decision(self):
         """
         Phase of blackjack where players make decision.
