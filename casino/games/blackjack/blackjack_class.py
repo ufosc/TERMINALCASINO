@@ -380,7 +380,18 @@ class Blackjack:
         """
         Displays final result of game, including who won or lost.
         """
-        pass
+        clear_screen()
+        display_blackjack_topbar(self.context, bet)
+
+        cprint("Dealer hand:")
+        cprint(dealer.hand)
+
+        cprint("Your hand:")
+        cprint(player.hand)
+
+        for msg in self.player_win_status:
+            cprint(msg)
+            cprint("Press [Enter] to leave Results")
 
     def play_again(self) -> bool:
         """
