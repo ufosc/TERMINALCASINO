@@ -302,9 +302,6 @@ class Blackjack:
         # Alias for quickly evaluating totals
         d = dealer_total
 
-        # Tracks which player won, lost, or tied with dealer
-        player_win_status: List[bool] = [None] * len(self.players)
-
         for player in self.players:
             win_msg: List[str] = []
             
