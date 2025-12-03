@@ -77,6 +77,8 @@ class Blackjack:
             "A": [1, 11]
         }
 
+        self.player_win_status: List[str] = []
+
     @staticmethod
     def display_topbar(ctx: GameContext, bet: Optional[int]) -> None:
         """
