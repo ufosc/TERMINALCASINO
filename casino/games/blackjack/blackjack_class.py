@@ -311,43 +311,38 @@ class Blackjack:
             # Player total
             p: int = self.calc_hand_total(player.hand)
 
-            player_won: bool = None
-            tie = False
+            # Player's win status
+            win_status: str = None
 
             if player_bj and dealer_bj:
-                tie = True
+                win_status = "tie"
                 result = "blackjack_tie"
             elif dealer_bj:
-                player_won = False
+                win_status = "lose"
                 result = "dealer_blackjack"
             elif player_bj:
-                player_won = True
+                win_status = "win"
                 result = "player_blackjack"
             elif p > 21:
-                player_won = False
+                win_status = "lose"
                 result = "player_bust"
             elif d > 21:
-                player_won = True
+                win_status = "win"
                 result = "dealer_bust"
             elif p == d:
-                tie = True
+                win_status = "tie"
                 result = "tie"
             elif p < d:
-                player_won = False
+                win_status = "lose"
                 result = "dealer_wins"
             elif p > d:
-                player_won = True
+                win_status = "win"
                 result = "player_wins"
 
             win_msg: str = result
             win_msg = "\n".join(outcome_msg(result, player.bet))
 
-            if player_won:
-                player.balance += player.bet
-                player.update_account()
-            elif player_won == False:
-                player.balance -= player.bet
-                player.update_account()
+            self.player_win_status.append(win_status)
         
             # Print final result to player
             print(win_msg)
