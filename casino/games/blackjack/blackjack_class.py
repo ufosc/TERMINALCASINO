@@ -401,11 +401,11 @@ class Blackjack:
             if player.balance < self.MINIMUM_BET:
                 cprint(NO_FUNDS_MSG)
                 cinput("Press [Enter] to continue")
-                return False
+                return
 
             # Ask user if they would like to stay at the table  
             cprint(STAY_AT_TABLE_PROMPT)
-            play_again = CINPUT(YES_OR_NO_PROMPT)
+            play_again = cinput(YES_OR_NO_PROMPT)
 
             if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
                 return True
