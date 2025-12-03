@@ -350,7 +350,31 @@ class Blackjack:
         """
         Phase of blackjack where winners get paid.
         """
-        pass
+
+        for i, status in enumerate(self.player_win_status):
+            # Determines how much player will get back, relative to their bet
+            multiplier = 1
+
+            player = self.players[i]
+
+            if status == "win":
+                # Player wins amount they bet
+                multiplier = 2
+
+                # Player wins amount they bet PLUS bonus from BLACKJACK_MULTIPLIER
+                if player.has_blackjack:
+                    multiplier = 1 + BLACKJACK_MULTIPLIER
+            elif status == "lose":
+                multiplier = 0
+            elif status == "tie":
+                # Refund bet if tied
+                multiplier = 1
+            else:
+                raise ValueError(f"{status} must be 'win', 'lose', or 'tie' in self.player_win_status")
+
+            # Update account balance
+            player.balance += player.bet * multiplier
+            player.update_account()
     
     def display_results(self) -> None:
         """
