@@ -149,7 +149,10 @@ def print_game(ctx, stage: str, player_hand: list[StandardCard], opponent_hand: 
         cprint(message + "\n")
     cprint(f"=== {stage.upper()} ===\n")
     cprint("Opponent hand:")
-    print_hand(opponent_hand, hidden=True)
+    if stage != "SHOWDOWN":
+        print_hand(opponent_hand, hidden=True)
+    else:
+        print_hand(opponent_hand, hidden=False)
     cprint("Board:")
     if len(board) == 0:
         cprint("No cards on the board yet.")
