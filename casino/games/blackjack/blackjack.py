@@ -97,9 +97,11 @@ class Blackjack:
         Aces count as 11 unless the total exceeds 21, in which case they are reduced to 1
         as many times as needed to avoid busting.
 
+        NOTE: Busting can still occur even after Aces are reduced
+
         Examples
         --------
-        >>> calc_hand_total([A♠, 9♥])
+        >>> calc_hand_total([A♠, 9♥])      # Ace counted as 11 (default)
         20
 
         >>> calc_hand_total([A♠, K♥, 9♦])  # Ace reduced from 11 to 1
@@ -110,6 +112,9 @@ class Blackjack:
 
         >>> calc_hand_total([A♠, A♥, A♦, 9♣])  # Multiple Aces reduced from 11 to 1
         12
+
+        >>> calc_hand_total([A♠, A♥, 10♦, 10♣]) # Multiple Aces reduced from 11 to 1. Results in bust
+        22
         """
 
         total = 0
