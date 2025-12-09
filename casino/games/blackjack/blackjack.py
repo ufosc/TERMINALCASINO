@@ -188,12 +188,18 @@ class Blackjack:
             cprint(STAY_AT_TABLE_PROMPT)
             play_again = cinput(YES_OR_NO_PROMPT)
 
-            if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
-                return True
+            status: str = None
+            if play_again.upper() in {"", "Y", "YES"}:
+                status = "CONTINUE"
+            elif play_again.upper() in {"V", "VARIANT"}:
+                status = "VARIANT"
             elif play_again.upper() == "NO" or play_again == "N":
                 clear_screen()
                 cprint("\nThanks for playing!\n\n")
-                return False
+                status = "EXIT"
+            else:
+                # Notify user that they must enter a valid input
+                pass
 
     @abstractmethod
     def play_round(self):
@@ -553,13 +559,21 @@ class StandardBlackjack(Blackjack):
         if play_again:
             status = "CONTINUE"
         else:
-            # Ask user if they want to play another variant
-            usr_input = input("Play another variant? (y/N): ")
-            
-            if usr_input.upper == "Y":
-                status = "NEW_VARIANT"
-            else:
-                status = "EXIT"
+            invalid_input = True
+            while invalid_input:
+                # Ask user if they want to play another variant
+                usr_input = input("Play another variant? (y/N): ")
+                
+                if usr_input.upper() in {"Y", "YES"}:
+                    status = "NEW_VARIANT"
+                    invalid_input = False
+                elif usr_input.upper() in {"", "N", "NO"}:
+                    status = "EXIT"
+                    invalid_input = False
+                else:
+                    print(f"{usr_input} is not a valid input.")
+
+        return status
 
 
 def play_blackjack(context: GameContext):
@@ -570,11 +584,17 @@ def play_blackjack(context: GameContext):
 
     blackjack = Blackjack(context)
 
-    play_again: bool = None
-    while play_again:
-        play_again = blackjack.play_round()
+    while True:
+        status = blackjack.play_round()
 
-        if play_again.upper() == "EXIT":
+        if status.upper() == "EXIT":
             print("Exiting Blackjack...")
             sleep(0.5)
             break
+        elif status.upper() == "NEW_VARIANT":
+            # Let user pick a new variant of Blackjack to play
+            pass
+        elif status.upper() == "CONTINUE":
+            continue
+        else:
+            raise ValueError(f"{status} is not a valid status.")
