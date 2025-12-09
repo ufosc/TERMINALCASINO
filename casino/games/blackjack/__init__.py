@@ -1,3 +1,4 @@
-from .blackjack import play_blackjack
+from .blackjack import *
 
-__all__ = ["play_blackjack"]
+# Temporary comment for function to start blackjack
+#__all__ = ["play_blackjack"]
