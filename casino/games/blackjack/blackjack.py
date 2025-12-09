@@ -93,7 +93,25 @@ class Blackjack:
     def calc_hand_total(hand: list[StandardCard]) -> int:
         """
         Calculate the total value of a hand.
+
+        Aces count as 11 unless the total exceeds 21, in which case they are reduced to 1
+        as many times as needed to avoid busting.
+
+        Examples
+        --------
+        >>> calc_hand_total([A♠, 9♥])
+        20
+
+        >>> calc_hand_total([A♠, K♥, 9♦])  # Ace reduced from 11 to 1
+        20
+
+        >>> calc_hand_total([A♠, A♥, 9♦])  # One Ace reduced from 11 to 1
+        21
+
+        >>> calc_hand_total([A♠, A♥, A♦, 9♣])  # Multiple Aces reduced from 11 to 1
+        12
         """
+
         total = 0
         aces  = 0
 
