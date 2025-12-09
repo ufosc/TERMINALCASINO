@@ -55,6 +55,7 @@ class Blackjack:
     Abstract base class that sets up Blackjack.
     
     To create a variant of blackjack, inherit from this class.
+    All inherited classes must only play one round of that variant of Blackjack
     """
     
     def __init__(self, ctx: GameContext) -> None:
@@ -80,11 +81,11 @@ class Blackjack:
         self.player_win_status: List[str] = []
 
     @staticmethod
-    def display_topbar(ctx: GameContext, bet: Optional[int]) -> None:
+    def display_topbar(self, bet: Optional[int]) -> None:
         """
         Prints top bar for player to view how much they bet.
         """
-        display_topbar(ctx.account, **BLACKJACK_HEADER_OPTIONS)
+        display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
         if bet is not None:
             cprint(f"Bet: {bet}")
 
@@ -115,6 +116,83 @@ class Blackjack:
             aces  -= 1
         
         return total
+
+    @abstractmethod
+    def bet(self):
+        """
+        Asks users to submit a bet
+        """
+        pass
+
+    @abstractmethod
+    def deal_cards(self):
+        pass
+
+    @abstractmethod
+    def player_decision(self):
+        pass
+
+    @abstractmethod
+    def dealer_draw(self):
+        pass
+
+    @abstractmethod
+    def check_win(self):
+        pass
+
+    @abstractmethod
+    def payout(self):
+        pass
+
+    @abstractmethod
+    def display_results(self):
+        pass
+
+    def play_again(self) -> bool:
+        """
+        Asks user if they would like to play again.
+        """
+        clear_screen()
+        display_blackjack_topbar()
+
+        for player in self.players:
+            if player.balance < self.MINIMUM_BET:
+                cprint(NO_FUNDS_MSG)
+                cinput("Press [Enter] to continue")
+                return
+
+            # Ask user if they would like to stay at the table  
+            cprint(STAY_AT_TABLE_PROMPT)
+            play_again = cinput(YES_OR_NO_PROMPT)
+
+            if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
+                return True
+            elif play_again.upper() == "NO" or play_again == "N":
+                clear_screen()
+                cprint("\nThanks for playing!\n\n")
+                return False
+
+    @abstractmethod
+    def play_round(self):
+        """
+        Plays a single round of the Blackjack variant
+
+        Note that most Blackjack setups will execute the following steps in this exact order:
+
+        self.bet()             # Users place bets. Take placed bet amount from users
+        self.deal_cards()      # Deal cards to users
+        self.blackjack_check() # Check if players or dealer has blackjack. Offer insurance.
+        self.player_decision() # Player chooses desired moves during round
+        self.dealer_draw()     # Dealer draws once every player has busted or stands
+        self.check_win()       # Check which player has won
+        self.payout()          # Pay players who won or tied the appropriate amount
+        self.display_results() # Show who won or lost
+        """
+        pass
+
+class StandardBlackjack(Blackjack):
+    def __init__(self, ctx: GameContext) -> None:
+        super.__init__(ctx)
 
     def bet(self):
         """
@@ -393,26 +471,48 @@ class Blackjack:
             cprint(msg)
             cprint("Press [Enter] to leave Results")
 
-    def play_again(self) -> bool:
+    def play_round(self):
         """
-        Asks user if they would like to play again.
+        Plays a single round of Standard Blackjack
         """
-        clear_screen()
-        display_blackjack_topbar()
 
-        for player in self.players:
-            if player.balance < self.MINIMUM_BET:
-                cprint(NO_FUNDS_MSG)
-                cinput("Press [Enter] to continue")
-                return
+        self.bet()
+        self.deal_cards()
+        self.blackjack_check()
+        self.player_decision()
+        self.dealer_draw()
+        self.check_win()
+        self.payout()
+        self.display_results()
 
-            # Ask user if they would like to stay at the table  
-            cprint(STAY_AT_TABLE_PROMPT)
-            play_again = cinput(YES_OR_NO_PROMPT)
+        play_again: bool = self.play_again()
 
-            if play_again.upper() == "YES" or play_again == "Y" or play_again == "":
-                return True
-            elif play_again.upper() == "NO" or play_again == "N":
-                clear_screen()
-                cprint("\nThanks for playing!\n\n")
-                return False
+        status: str = None
+        if play_again:
+            status = "CONTINUE"
+        else:
+            # Ask user if they want to play another variant
+            usr_input = input("Play another variant? (y/N): ")
+            
+            if usr_input.upper == "Y":
+                status = "NEW_VARIANT"
+            else:
+                status = "EXIT"
+
+
+def play_blackjack(context: GameContext):
+    VARIANTS: dict[str, type[Blackjack]] = {
+        "standard": StandardBlackjack(context),
+        "none": Blackjack(context)
+    }
+
+    blackjack = Blackjack(context)
+
+    play_again: bool = None
+    while play_again:
+        play_again = blackjack.play_round()
+
+        if play_again.upper() == "EXIT":
+            print("Exiting Blackjack...")
+            sleep(0.5)
+            break
