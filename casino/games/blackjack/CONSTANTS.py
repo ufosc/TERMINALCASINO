@@ -13,8 +13,8 @@ SECURITY_GUARD = "👮‍♂️"
 SECURITY_MSG = f"""
 {SECURITY_GUARD}: Time for you to go.
 You have been removed from the casino
-
 """
+
 YES_OR_NO_PROMPT       = "[Y]es   [N]o"
 DECK_NUMBER_SELECTION  = "🤵: How many decks would you like to play with?"
 DECK_NUMBER_BOUNDS_MSG = "🤵: That won't work, please be serious. Try again."
