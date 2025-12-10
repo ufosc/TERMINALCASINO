@@ -80,8 +80,7 @@ class Blackjack:
 
         self.player_win_status: List[str] = []
 
-    @staticmethod
-    def display_topbar(self, bet: Optional[int]) -> None:
+    def display_blackjack_topbar(self, bet: Optional[int] = None) -> None:
         """
         Prints top bar for player to view how much they bet.
         """
@@ -176,7 +175,7 @@ class Blackjack:
         Asks user if they would like to play again.
         """
         clear_screen()
-        display_blackjack_topbar()
+        self.display_blackjack_topbar()
 
         for player in self.players:
             if player.balance < self.MINIMUM_BET:
@@ -233,7 +232,7 @@ class StandardBlackjack(Blackjack):
         for player in self.players:
             if player.balance < MINIMUM_BET:
                 clear_screen()
-                display_blackjack_topbar(self.context, None)
+                self.display_blackjack_topbar()
                 cprint(NO_FUNDS_MSG)
                 cinput("Press [Enter] to continue.")
                 continue
@@ -241,7 +240,7 @@ class StandardBlackjack(Blackjack):
             # Determine player's bet
             while True:
                 clear_screen()
-                display_blackjack_topbar(self.context, None)
+                self.display_blackjack_topbar()
 
                 if error_msg != "":
                     cprint(error_msg)
@@ -547,32 +546,17 @@ class StandardBlackjack(Blackjack):
         self.bet()
         self.deal_cards()
         self.blackjack_check()
-        self.player_decision()
+
+        kicked: str = self.player_decision()
+        if kicked == "kicked":
+            return "kicked"
+
         self.dealer_draw()
         self.check_win()
         self.payout()
         self.display_results()
 
-        play_again: bool = self.play_again()
-
-        status: str = None
-        if play_again:
-            status = "CONTINUE"
-        else:
-            invalid_input = True
-            while invalid_input:
-                # Ask user if they want to play another variant
-                usr_input = input("Play another variant? (y/N): ")
-                
-                if usr_input.upper() in {"Y", "YES"}:
-                    status = "NEW_VARIANT"
-                    invalid_input = False
-                elif usr_input.upper() in {"", "N", "NO"}:
-                    status = "EXIT"
-                    invalid_input = False
-                else:
-                    print(f"{usr_input} is not a valid input.")
-
+        status: str = self.play_again()
         return status
 
 
@@ -596,5 +580,14 @@ def play_blackjack(context: GameContext):
             pass
         elif status.upper() == "CONTINUE":
             continue
+        elif status.upper() == "KICKED":
+            action: str = None
+            while action != "":
+                clear_screen()
+                cprint(SECURITY_MSG)
+                action = cinput("Press [Enter] to exit.")
+
+            cprint("Exiting Blackjack...")
+            sleep(0.5)
         else:
             raise ValueError(f"{status} is not a valid status.")
