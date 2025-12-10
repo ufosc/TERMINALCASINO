@@ -3,10 +3,9 @@ from typing import Callable
 
 from . import games
 from .accounts import Account
-from casino.games.poker import play_poker
 from .config import Config
 from .types import GameContext
-from .utils import cprint, cinput, clear_screen, display_topbar
+from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
 
 
 CASINO_HEADER = """
@@ -26,15 +25,18 @@ INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
 GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
 # To add a new game, just add a handler function to GAME_HANDLERS
+
 GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack": games.blackjack.play_blackjack,
     "slots": games.slots.play_slots,
     "poker": games.poker.play_poker,
     "roulette": games.roulette.play_roulette,
+<<<<<<< HEAD
     "uno": games.uno.play_uno
+=======
+>>>>>>> b8ba905316bc4b457b8e10f288880d8c1e07d202
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
-
 
 def term_width() -> int:
     """Safe terminal width fallback."""
@@ -99,8 +101,15 @@ def main_menu(ctx: GameContext) -> None:
             display_topbar(account, **CASINO_HEADER_OPTIONS)
             cprint("")  # spacing
             width = term_width()
+            max_length = max(map(len, ALL_GAMES))
+            cprint("┌" + "─" * 30 + "┐")
+            cprint("│" + " " * 30 + "│")
             for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(f"[{i}] {name.title()}".center(width) + "\n")
+                cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
+            cprint("│" + " " * 30 + "│")
+            cprint("└" + "─" * 30 + "┘")
+
+
 
         choice = prompt_with_refresh(
             render_fn = render_choose_game,
@@ -130,6 +139,11 @@ def main():
         display_topbar(account=None, **CASINO_HEADER_OPTIONS)
         cprint("\nInvalid input. Please enter a valid name.\n")
         name = cinput("Enter your name: ").strip()
+    
+    # theme selection
+    clear_screen()
+    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
+    get_theme()
 
 
     account = Account.generate(name, ACCOUNT_STARTING_BALANCE)

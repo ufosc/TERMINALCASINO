@@ -2,7 +2,8 @@ import random
 from typing import Optional
 
 from casino.card_assets import assign_card_art
-from casino.types import Card, GameContext
+from casino.cards import StandardCard, StandardDeck, Card
+from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 BLACKJACK_HEADER = """
@@ -33,60 +34,51 @@ BET_PROMPT             = "🤵: How much would you like to bet?"
 INVALID_BET_MSG        = "🤵: That's not a valid bet."
 NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
-FULL_DECK: list[Card] = [
-    # Clubs
-    (2, "c2"), (3, "c3"), (4, "c4"), (5, "c5"), (6, "c6"), (7, "c7"), (8, "c8"), (9, "c9"), (10, "c10"),
-    ("J", "cJ"), ("Q", "cQ"), ("K", "cK"), ("A", "cA"),
-    # Diamonds
-    (2, "d2"), (3, "d3"), (4, "d4"), (5, "d5"), (6, "d6"), (7, "d7"), (8, "d8"), (9, "d9"), (10, "d10"),
-    ("J", "dJ"), ("Q", "dQ"), ("K", "dK"), ("A", "dA"),
-    # Hearts
-    (2, "h2"), (3, "h3"), (4, "h4"), (5, "h5"), (6, "h6"), (7, "h7"), (8, "h8"), (9, "h9"), (10, "h10"),
-    ("J", "hJ"), ("Q", "hQ"), ("K", "hK"), ("A", "hA"),
-    # Spades
-    (2, "s2"), (3, "s3"), (4, "s4"), (5, "s5"), (6, "s6"), (7, "s7"), (8, "s8"), (9, "s9"), (10, "s10"),
-    ("J", "sJ"), ("Q", "sQ"), ("K", "sK"), ("A", "sA"),
-]
+FULL_DECK: StandardDeck = StandardDeck()
 
-
-def deal_card(turn: list[Card], deck: list[Card]) -> None:
+def deal_card(turn: list[Card], deck: StandardDeck) -> None:
     """Deal a card to the player."""
-    card = random.choice(deck)
+    card = deck.draw()
     turn.append(card)
-    deck.remove(card)
+
+def double_down(ctx: GameContext, player_hand: list[Card], deck: StandardDeck, bet: int) -> int:
+    account = ctx.account
+    account.withdraw(bet)
+    bet = bet * 2
+    deal_card(player_hand, deck)
+    return bet
 
 
-def hand_total(turn: list[Card]) -> int:
+def hand_total(turn: list[StandardCard]) -> int:
     """Calculate the total of each hand."""
     total = 0
     aces = 0
-    for card, _ in turn:
-        if isinstance(card, int):
-            # 1-10
-            total += card
-        elif card in {"J", "Q", "K"}:
-            # face card
+    for card in turn:
+        if not isinstance(card, StandardCard):
+            raise ValueError(f"Expected StandardCard, got {type(card)}")
+        if card.rank in {"J", "Q", "K"}:
+            # Face card
             total += 10
-        elif card == "A":
-            # A special case
+        elif card.rank == "A":
+            # Ace special case
             total += 11
             aces += 1
         else:
-            raise ValueError(f"Invalid card: {card}")
-    # aces adjustment
+            # Numeric card (2-10)
+            total += int(card.rank)
+    # Ace adjustment
     while aces > 0 and total > 21:
         total -= 10
         aces -= 1
     return total
-
 
 def print_dealer_cards(dealer_hand: list[Card]) -> None:
     """Print the dealer's cards side by side."""
     if len(dealer_hand) == 0:
         cprint("")
     # first card shown, rest hidden
-    first_card = assign_card_art(dealer_hand[0])
-    hidden_card = assign_card_art((0, "flipped"))
+    first_card = dealer_hand[0].front
+    hidden_card = dealer_hand[1].back
     hand_string = "\n".join([
         "  ".join(lines)
         for lines in zip(first_card.strip("\n").splitlines(),
@@ -98,7 +90,7 @@ def print_dealer_cards(dealer_hand: list[Card]) -> None:
 def print_cards(hand: list[Card]) -> None:
     """Print the cards side by side."""
     card_lines = [
-        assign_card_art(card).strip("\n").splitlines()
+        card.front.strip("\n").splitlines()
         for card in hand
     ]
     max_lines = max(len(lines) for lines in card_lines)
@@ -122,7 +114,10 @@ def print_cards(hand: list[Card]) -> None:
 def print_hand_total(hand: list[Card], label: str = "Total") -> None:
     """Print the total of the hand."""
     total = hand_total(hand)
-    total_string = "Blackjack" if total == 21 else f"{total}"
+    if total == 21 and len(hand) == 2:
+        total_string = "Blackjack"
+    else: 
+        total_string = f"{total}"
     cprint(f"{label}: {total_string}")
 
 
@@ -139,6 +134,66 @@ def display_blackjack_topbar(ctx: GameContext, bet: Optional[int]) -> None:
     display_topbar(ctx.account, **BLACKJACK_HEADER_OPTIONS)
     if bet is not None:
         cprint(f"Bet: {bet}")
+
+
+def offer_insurance(ctx, bet, dealer_hand, player_hand, account):
+    """Offers insurance when dealer shows Ace."""
+    upcard = dealer_hand[0]
+    if upcard.rank != "A":
+        return 0, False
+    
+    # display hands
+    cprint("Dealer hand:")
+    print_hand(dealer_hand, hidden=True)
+    cprint("Your hand:")
+    print_hand(player_hand)
+
+    cprint("Dealer shows an Ace.")
+    cprint("Would you like to buy insurance?")
+
+    choice = cinput(YES_OR_NO_PROMPT)
+    while choice not in "YyNn" or choice == "":
+        clear_screen()
+        display_blackjack_topbar(ctx, bet)
+        cprint(INVALID_YES_OR_NO)
+        choice = cinput(YES_OR_NO_PROMPT)
+
+    while choice in "Yy":
+        max_bet = bet // 2
+        insurance_bet_str = cinput(f"You can bet up to {max_bet} chips. How much would you like to bet for insurance?").strip()
+        insurance_bet = 0
+        try:
+            insurance_bet = int(insurance_bet_str)
+            if insurance_bet > max_bet:
+                cprint(f"The maximum bet is {max_bet} chips.")
+                continue
+        except ValueError:
+            cprint(INVALID_BET_MSG)
+            continue
+        try:
+            account.withdraw(insurance_bet)
+        except ValueError:
+            cprint(f"Insufficient funds. You only have {account.balance} chips.")
+            continue
+        return insurance_bet, True # success
+
+    return 0, False
+
+def resolve_insurance_win(account, insurance_bet, insurance_taken):
+    """Payout 2:1 insurance if dealer has blackjack."""
+    if insurance_taken and insurance_bet > 0:
+        # payout = return bet + 2× profit
+        account.deposit(insurance_bet * 3)
+        return f"Insurance pays out: +{insurance_bet * 2} chips\n"
+    else:
+        return ""
+
+def resolve_insurance_loss(insurance_bet, insurance_taken):
+    """Player loses insurance immediately when dealer does not have blackjack."""
+    if insurance_taken and insurance_bet > 0:
+        return f"You lose your insurance bet: -{insurance_bet} chips\n"
+    else:
+        return ""
 
 
 def play_blackjack(ctx: GameContext) -> None:
@@ -173,6 +228,7 @@ def play_blackjack(ctx: GameContext) -> None:
 
     while continue_game:
         # determine the bet amount
+        initial_hand = True
         err_msg = None
         while True:
             clear_screen()
@@ -189,10 +245,10 @@ def play_blackjack(ctx: GameContext) -> None:
                 err_msg = INVALID_BET_MSG
                 continue
             try:
+                initial_bet = bet
                 account.withdraw(bet)
             except ValueError:
-                err_msg = \
-                    "Insufficient funds. You only have {account.balance} chips."
+                err_msg = f"Insufficient funds. You only have {account.balance} chips."
                 continue
             break
 
@@ -206,7 +262,8 @@ def play_blackjack(ctx: GameContext) -> None:
         dealer_bj = False
 
         # two decks of cards (values + string IDs)
-        deck = FULL_DECK * decks
+        FULL_DECK = StandardDeck(decks)
+        deck = FULL_DECK
 
         # hands
         player_hand = []
@@ -216,6 +273,8 @@ def play_blackjack(ctx: GameContext) -> None:
         for _ in range(2):
             deal_card(player_hand, deck)
             deal_card(dealer_hand, deck)
+
+        insurance_bet, insurance_taken = offer_insurance(ctx, bet, dealer_hand, player_hand, account)
 
         # player BJ check
         if hand_total(player_hand) == 21:
@@ -228,7 +287,7 @@ def play_blackjack(ctx: GameContext) -> None:
             dealer_bj = True
             player_status = False
             dealer_status = False
-            cprint("Your hand:")
+            cprint("Dealer hand:")
             print_hand(dealer_hand)
             cprint("Your hand:")
             print_hand(player_hand)
@@ -241,12 +300,23 @@ def play_blackjack(ctx: GameContext) -> None:
             cprint("Your hand:")
             print_hand(player_hand)
 
+            # conditional actions
+            account = ctx.account
+            if initial_hand and account.balance > bet:
+                actions_str = "[S]tay   [H]it   [D]ouble Down"
+                actions = "SsHhDd"
+            else:
+                actions_str = "[S]tay   [H]it"
+                actions = "SsHh"
+
+            initial_hand = False
+
             # action choice input
-            action = cinput(f"[S]tay   [H]it")
+            action = cinput(actions_str)
             print()
 
             # check valid answer
-            while action not in "SsHh" or action == "":
+            while action not in actions or action == "":
                 stubborn += 1
                 if stubborn >= 13:
                     clear_screen()
@@ -258,7 +328,7 @@ def play_blackjack(ctx: GameContext) -> None:
                 print_dealer_cards(dealer_hand)
                 cprint("Your hand:")
                 print_hand(player_hand)
-                action = cinput("[S]tay   [H]it")
+                action = cinput(actions_str)
 
             clear_screen()
             display_blackjack_topbar(ctx, bet)
@@ -268,6 +338,10 @@ def play_blackjack(ctx: GameContext) -> None:
                 player_status = False
             elif action.lower() == "h":
                 deal_card(player_hand, deck)
+            elif action.lower() == "d":
+                bet = double_down(ctx, player_hand, deck, bet)
+                clear_screen()
+                display_blackjack_topbar(ctx, bet)
             else:
                 raise ValueError(f"Invalid choice: {action}")
 
@@ -310,6 +384,14 @@ def play_blackjack(ctx: GameContext) -> None:
         player_won = False
         dealer_won = False
         win_msgs = []
+        # insurance resolution
+        if dealer_bj:
+            insurance_msg = resolve_insurance_win(account, insurance_bet, insurance_taken)
+            win_msgs.append(insurance_msg)
+        else:
+            insurance_msg = resolve_insurance_loss(insurance_bet, insurance_taken)
+            win_msgs.append(insurance_msg)
+        # main game resolution
         if player_bj and dealer_bj:
             win_msgs.append("Player and dealer have a blackjack\n")
             win_msgs.append("Push\n")
