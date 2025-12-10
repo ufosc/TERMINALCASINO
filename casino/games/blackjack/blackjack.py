@@ -314,11 +314,50 @@ class StandardBlackjack(Blackjack):
         hidden  = dealer.hand[1]
         dealer.has_blackjack = face_up.rank == "A" and hidden.rank in [10, "J", "Q", "K"]
         
-    def player_decision(self):
+    def player_decision(self) -> None | str:
         """
         Phase of blackjack where players make decision.
         """
-        pass
+        for i, player in enumerate(self.players):
+            # Players with win status of None have not won, lost, or drawn yet.
+            if self.player_win_status[i] != None:
+                continue
+            
+            while True:
+                cprint("Dealer Hand:")
+                print_cards(self.dealer.hand)
+                cprint("Player Hand:")
+                print_cards(player.hand)
+
+                action = cinput(f"[S]tand   [H]it")
+                print()
+
+                # Check valid answer. If user surpasses `stubborn` threshold, call security
+                # and kick user out
+                stubborn = 0
+                while action.upper() not in {"S", "STAND", "H", "HIT"}:
+                    stubborn += 1
+                    if stubborn >= 13:
+                        return "kicked"
+
+                    clear_screen()
+                    self.display_blackjack_topbar(player.bet)
+                    cprint(INVALID_CHOICE_MSG + "\n")
+
+                    cprint("Dealer Hand:")
+                    print_cards(self.dealer.hand)
+                    cprint("Player Hand:")
+                    print_cards(player.hand)
+                    action = cinput("[S]tay   [H]it")
+
+                if action.upper() in {"S", "STAND"}:
+                    break
+                elif action.upper() in {"H", "HIT"}:
+                    player.hand += self.deck.draw()
+
+                    if calc_hand_total(player.hand) > 21:
+                        self.player_win_status[i] = "lose"
+                        break
 
     def dealer_draw(self) -> None:
         """
