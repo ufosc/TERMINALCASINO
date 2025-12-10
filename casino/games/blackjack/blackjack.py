@@ -1,13 +1,15 @@
 import random
 from typing import Optional, List
+from abc import ABC, abstractmethod
+from time import sleep
 
 from casino.cards import StandardCard, StandardDeck, Card
 from casino.types import GameContext
-from accounts import Account
+from casino.accounts import Account
 
-from casino.utils import clear_screen, cprint, cinput, display_topbar
+from casino.utils import clear_screen, cprint, cinput, display_topbar, print_cards
 
-from CONSTANTS import *
+from casino.games.blackjack.CONSTANTS import *
 
 
 class Player:
@@ -15,10 +17,11 @@ class Player:
     Defines a player in a blackjack game.
     """
 
-    def __init__(self, account: GameContext.account) -> None:
+    def __init__(self, account: Account) -> None:
         self.hand: List[StandardCard] = []
 
         # Define Player object's attributes in terms of the Account object's attributes
+        self.account = account
         self.name = account.name
         self.balance = account.balance
 
@@ -32,12 +35,12 @@ class Player:
         for card in self.hand:
             print(card)
 
-    def update_account(self) -> GameContext.account:
+    def update_account(self) -> Account:
         """
         Update Account object's balance
         """
-        account.balance = self.balance
-        return account
+        self.account.balance = self.balance
+        return self.account
 
 
 class Dealer:
@@ -50,7 +53,7 @@ class Dealer:
         self.hand: List[StandardCard] = []
 
 
-class Blackjack:
+class Blackjack(ABC):
     """
     Abstract base class that sets up Blackjack.
     
@@ -78,7 +81,9 @@ class Blackjack:
             "A": [1, 11]
         }
 
-        self.player_win_status: List[str] = []
+        self.player_win_status: List[str | None] = [None] * len(self.players)
+        
+        self.MINIMUM_BET = self.configurations.blackjack_min_bet
 
     def display_blackjack_topbar(self, bet: Optional[int] = None) -> None:
         """
@@ -170,13 +175,14 @@ class Blackjack:
     def display_results(self):
         pass
 
-    def play_again(self) -> bool:
+    def play_again(self) -> str:
         """
         Asks user if they would like to play again.
         """
         clear_screen()
         self.display_blackjack_topbar()
 
+        # TODO: Refactor so that this function works for multiple players
         for player in self.players:
             if player.balance < self.MINIMUM_BET:
                 cprint(NO_FUNDS_MSG)
@@ -200,6 +206,8 @@ class Blackjack:
                 # Notify user that they must enter a valid input
                 pass
 
+            return status
+
     @abstractmethod
     def play_round(self):
         """
@@ -220,17 +228,16 @@ class Blackjack:
 
 class StandardBlackjack(Blackjack):
     def __init__(self, ctx: GameContext) -> None:
-        super.__init__(ctx)
+        super().__init__(ctx)
 
     def bet(self):
         """
         Asks all users to submit a bet.
         """
-        MINIMUM_BET = self.configurations.blackjack_min_bet
         error_msg = ""
 
         for player in self.players:
-            if player.balance < MINIMUM_BET:
+            if player.balance < self.MINIMUM_BET:
                 clear_screen()
                 self.display_blackjack_topbar()
                 cprint(NO_FUNDS_MSG)
@@ -251,8 +258,8 @@ class StandardBlackjack(Blackjack):
                 # Check that input is a number
                 try:
                     bet = int(bet_str)
-                    if bet < MINIMUM_BET:
-                        error_msg = f"The minimum bet is {MINIMUM_BET} chips."
+                    if bet < self.MINIMUM_BET:
+                        error_msg = f"The minimum bet is {self.MINIMUM_BET} chips."
                         continue
                 except ValueError:
                     error_msg = INVALID_BET_MSG
@@ -260,7 +267,8 @@ class StandardBlackjack(Blackjack):
 
                 # Check that user has enough money in account to bet
                 try:
-                    account.withdraw(bet)
+                    player.account.withdraw(bet)
+                    player.bet = bet
                 except ValueError:
                     error_msg = f"Insufficient funds. You only have {player.balance} chips."
                     continue
@@ -272,16 +280,16 @@ class StandardBlackjack(Blackjack):
         """
         # Deal cards to players
         for player in self.players:
-            cards = [deck.draw(), deck.draw()]
+            cards = [self.deck.draw(), self.deck.draw()]
             for card in cards:
                 card.hidden = False
             
             player.hand = cards
 
         # Deal cards to dealer
-        cards = [deck.draw(), deck.draw()]
+        cards = [self.deck.draw(), self.deck.draw()]
         cards[0].hidden = False
-        dealer.hand = cards
+        self.dealer.hand = cards
 
     def blackjack_check(self) -> None:
         """
@@ -311,13 +319,13 @@ class StandardBlackjack(Blackjack):
                     continue
         
         # Check for dealer blackjack
-        if len(dealer.hand != 2):
-            dealer.has_blackjack = False
+        if len(self.dealer.hand) != 2:
+            self.dealer.has_blackjack = False
             return
         
-        face_up = dealer.hand[0]
-        hidden  = dealer.hand[1]
-        dealer.has_blackjack = face_up.rank == "A" and hidden.rank in [10, "J", "Q", "K"]
+        face_up = self.dealer.hand[0]
+        hidden  = self.dealer.hand[1]
+        self.dealer.has_blackjack = face_up.rank == "A" and hidden.rank in [10, "J", "Q", "K"]
         
     def player_decision(self) -> None | str:
         """
@@ -379,13 +387,14 @@ class StandardBlackjack(Blackjack):
         """
         dealer_total = self.calc_hand_total(self.dealer.hand)
 
-        for card in dealer.hand:
+        for card in self.dealer.hand:
             card.hidden = False
 
         while dealer_total < 17:
-            new_card: StandardCard = deck.draw()
+            new_card: StandardCard = self.deck.draw()
             new_card.hidden = False
-            dealer.hand.append(new_card)
+            self.dealer.hand.append(new_card)
+            dealer_total = self.calc_hand_total(self.dealer.hand)
 
     @staticmethod
     def outcome_msg(result: str, bet: int) -> List[str]:
@@ -445,11 +454,11 @@ class StandardBlackjack(Blackjack):
         
         win_msgs: List[str] = []
         dealer_won = False
-        dealer_total: int = self.calc_hand_total(dealer.hand)
+        dealer_total: int = self.calc_hand_total(self.dealer.hand)
         # Alias for quickly evaluating totals
         d = dealer_total
 
-        for player in self.players:
+        for i, player in enumerate(self.players):
             win_msg: List[str] = []
             
             # Player total
@@ -458,13 +467,13 @@ class StandardBlackjack(Blackjack):
             # Player's win status
             win_status: str = None
 
-            if player_bj and dealer_bj:
+            if player.has_blackjack and self.dealer.has_blackjack:
                 win_status = "tie"
                 result = "blackjack_tie"
-            elif dealer_bj:
+            elif self.dealer.has_blackjack:
                 win_status = "lose"
                 result = "dealer_blackjack"
-            elif player_bj:
+            elif player.has_blackjack:
                 win_status = "win"
                 result = "player_blackjack"
             elif p > 21:
@@ -484,9 +493,9 @@ class StandardBlackjack(Blackjack):
                 result = "player_wins"
 
             win_msg: str = result
-            win_msg = "\n".join(outcome_msg(result, player.bet))
+            win_msg = "\n".join(self.outcome_msg(result, player.bet))
 
-            self.player_win_status.append(win_status)
+            self.player_win_status[i] = win_status
         
             # Print final result to player
             cprint(win_msg)
@@ -525,18 +534,28 @@ class StandardBlackjack(Blackjack):
         """
         Displays final result of game, including who won or lost.
         """
-        clear_screen()
-        display_blackjack_topbar(self.context, bet)
 
-        cprint("Dealer hand:")
-        cprint(dealer.hand)
+        # TODO: rework function so that it works for local multiplayer
+        for player in self.players:
+            clear_screen()
+            self.display_blackjack_topbar(player.bet)
 
-        cprint("Your hand:")
-        cprint(player.hand)
+            cprint("Dealer hand:")
+            print_cards(self.dealer.hand)
+
+            cprint("Your hand:")
+            print_cards(player.hand)
+
+        display_msg: dict[str, str] = {
+            "win": "You win!"
+        }
 
         for msg in self.player_win_status:
             cprint(msg)
-            cprint("Press [Enter] to leave Results")
+
+            action: str | None = None
+            while action != "":
+                action = cinput("Press [Enter] to leave Results")
 
     def play_round(self):
         """
@@ -563,16 +582,15 @@ class StandardBlackjack(Blackjack):
 def play_blackjack(context: GameContext):
     VARIANTS: dict[str, type[Blackjack]] = {
         "standard": StandardBlackjack(context),
-        "none": Blackjack(context)
     }
 
-    blackjack = Blackjack(context)
+    blackjack = VARIANTS["standard"]
 
     while True:
         status = blackjack.play_round()
 
         if status.upper() == "EXIT":
-            print("Exiting Blackjack...")
+            cprint("Exiting Blackjack...")
             sleep(0.5)
             break
         elif status.upper() == "NEW_VARIANT":
