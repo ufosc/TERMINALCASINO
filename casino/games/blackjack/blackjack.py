@@ -366,9 +366,11 @@ class StandardBlackjack(Blackjack):
                 if action.upper() in {"S", "STAND"}:
                     break
                 elif action.upper() in {"H", "HIT"}:
-                    player.hand += self.deck.draw()
+                    card = self.deck.draw()
+                    card.hidden = False
+                    player.hand.append(card)
 
-                    if calc_hand_total(player.hand) > 21:
+                    if self.calc_hand_total(player.hand) > 21:
                         self.player_win_status[i] = "lose"
                         break
 
