@@ -31,7 +31,6 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "slots": games.slots.play_slots,
     "poker": games.poker.play_poker,
     "roulette": games.roulette.play_roulette,
-<<<<<<< HEAD
     "uno": games.uno.play_uno
 
 }

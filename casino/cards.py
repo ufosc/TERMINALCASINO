@@ -133,7 +133,7 @@ class StandardDeck(Deck):
 class UnoCard(Card):
     def __init__(self, color: str, rank: str):
         super().__init__(color, rank)
-        
+        self.hidden = False;
         self.color = color
         self.rank  = rank
 
@@ -152,10 +152,24 @@ class UnoCard(Card):
 
         self.load_art(FILE)
 
+    def __repr__(self) -> str:
+        """
+        Return an unambiguous string representation of the `UnoCard` object.
+
+        This developer-oriented representation includes the class name
+        and key internal state (rank, suit, and hidden status). This is
+        useful for debugging and logging
+        """
+
+        return (
+            f"{self.__class__.__name__}("
+            f"rank={self.rank!r}, color={self.color!r}, hidden={self.hidden!r})"
+        )
+
 
 class UnoDeck(Deck):
     COLORS = ["red", "green", "blue", "yellow"]
-    RANKS  = [str(n) for n in range(0, 11)] + ["draw_2", "skip", "reverse"]
+    RANKS  = [str(n) for n in range(0, 10)] + ["draw_2", "skip", "reverse"]
     SPECIAL_CARDS = ["wild", "wild_draw_4"]
 
     def __init__(self):
@@ -171,7 +185,7 @@ class UnoDeck(Deck):
             for rank  in __class__.RANKS
         ]
         
-        for card in SPECIAL_CARDS:
+        for card in self.SPECIAL_CARDS:
             self.cards.append(UnoCard("wild", card))
 
         return self.cards
