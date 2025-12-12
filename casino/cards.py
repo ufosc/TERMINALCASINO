@@ -165,6 +165,13 @@ class UnoCard(Card):
             f"{self.__class__.__name__}("
             f"rank={self.rank!r}, color={self.color!r}, hidden={self.hidden!r})"
         )
+    
+    def __eq__(self, other) -> bool:
+        if (self.color == other.color and
+            self.rank == other.rank):
+            return True
+        return False
+
 
 
 class UnoDeck(Deck):
