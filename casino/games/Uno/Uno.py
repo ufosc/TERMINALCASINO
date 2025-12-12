@@ -41,6 +41,29 @@ def draw(deck,disc) -> UnoCard:
     check_deck(deck,disc)
     return c
 
+def print_hand(hand) :
+        """Print the cards side by side."""
+        card_lines = [
+            card.front.strip("\n").splitlines()
+            for card in hand
+        ]
+        max_lines = max(len(lines) for lines in card_lines)
+
+        # pad cards
+        for lines in card_lines:
+            while len(lines) < max_lines:
+                lines.append(" " * len(lines[0]))
+
+        # combine lines horizontally
+        combined_lines = []
+        for i in range(max_lines):
+            combined_lines.append(
+                "  ".join(card_lines[j][i] for j in range(len(hand)))
+            )
+    
+        hand_string = "\n".join(combined_lines)
+        cprint(hand_string)
+
 def play_uno(ctx: GameContext) -> None:
     unodeck_ = UnoDeck()
     current_deck = unodeck_.cards 
@@ -49,7 +72,7 @@ def play_uno(ctx: GameContext) -> None:
 
     display_uno_topbar(ctx)
 
-    # thinking hotseat multiplayer until socket stuff is added
+    # thinking hotseat multiplayer until socket stuff is implemented
     playernum = 0
     while playernum <= 6 and playernum < 1:
         playernum = int(cinput("Input number of players (2-6):"))
@@ -73,11 +96,10 @@ def play_uno(ctx: GameContext) -> None:
     while(continueGame) :
         for i in players :
             player_switch_warning(ctx, i)
-            cprint("Player: " + i.name + "\n\nTop card of the Discard pile: \n" + str(current_card) + "\n\nYour hand:\n")
-            i.print_hand()
-            cprint("\nCards from your hand that can be played:\n")
-            for j in i.playable_cards(current_card):
-                cprint(str(j),end="")
+            cprint("Player: " + i.name + "\n\nTop card of the Discard pile: \n" + str(current_card) + "\n\nYour hand:")
+            print_hand(i.hand)
+            cprint("\nCards from your hand that can be played:")
+            print_hand(i.playable_cards(current_card))
             
             answer = cinput(DRAW_PROMPT)
             if (answer == "D" or answer == "d") :
@@ -85,7 +107,13 @@ def play_uno(ctx: GameContext) -> None:
                 cprint("You drew \n" + str(new_card) + " from the pile.")
                 cinput("Press enter when ready to switch to the next player")
             elif (answer == "P" or answer == "p") :
-                played_card = cinput(WHICH_CARD_PROMPT)
+                played_card_string = cinput(WHICH_CARD_PROMPT)
+                played_card_words = played_card_string.split()
+                valid_card = True
+                if not (len(played_card_words) == 1 or len(played_card_words) == 2):
+                    valid_card = False
+                
+
                 #not implemented yet
             display_uno_topbar(ctx)
         continueGame = False

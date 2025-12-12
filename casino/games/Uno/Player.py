@@ -5,12 +5,8 @@ from casino.utils import cprint
 class Player:
     def __init__(self, id, name) :
         self.id = id
-        self.name = name
+        self.name = name.upper()
         self.hand = []
-
-    def print_hand(self) -> None :
-        for c in self.hand:
-            cprint(str(c),end="")
     
     def draw(self, deck: list[UnoCard]) -> UnoCard:
         c = random.choice(deck)
