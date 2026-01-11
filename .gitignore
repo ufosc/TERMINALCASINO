@@ -28,6 +28,3 @@ __pycache__/
 # Windows Explorer files
 Thumbs.db
 desktop.ini
-
-#local venv
-venv/
