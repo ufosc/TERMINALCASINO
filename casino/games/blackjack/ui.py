@@ -42,29 +42,21 @@ class BlackjackUI:
                           bet: int,
                           hide_dealer_total: bool = False,
                           message: Optional[str] = None):
-        """
-        Main render function. 
-        Layout:
-        1. Header
-        2. Bet Info
-        3. SYSTEM/ERROR MESSAGES (Requested Location)
-        4. Cards
-        """
         self.clear()
         
-        # 1. Header
+        # Header
         display_topbar(self.ctx.account, **HEADER_OPTIONS)
         
-        # 2. Bet Info
+        # Bet Info
         cprint(f"Bet: {bet}")
         
-        # 3. Message Area (The requested change)
+        # Message Area
         if message:
             cprint(f"\n{message}\n")
         else:
-            cprint("\n") # Empty space to keep layout stable
+            cprint("\n")
 
-        # 4. Dealer Area
+        # Dealer Area
         cprint("Dealer hand:")
         cprint(self._render_cards_ascii(dealer_hand))
         if not hide_dealer_total:
@@ -72,14 +64,13 @@ class BlackjackUI:
         else:
              cprint("Total: ?")
         
-        # 5. Player Area
+        # Player Area
         cprint("-" * 20)
         cprint("Your hand:")
         cprint(self._render_cards_ascii(player_hand))
         cprint(f"Total: {player_total}")
 
     def prompt_bet(self, min_bet: int, balance: int) -> int:
-        """Loops until a valid bet is entered."""
         error = None
         while True:
             self.clear()
@@ -123,5 +114,4 @@ class BlackjackUI:
                 error = MSG_INVALID_NUMBER
 
     def print_simple_message(self, msg: str):
-        """For end of game messages or blocking alerts."""
         cprint(msg)

@@ -2,14 +2,14 @@ from casino.cards import StandardDeck, Card
 
 class BlackjackCore:
     """
-    Handles the game state and rules logic. 
-    Decoupled from UI to allow future refactoring of other variants.
+    Generic Blackjack mechanics. 
+    Responsible for Deck management, Hand state, and Value calculation.
     """
     def __init__(self, num_decks: int = 1):
         self.deck = StandardDeck(num_decks)
         self.player_hand: list[Card] = []
         self.dealer_hand: list[Card] = []
-        
+
     def deal_card_to_player(self):
         self.player_hand.append(self.deck.draw())
 
@@ -21,7 +21,6 @@ class BlackjackCore:
         self.dealer_hand = []
 
     def get_hand_total(self, hand: list[Card]) -> int:
-        """Calculates the blackjack value of a hand."""
         total = 0
         aces = 0
         for card in hand:
@@ -51,3 +50,9 @@ class BlackjackCore:
 
     def is_busted(self, hand: list[Card]) -> bool:
         return self.get_hand_total(hand) > 21
+    
+    def dealer_should_hit(self, stand_on_soft_17=True) -> bool:
+        """
+        (Future-proofing: stand_on_soft_17 param could be used here for american rules)
+        """
+        return self.dealer_total < 17

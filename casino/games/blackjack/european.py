@@ -1,9 +1,44 @@
+from enum import Enum, auto
 from casino.types import GameContext
 from .constants import *
 from .core import BlackjackCore
 from .ui import BlackjackUI
 
+# --- ENUMS & RULES STRATEGY ---
+
+class RoundResult(Enum):
+    PLAYER_BUST = auto()
+    DEALER_BUST = auto()
+    PLAYER_BJ = auto()
+    DEALER_BJ = auto()
+    PUSH = auto()
+    PLAYER_WIN = auto()
+    DEALER_WIN = auto()
+
+class EuropeanRules:
+    """
+    Encapsulates logic specific to European Blackjack (ENHC).
+    """
+    @staticmethod
+    def can_double(hand_total: int) -> bool:
+        """Rule: Double down only allowed on hard totals of 9, 10, or 11."""
+        return hand_total in {9, 10, 11}
+
+    @staticmethod
+    def get_payout(result: RoundResult) -> float:
+        if result == RoundResult.PLAYER_BJ:
+            return 2.5  # 3:2 Payout
+        elif result in {RoundResult.PLAYER_WIN, RoundResult.DEALER_BUST}:
+            return 2.0  # 1:1 Payout
+        elif result == RoundResult.PUSH:
+            return 1.0  # Push
+        return 0.0
+
+# --- GAME CONTROLLER ---
+
 class EuropeanBlackjackGame:
+    STUBBORN_LIMIT = 13
+
     def __init__(self, ctx: GameContext):
         self.ctx = ctx
         self.ui = BlackjackUI(ctx)
@@ -12,154 +47,155 @@ class EuropeanBlackjackGame:
         self.stubborn_counter = 0
 
     def run(self):
-        if self.ctx.account.balance < self.ctx.config.blackjack_min_bet:
-            self.ui.clear()
-            self.ui.print_simple_message(MSG_NO_FUNDS)
-            self.ui.get_input("Press enter to exit.")
-            return
+        if not self._check_funds(): return
 
-        # Setup
         num_decks = self.ui.prompt_deck_count()
         self.core = BlackjackCore(num_decks)
         
-        # Main Game Loop
-        playing = True
-        while playing:
+        while True:
             self.play_round()
-            
-            if self.ctx.account.balance < self.ctx.config.blackjack_min_bet:
-                self.ui.print_simple_message(MSG_NO_FUNDS)
-                break
-                
-            if not self.ask_play_again():
-                break
+            if not self._check_funds(): break
+            if not self.ask_play_again(): break
         
         self.ui.clear()
         self.ui.print_simple_message("\nThanks for playing.\n\n")
 
+    def _check_funds(self) -> bool:
+        if self.ctx.account.balance < self.ctx.config.blackjack_min_bet:
+            self.ui.clear()
+            self.ui.print_simple_message(MSG_NO_FUNDS)
+            self.ui.get_input("Press enter to exit.")
+            return False
+        return True
+
     def play_round(self):
-        # 1. Betting
+        # Betting
         self.bet = self.ui.prompt_bet(self.ctx.config.blackjack_min_bet, self.ctx.account.balance)
         self.ctx.account.withdraw(self.bet)
         
-        # 2. Dealing
+        # Dealing
         self.core.reset_hands()
         self.core.deal_card_to_player()
         self.core.deal_card_to_player()
-        self.core.deal_card_to_dealer() # Only 1 card in EU
+        self.core.deal_card_to_dealer() # Dealer gets 1 card in EU ruleset
 
-        # 3. Check Natural Blackjack
+        # Check Natural Blackjack
         if self.core.is_blackjack(self.core.player_hand):
-            # EU RULE FIX: Dealer must draw their second card now 
-            # to check if they also have BJ (Push)
-            self.core.deal_card_to_dealer() 
-            self.refresh_table(hide_dealer_total=False, message="Checking dealer hand...")
-            self.resolve_round(player_bj=True)
+            self.core.deal_card_to_dealer() # Draw 2nd card to check tie
+            self.refresh_table(message="Checking dealer hand...")
+            
+            if self.core.is_blackjack(self.core.dealer_hand):
+                self._handle_resolution(RoundResult.PUSH)
+            else:
+                self._handle_resolution(RoundResult.PLAYER_BJ)
             return
 
-        # 4. Player Turn
+        # Player Turn
         if not self.player_turn_loop():
-            self.resolve_round(player_busted=True)
+            self._handle_resolution(RoundResult.PLAYER_BUST)
             return
 
-        # 5. Dealer Turn
+        # Dealer Turn
         self.dealer_turn_loop()
         
-        # 6. Resolution
-        self.resolve_round()
+        # Determine Winner
+        result = self._determine_winner()
+        self._handle_resolution(result)
 
     def player_turn_loop(self) -> bool:
-        """
-        Manages input loop. Returns False if busted, True if stayed.
-        """
         first_turn = True
-        message_state = None
+        msg = None
         
         while True:
-            # Render with current message
-            self.refresh_table(hide_dealer_total=False, message=message_state)
-            message_state = None 
+            self.refresh_table(message=msg)
+            msg = None
 
-            options = "[S]tay   [H]it"
-            valid = "sh"
-            
-            # EU RULE FIX: Double down usually restricted to hard 9, 10, or 11
-            can_double = (
-                first_turn 
-                and self.ctx.account.balance >= self.bet 
-                and self.core.player_total in [9, 10, 11]
-            )
+            can_afford = self.ctx.account.balance >= self.bet
+            can_double = (first_turn 
+                          and can_afford 
+                          and EuropeanRules.can_double(self.core.player_total))
 
-            if can_double:
-                options += "   [D]ouble"
-                valid += "d"
-            
+            options = "[S]tay   [H]it" + ("   [D]ouble" if can_double else "")
             action = self.ui.get_input(options).lower().strip()
-            
-            if action not in valid or not action:
-                if action == 'd' and not can_double:
-                    message_state = "👮: European rules restrict doubling to 9, 10, or 11."
-                else:
-                    message_state = MSG_INVALID_CHOICE
-                    self.stubborn_counter += 1
-                
-                if self.stubborn_counter >= 13:
-                    self.ui.clear()
-                    self.ui.print_simple_message(MSG_SECURITY)
-                    exit()
-                continue 
-            
-            first_turn = False
             
             if action == 's':
                 return True
+            
             elif action == 'h':
                 self.core.deal_card_to_player()
                 if self.core.is_busted(self.core.player_hand):
                     return False
+                first_turn = False 
+            
             elif action == 'd':
-                self.ctx.account.withdraw(self.bet)
-                self.bet *= 2
-                self.core.deal_card_to_player()
-                return not self.core.is_busted(self.core.player_hand)
+                if can_double:
+                    self.ctx.account.withdraw(self.bet)
+                    self.bet *= 2
+                    self.core.deal_card_to_player()
+                    return not self.core.is_busted(self.core.player_hand)
+                else:
+                    if first_turn and can_afford and not EuropeanRules.can_double(self.core.player_total):
+                        msg = MSG_EUROPEAN_DOUBLE
+                    else:
+                        msg = MSG_INVALID_CHOICE
+                        self._check_stubbornness()
+            else:
+                msg = MSG_INVALID_CHOICE
+                self._check_stubbornness()
 
     def dealer_turn_loop(self):
-        # In EU, dealer starts with 1 card. Logic is same, but visually distinctive.
-        while self.core.dealer_total < 17:
-             self.ui.print_simple_message("Dealer draws...") 
+        while self.core.dealer_should_hit():
+             self.ui.print_simple_message("Dealer draws...")
              self.core.deal_card_to_dealer()
-             # Small delay or refresh could go here for visual effect
-             self.refresh_table()
 
-    def resolve_round(self, player_bj=False, player_busted=False):
+    def _determine_winner(self) -> RoundResult:
+        if self.core.is_busted(self.core.dealer_hand):
+            return RoundResult.DEALER_BUST
+        
         p_tot = self.core.player_total
         d_tot = self.core.dealer_total
-        d_bj = self.core.is_blackjack(self.core.dealer_hand)
         
-        msg = ""
-        if player_busted:
-            msg = f"You busted. Dealer wins: -{self.bet}"
-        elif player_bj:
-            if d_bj:
-                msg = "Both have Blackjack. Push."
-                self.ctx.account.deposit(self.bet)
-            else:
-                msg = f"Blackjack! You win: +{self.bet}"
-                self.ctx.account.deposit(self.bet * 2.5)
-        elif self.core.is_busted(self.core.dealer_hand):
-            msg = f"Dealer busted. You win: +{self.bet}"
-            self.ctx.account.deposit(self.bet * 2)
-        elif p_tot > d_tot:
-            msg = f"You win: +{self.bet}"
-            self.ctx.account.deposit(self.bet * 2)
+        if p_tot > d_tot:
+            return RoundResult.PLAYER_WIN
         elif p_tot < d_tot:
-            msg = f"Dealer wins: -{self.bet}"
+            return RoundResult.DEALER_WIN
         else:
-            msg = "Push."
-            self.ctx.account.deposit(self.bet)
-        
-        self.refresh_table(hide_dealer_total=False, message=msg)
+            return RoundResult.PUSH
+
+    def _handle_resolution(self, result: RoundResult):
+        msg = ""
+        payout_mult = EuropeanRules.get_payout(result)
+
+        if result == RoundResult.PLAYER_BUST:
+            msg = MSG_PLAYER_BUST
+        elif result == RoundResult.DEALER_BUST:
+            msg = MSG_DEALER_BUST
+        elif result == RoundResult.PLAYER_BJ:
+            msg = MSG_PLAYER_BJ
+        elif result == RoundResult.DEALER_WIN:
+            msg = MSG_DEALER_WIN + f" {self.core.dealer_total} vs {self.core.player_total}"
+        elif result == RoundResult.PLAYER_WIN:
+            msg = MSG_PLAYER_WIN + f" {self.core.player_total} vs {self.core.dealer_total}"
+        elif result == RoundResult.PUSH:
+            msg = MSG_PUSH
+
+        # Payout Execution
+        if payout_mult > 0:
+            winnings = int(self.bet * payout_mult)
+            self.ctx.account.deposit(winnings)
+            msg += f" (+{winnings})"
+        else:
+            msg += f" (-{self.bet})"
+
+        self.refresh_table(message=msg)
         self.ui.get_input("Press Enter to continue...")
+
+    def _check_stubbornness(self):
+        self.stubborn_counter += 1
+        if self.stubborn_counter >= self.STUBBORN_LIMIT:
+            self.ui.clear()
+            self.ui.print_simple_message(MSG_SECURITY)
+            exit()
 
     def refresh_table(self, hide_dealer_total=False, message=None):
         self.ui.render_game_state(
@@ -176,14 +212,8 @@ class EuropeanBlackjackGame:
         error_msg = None
         while True:
             self.refresh_table(hide_dealer_total=False, message=error_msg or MSG_STAY_TABLE)
-            
             choice = self.ui.get_input(PROMPT_YES_NO).lower().strip()
             if choice in ['y', 'yes']: return True
             if choice in ['n', 'no']: return False
-            
             error_msg = MSG_INVALID_CHOICE
             self.stubborn_counter += 1
-
-def play_european_blackjack(ctx: GameContext):
-    game = EuropeanBlackjackGame(ctx)
-    game.run()

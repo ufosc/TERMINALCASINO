@@ -20,3 +20,14 @@ MSG_INVALID_BET = "🤵: That's not a valid bet."
 MSG_NO_FUNDS = "🤵: You don't have enough chips to play. Goodbye."
 MSG_INVALID_CHOICE = "🤵: That's not a choice in this game."
 PROMPT_YES_NO = "[Y]es   [N]o"
+
+# Result messages
+MSG_PLAYER_BUST = "You busted. Dealer wins."
+MSG_DEALER_BUST = "Dealer busted. You win!"
+MSG_PLAYER_BJ = "Blackjack! You win!"
+MSG_DEALER_WIN = "Dealer wins."
+MSG_PLAYER_WIN = "You win!"
+MSG_PUSH = "Push."
+
+# Rules messages
+MSG_EUROPEAN_DOUBLE = "European rules: Double only on 9, 10, or 11."
