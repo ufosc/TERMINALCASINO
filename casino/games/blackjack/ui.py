@@ -65,7 +65,6 @@ class BlackjackUI:
              cprint("Total: ?")
         
         # Player Area
-        cprint("-" * 20)
         cprint("Your hand:")
         cprint(self._render_cards_ascii(player_hand))
         cprint(f"Total: {player_total}")

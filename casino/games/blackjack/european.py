@@ -217,3 +217,7 @@ class EuropeanBlackjackGame:
             if choice in ['n', 'no']: return False
             error_msg = MSG_INVALID_CHOICE
             self.stubborn_counter += 1
+
+def play_european_blackjack(ctx: GameContext):
+    game = EuropeanBlackjackGame(ctx)
+    game.run()
