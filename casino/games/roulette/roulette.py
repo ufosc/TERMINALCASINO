@@ -257,6 +257,10 @@ class Roulette:
 
         return self.winning_value
 
+    def reset_round(self) -> None:
+        self.bets.clear()
+        self.winning_value = None
+
     def submit_bets(self, ctx: GameContext) -> None | str:
         """
         Instruct users to submit bets.
@@ -452,6 +456,7 @@ def play_roulette(context: GameContext) -> None:
 
     roulette = AmericanRoulette(accounts)
     while continue_game:
+        roulette.reset_round()
         clear_screen()
         display_roulette_topbar(context)
 
