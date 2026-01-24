@@ -622,21 +622,23 @@ def play_blackjack(context: GameContext):
         "standard": StandardBlackjack(context),
     }
 
-    blackjack = VARIANTS["standard"]
+    choice = "standard"
+    blackjack = VARIANTS[choice]
 
     while True:
-        status = blackjack.play_round()
+        end_of_round_status = blackjack.play_round()
 
-        if status.upper() == "EXIT":
+        if end_of_round_status.upper() == "EXIT":
             cprint("Exiting Blackjack...")
             sleep(0.5)
             break
-        elif status.upper() == "NEW_VARIANT":
+        elif end_of_round_status.upper() == "NEW_VARIANT":
             # Let user pick a new variant of Blackjack to play
             pass
-        elif status.upper() == "CONTINUE":
+        elif end_of_round_status.upper() == "CONTINUE":
+            blackjack.reset()
             continue
-        elif status.upper() == "KICKED":
+        elif end_of_round_status.upper() == "KICKED":
             action: str = None
             while action != "":
                 clear_screen()
