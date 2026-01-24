@@ -245,6 +245,22 @@ class Blackjack(ABC):
         """
         pass
 
+    def reset(self, context = None):
+        """
+        Reset a Blackjack object.
+
+        This function is typically run in between rounds to reset the state of Blackjack
+        """
+
+        # Reset Blackjack with old configuration
+        if context == None:
+            self.__init__(self.context)
+
+        # Reset Blackjack but load a new configuration
+        else:
+            self.__init__(context)
+
+
 class StandardBlackjack(Blackjack):
     def __init__(self, ctx: GameContext) -> None:
         super().__init__(ctx)
