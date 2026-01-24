@@ -232,7 +232,7 @@ class Blackjack(ABC):
         """
         Plays a single round of the Blackjack variant
 
-        Note that most Blackjack setups will execute the following steps in this exact order:
+        Note that most Blackjack variants will execute the following steps in this exact order:
 
         self.bet()             # Users place bets. Take placed bet amount from users
         self.deal_cards()      # Deal cards to users
@@ -578,10 +578,10 @@ class StandardBlackjack(Blackjack):
             clear_screen()
             self.display_blackjack_topbar(player.bet)
 
-            cprint("Dealer hand:")
+            cprint(f"Dealer Hand: {self.dealer.hand_total}")
             print_cards(self.dealer.hand)
 
-            cprint("Your hand:")
+            cprint(f"Your Hand: {player.hand_total}")
             print_cards(player.hand)
 
         display_msg: dict[str, str] = {
