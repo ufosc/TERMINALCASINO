@@ -12,6 +12,57 @@ from casino.utils import clear_screen, cprint, cinput, display_topbar, print_car
 from casino.games.blackjack.CONSTANTS import *
 
 
+def calc_hand_total(hand: list[StandardCard]) -> int:
+    """
+    Calculate the total value of a hand.
+
+    Aces count as 11 unless the total exceeds 21, in which case they are reduced to 1
+    as many times as needed to avoid busting.
+
+    NOTE: Busting can still occur even after Aces are reduced
+
+    Examples
+    --------
+    >>> calc_hand_total([A♠, 9♥])      # Ace counted as 11 (default)
+    20
+
+    >>> calc_hand_total([A♠, K♥, 9♦])  # Ace reduced from 11 to 1
+    20
+
+    >>> calc_hand_total([A♠, A♥, 9♦])  # One Ace reduced from 11 to 1
+    21
+
+    >>> calc_hand_total([A♠, A♥, A♦, 9♣])  # Multiple Aces reduced from 11 to 1
+    12
+
+    >>> calc_hand_total([A♠, A♥, 10♦, 10♣]) # Multiple Aces reduced from 11 to 1. Results in bust
+    22
+    """
+
+    total = 0
+    aces  = 0
+
+    for card in hand:
+        if not isinstance(card, StandardCard):
+            raise ValueError(f"Expected StandardCard, got {type(card)}.")
+        if card.rank in {"J", "Q", "K"}:
+            # Face card
+            total += 10
+        elif card.rank == "A":
+            # Special case: Ace card
+            total += 11
+            aces += 1
+        else:
+            total += int(card.rank)
+    
+    # Adjust Ace card value if exceeding 21
+    while aces > 0 and total > 21:
+        total -= 10
+        aces  -= 1
+    
+    return total
+
+
 class Player:
     """
     Defines a player in a blackjack game.
@@ -42,6 +93,16 @@ class Player:
         self.account.balance = self.balance
         return self.account
 
+    @property
+    def hand_total(self):
+        """
+        Total value of Player's hand
+
+        This attribute holds the sum of the values of all cards in the player's hand.
+        It is updated whenever the player's hand changes (e.g., when new cards are drawn).
+        """
+        return calc_hand_total(self.hand)
+
 
 class Dealer:
     """
@@ -52,6 +113,15 @@ class Dealer:
         self.has_blackjack: bool = False
         self.hand: List[StandardCard] = []
 
+    @property
+    def hand_total(self):
+        """
+        Total value of Dealer's hand
+
+        This attribute holds the sum of the values of all cards in the dealer's hand.
+        It is updated whenever the dealer's hand changes (e.g., when new cards are drawn).
+        """
+        return calc_hand_total(self.hand)
 
 class Blackjack(ABC):
     """
@@ -92,57 +162,6 @@ class Blackjack(ABC):
         display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
         if bet is not None:
             cprint(f"Bet: {bet}")
-
-    @staticmethod
-    def calc_hand_total(hand: list[StandardCard]) -> int:
-        """
-        Calculate the total value of a hand.
-
-        Aces count as 11 unless the total exceeds 21, in which case they are reduced to 1
-        as many times as needed to avoid busting.
-
-        NOTE: Busting can still occur even after Aces are reduced
-
-        Examples
-        --------
-        >>> calc_hand_total([A♠, 9♥])      # Ace counted as 11 (default)
-        20
-
-        >>> calc_hand_total([A♠, K♥, 9♦])  # Ace reduced from 11 to 1
-        20
-
-        >>> calc_hand_total([A♠, A♥, 9♦])  # One Ace reduced from 11 to 1
-        21
-
-        >>> calc_hand_total([A♠, A♥, A♦, 9♣])  # Multiple Aces reduced from 11 to 1
-        12
-
-        >>> calc_hand_total([A♠, A♥, 10♦, 10♣]) # Multiple Aces reduced from 11 to 1. Results in bust
-        22
-        """
-
-        total = 0
-        aces  = 0
-
-        for card in hand:
-            if not isinstance(card, StandardCard):
-                raise ValueError(f"Expected StandardCard, got {type(card)}.")
-            if card.rank in {"J", "Q", "K"}:
-                # Face card
-                total += 10
-            elif card.rank == "A":
-                # Special case: Ace card
-                total += 11
-                aces += 1
-            else:
-                total += int(card.rank)
-        
-        # Adjust Ace card value if exceeding 21
-        while aces > 0 and total > 21:
-            total -= 10
-            aces  -= 1
-        
-        return total
 
     @abstractmethod
     def bet(self):
@@ -337,9 +356,9 @@ class StandardBlackjack(Blackjack):
                 continue
             
             while True:
-                cprint("Dealer Hand:")
+                cprint(f"Dealer Hand: {self.dealer.hand_total}")
                 print_cards(self.dealer.hand)
-                cprint("Player Hand:")
+                cprint(f"Player Hand: {self.players[0].hand_total}")
                 print_cards(player.hand)
 
                 action = cinput(f"[S]tand   [H]it")
@@ -370,7 +389,7 @@ class StandardBlackjack(Blackjack):
                     card.hidden = False
                     player.hand.append(card)
 
-                    if self.calc_hand_total(player.hand) > 21:
+                    if player.hand_total > 21:
                         self.player_win_status[i] = "lose"
                         break
 
@@ -379,7 +398,7 @@ class StandardBlackjack(Blackjack):
         Phase of blackjack where dealer draws cards.
 
         Note that this function uses "soft 17" as a rule due to the
-        implementation of Blackjack.calc_hand_total().
+        implementation of calc_hand_total().
         
         "Soft 17" refers to a situation where the dealer has an
         Ace and a 6.
@@ -387,16 +406,14 @@ class StandardBlackjack(Blackjack):
         Since the dealer must stand on 17, they will stand in this
         specific situation.
         """
-        dealer_total = self.calc_hand_total(self.dealer.hand)
 
         for card in self.dealer.hand:
             card.hidden = False
 
-        while dealer_total < 17:
+        while self.dealer.hand_total < 17:
             new_card: StandardCard = self.deck.draw()
             new_card.hidden = False
             self.dealer.hand.append(new_card)
-            dealer_total = self.calc_hand_total(self.dealer.hand)
 
     @staticmethod
     def outcome_msg(result: str, bet: int) -> List[str]:
@@ -456,15 +473,15 @@ class StandardBlackjack(Blackjack):
         
         win_msgs: List[str] = []
         dealer_won = False
-        dealer_total: int = self.calc_hand_total(self.dealer.hand)
+
         # Alias for quickly evaluating totals
-        d = dealer_total
+        d = self.dealer.hand_total
 
         for i, player in enumerate(self.players):
             win_msg: List[str] = []
             
             # Player total
-            p: int = self.calc_hand_total(player.hand)
+            p: int = player.hand_total
 
             # Player's win status
             win_status: str = None
@@ -494,13 +511,13 @@ class StandardBlackjack(Blackjack):
                 win_status = "win"
                 result = "player_wins"
 
-            win_msg: str = result
-            win_msg = "\n".join(self.outcome_msg(result, player.bet))
+            outcome_dict = self.outcome_msg(result, player.bet)
+            outcome_msg = outcome_dict["message"] + "\n" + outcome_dict["bet_result"]
 
             self.player_win_status[i] = win_status
         
             # Print final result to player
-            cprint(win_msg)
+            cprint(outcome_msg)
 
     def payout(self):
         """
