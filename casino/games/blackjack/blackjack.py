@@ -286,8 +286,9 @@ class StandardBlackjack(Blackjack):
 
                 # Check that user has enough money in account to bet
                 try:
-                    player.account.withdraw(bet)
                     player.bet = bet
+                    player.balance -= bet
+                    player.update_account()
                 except ValueError:
                     error_msg = f"Insufficient funds. You only have {player.balance} chips."
                     continue
@@ -356,7 +357,9 @@ class StandardBlackjack(Blackjack):
                 continue
             
             while True:
-                cprint(f"Dealer Hand: {self.dealer.hand_total}")
+                clear_screen()
+                self.display_blackjack_topbar()
+                cprint(f"Dealer Hand")
                 print_cards(self.dealer.hand)
                 cprint(f"Player Hand: {self.players[0].hand_total}")
                 print_cards(player.hand)
