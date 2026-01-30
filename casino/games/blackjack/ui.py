@@ -50,11 +50,6 @@ class BlackjackUI:
         # Bet Info
         cprint(f"Bet: {bet}")
         
-        # Message Area
-        if message:
-            cprint(f"\n{message}\n")
-        else:
-            cprint("\n")
 
         # Dealer Area
         cprint("Dealer hand:")
@@ -68,6 +63,12 @@ class BlackjackUI:
         cprint("Your hand:")
         cprint(self._render_cards_ascii(player_hand))
         cprint(f"Total: {player_total}")
+
+        # Message Area
+        if message:
+            cprint(f"\n{message}\n")
+        else:
+            cprint("\n")
 
     def prompt_bet(self, min_bet: int, balance: int) -> int:
         error = None
