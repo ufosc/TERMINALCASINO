@@ -654,4 +654,4 @@ def export():
         with open(ASSET_DIR, "w", encoding="utf-8") as file:
             file.write(card)
 
-export()
+# export()  # Commented out - only run when explicitly needed
