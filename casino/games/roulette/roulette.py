@@ -222,11 +222,19 @@ class Roulette:
             print("".join(row))
 
     def wheel_animation(self, ctx: GameContext, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
+        clear_screen()
+        display_roulette_topbar(ctx)
+
+        # Show each number multiple times to reduce strobing
+        frames_per_number = 7
+        frame_delay = sec_btwn_spins / frames_per_number
+
         for num in sequence:
-            clear_screen()
-            display_roulette_topbar(ctx)
-            self.print_wheel(highlighted_num = num)
-            time.sleep(sec_btwn_spins)
+            for _ in range(frames_per_number):
+                sys.stdout.write("\x1b[6;1H")
+                self.print_wheel(highlighted_num = num)
+                sys.stdout.flush()
+                time.sleep(frame_delay)
 
     def spin_wheel(self, ctx: GameContext) -> tuple[str, str, int, int]:
         """
