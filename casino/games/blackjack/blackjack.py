@@ -6,39 +6,12 @@ from time import sleep
 from casino.cards import StandardCard, StandardDeck, Card
 from casino.types import GameContext
 from casino.accounts import Account
-
 from casino.utils import clear_screen, cprint, cinput, display_topbar, print_cards
 
-from casino.games.blackjack.CONSTANTS import *
+FULL_DECK: StandardDeck = StandardDeck()
 
-
-def calc_hand_total(hand: list[StandardCard]) -> int:
-    """
-    Calculate the total value of a hand.
-
-    Aces count as 11 unless the total exceeds 21, in which case they are reduced to 1
-    as many times as needed to avoid busting.
-
-    NOTE: Busting can still occur even after Aces are reduced
-
-    Examples
-    --------
-    >>> calc_hand_total([A♠, 9♥])      # Ace counted as 11 (default)
-    20
-
-    >>> calc_hand_total([A♠, K♥, 9♦])  # Ace reduced from 11 to 1
-    20
-
-    >>> calc_hand_total([A♠, A♥, 9♦])  # One Ace reduced from 11 to 1
-    21
-
-    >>> calc_hand_total([A♠, A♥, A♦, 9♣])  # Multiple Aces reduced from 11 to 1
-    12
-
-    >>> calc_hand_total([A♠, A♥, 10♦, 10♣]) # Multiple Aces reduced from 11 to 1. Results in bust
-    22
-    """
-
+def hand_total(turn: list[StandardCard]) -> int:
+    """Calculate the total of each hand."""
     total = 0
     aces  = 0
 
@@ -162,42 +135,6 @@ class Blackjack(ABC):
         display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
         if bet is not None:
             cprint(f"Bet: {bet}")
-
-    @abstractmethod
-    def bet(self):
-        """
-        Asks users to submit a bet
-        """
-        pass
-
-    @abstractmethod
-    def deal_cards(self):
-        pass
-
-    @abstractmethod
-    def player_decision(self):
-        pass
-
-    @abstractmethod
-    def dealer_draw(self):
-        pass
-
-    @abstractmethod
-    def check_win(self):
-        pass
-
-    @abstractmethod
-    def payout(self):
-        pass
-
-    @abstractmethod
-    def display_results(self):
-        pass
-
-    def play_again(self) -> str:
-        """
-        Asks user if they would like to play again.
-        """
         clear_screen()
         self.display_blackjack_topbar()
 
