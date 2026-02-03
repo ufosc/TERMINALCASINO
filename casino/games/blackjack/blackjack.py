@@ -43,10 +43,18 @@ def deal_card(turn: list[Card], deck: StandardDeck) -> None:
 
 def double_down(ctx: GameContext, player_hand: list[Card], deck: StandardDeck, bet: int) -> int:
     account = ctx.account
-    account.withdraw(bet)
-    bet = bet * 2
-    deal_card(player_hand, deck)
-    return bet
+
+    if bet < account.balance:
+        account.withdraw(bet)
+        bet *= 2
+        deal_card(player_hand, deck)
+        return bet
+    else:
+        bet = bet + account.balance
+        account.withdraw(account.balance)
+        deal_card(player_hand, deck)
+        return bet
+
 
 
 def hand_total(turn: list[StandardCard]) -> int:
@@ -302,8 +310,11 @@ def play_blackjack(ctx: GameContext) -> None:
 
             # conditional actions
             account = ctx.account
-            if initial_hand and account.balance > bet:
+            if initial_hand and account.balance >= bet:
                 actions_str = "[S]tay   [H]it   [D]ouble Down"
+                actions = "SsHhDd"
+            elif initial_hand and account.balance > 0:
+                actions_str = "[S]tay   [H]it   [D]ouble for Less"
                 actions = "SsHhDd"
             else:
                 actions_str = "[S]tay   [H]it"
