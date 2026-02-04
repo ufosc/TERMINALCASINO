@@ -103,7 +103,9 @@ def main_menu(ctx: GameContext) -> None:
             cprint("┌" + "─" * 30 + "┐")
             cprint("│" + " " * 30 + "│")
             for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
+                cprint(
+                    f"│{('[{}] {}'.format(i, name.title()) + ' ' * (max_length - len(name))).center(30)}│".center(width)
+                )
             cprint("│" + " " * 30 + "│")
             cprint("└" + "─" * 30 + "┘")
 
