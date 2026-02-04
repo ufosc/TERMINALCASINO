@@ -7,10 +7,11 @@ from casino.cards import StandardCard, StandardDeck, Card
 from casino.types import GameContext
 from casino.accounts import Account
 from casino.utils import clear_screen, cprint, cinput, display_topbar, print_cards
+from .constants import *
 
 FULL_DECK: StandardDeck = StandardDeck()
 
-def hand_total(turn: list[StandardCard]) -> int:
+def calc_hand_total(hand: list[StandardCard]) -> int:
     """Calculate the total of each hand."""
     total = 0
     aces  = 0
@@ -135,6 +136,11 @@ class Blackjack(ABC):
         display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
         if bet is not None:
             cprint(f"Bet: {bet}")
+
+    def play_again(self) -> str:
+        """
+        Asks user if they would like to play again.
+        """
         clear_screen()
         self.display_blackjack_topbar()
 
