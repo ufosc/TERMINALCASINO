@@ -549,7 +549,7 @@ class StandardBlackjack(Blackjack):
             while action != "":
                 action = cinput("Press [Enter] to leave Results")
 
-    def play_round(self):
+    def play_round(self) -> str:
         """
         Plays a single round of Standard Blackjack
         """
