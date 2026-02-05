@@ -602,4 +602,4 @@ def play_blackjack(context: GameContext):
             cprint("Exiting Blackjack...")
             sleep(0.5)
         else:
-            raise ValueError(f"{status} is not a valid status.")
+            raise ValueError(f"{end_of_round_status} is not a valid exit status.")
