@@ -30,4 +30,4 @@ Thumbs.db
 desktop.ini
 
 #local venv
-venv/
+.venv/
