@@ -161,20 +161,20 @@ class Blackjack(ABC):
 
             # Ask user if they would like to stay at the table  
             cprint(STAY_AT_TABLE_PROMPT)
-            play_again = cinput(YES_OR_NO_PROMPT)
+            play_again: str = cinput(YES_OR_NO_PROMPT)
 
-            status: str = None
+            status: str = ""
             if play_again.upper() in {"", "Y", "YES"}:
                 status = "CONTINUE"
             elif play_again.upper() in {"V", "VARIANT"}:
                 status = "VARIANT"
-            elif play_again.upper() == "NO" or play_again == "N":
+            elif play_again.upper() in {"N", "NO"}:
                 clear_screen()
                 cprint("\nThanks for playing!\n\n")
                 status = "EXIT"
             else:
                 # Notify user that they must enter a valid input
-                pass
+                cprint(f"{play_again} is not a valid value.")
 
             return status
 
