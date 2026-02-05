@@ -64,7 +64,15 @@ class Player:
         """
         Update Account object's balance
         """
-        self.account.balance = self.balance
+
+        # Compare Player.balance with Player's account balance
+        difference = self.balance - self.account.balance
+
+        if difference < 0:
+            self.account.withdraw(abs(difference))
+        elif difference > 0:
+            self.account.deposit(difference)
+        
         return self.account
 
     @property
