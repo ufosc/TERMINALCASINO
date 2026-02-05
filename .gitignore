@@ -31,3 +31,6 @@ desktop.ini
 
 #local venv
 .venv/
+
+# Zensical-ignored folders
+site/
