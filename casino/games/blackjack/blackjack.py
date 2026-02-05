@@ -584,7 +584,7 @@ def play_blackjack(context: GameContext):
 
         if end_of_round_status.upper() == "EXIT":
             cprint("Exiting Blackjack...")
-            sleep(0.5)
+            sleep(1.0)
             break
         elif end_of_round_status.upper() == "NEW_VARIANT":
             # Let user pick a new variant of Blackjack to play
