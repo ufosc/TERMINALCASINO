@@ -248,12 +248,15 @@ class StandardBlackjack(Blackjack):
                         error_msg = f"The minimum bet is {self.MINIMUM_BET} chips."
                         continue
                 except ValueError:
-                    error_msg = INVALID_BET_MSG
+                    error_msg = "Enter a number."
                     continue
 
                 # Check that user has enough money in account to bet
                 try:
                     player.bet = bet
+                    if player.bet > player.balance:
+                        raise ValueError("Player betting more than their balance")
+
                     player.balance -= bet
                     player.update_account()
                 except ValueError:
