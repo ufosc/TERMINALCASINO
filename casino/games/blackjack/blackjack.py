@@ -600,6 +600,6 @@ def play_blackjack(context: GameContext):
                 action = cinput("Press [Enter] to exit.")
 
             cprint("Exiting Blackjack...")
-            sleep(0.5)
+            sleep(1.0)
         else:
             raise ValueError(f"{end_of_round_status} is not a valid exit status.")
