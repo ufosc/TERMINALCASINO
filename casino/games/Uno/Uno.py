@@ -2,7 +2,7 @@ from enum import nonmember
 import time
 import random
 
-from casino.games.uno.player import Player
+from .player import Player
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.cards import UnoDeck, UnoCard
@@ -25,10 +25,9 @@ def display_uno_topbar(ctx: GameContext, margin = None) :
 
 #warning to look away when cards switch
 def player_switch_warning(ctx: GameContext, current_player) : 
-    for i in range(5) :
-        cprint("SWITCHING TO PLAYER " + current_player.name + " IN " + str(5-i) + " SECONDS")
-        time.sleep(1)
-        display_uno_topbar(ctx)
+    display_uno_topbar(ctx)
+    cinput(f"Press enter to reveal {current_player.name}'s cards.")
+    display_uno_topbar(ctx)
 
 #check if deck is empty and reshuffle from discard
 def check_deck(deck, disc) :
@@ -119,7 +118,7 @@ def play_uno(ctx: GameContext) -> None:
             cprint("You drew \n" + str(new_card) + " from the pile.")
         elif (answer == "p" or answer == "play") :
             VALID_COLORS = ["red", "green", "blue", "yellow"]
-            VALID_RANKS  = [str(n) for n in range(0, 10)] + ["+2", "skip", "reverse"]
+            VALID_RANKS  = [str(n) for n in range(0, 10)] + ["draw_2", "skip", "reverse"]
 
             valid_card = False
             while (not valid_card): #checking if Card is in hand and can be played
@@ -129,6 +128,9 @@ def play_uno(ctx: GameContext) -> None:
                 cprint(WHICH_CARD_PROMPT2)
                 played_card_string = cinput(WHICH_CARD_PROMPT3)
                 played_card_words = played_card_string.split()
+
+                if len(played_card_words) == 2 and played_card_words[1] == "+2":
+                    played_card_words[1] = "draw_2"
 
                 if ((not ((len(played_card_words) == 1) and
                     played_card_words[0] in ["wild", "+4"])) and 
