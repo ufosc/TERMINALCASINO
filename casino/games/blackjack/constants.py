@@ -27,8 +27,7 @@ INVALID_BET_MSG        = "🤵: That's not a valid bet."
 NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
 
 # Pay n times the amount of original player bet
-BLACKJACK_MULTIPLIER = 1.5
-BLACKJACK_HEADER = """
+BLACKJACK_MULTIPLIER = 1.5BLACKJACK_HEADER = """
 ┌───────────────────────────────┐
 │     ♠ B L A C K J A C K ♠     │
 └───────────────────────────────┘
