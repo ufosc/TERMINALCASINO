@@ -173,7 +173,7 @@ def play_uno(ctx: GameContext) -> None:
                         currentPlayerIndex = (currentPlayerIndex + direction) % len(players)
                     else:
                         direction *= -1
-                case "+2":
+                case "draw_2":
                     currentPlayerIndex = (currentPlayerIndex + direction) % len(players)
                     players[currentPlayerIndex].draw(current_deck)
                     players[currentPlayerIndex].draw(current_deck)
