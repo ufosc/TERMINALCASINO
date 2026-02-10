@@ -102,6 +102,66 @@ def display_blackjack_topbar(ctx: GameContext, bet: Optional[int]) -> None:
         cprint(f"Bet: {bet}")
 
 
+def offer_insurance(ctx, bet, dealer_hand, player_hand, account):
+    """Offers insurance when dealer shows Ace."""
+    upcard = dealer_hand[0]
+    if upcard.rank != "A":
+        return 0, False
+    
+    # display hands
+    cprint("Dealer hand:")
+    print_hand(dealer_hand, hidden=True)
+    cprint("Your hand:")
+    print_hand(player_hand)
+
+    cprint("Dealer shows an Ace.")
+    cprint("Would you like to buy insurance?")
+
+    choice = cinput(YES_OR_NO_PROMPT)
+    while choice not in "YyNn" or choice == "":
+        clear_screen()
+        display_blackjack_topbar(ctx, bet)
+        cprint(INVALID_YES_OR_NO)
+        choice = cinput(YES_OR_NO_PROMPT)
+
+    while choice in "Yy":
+        max_bet = bet // 2
+        insurance_bet_str = cinput(f"You can bet up to {max_bet} chips. How much would you like to bet for insurance?").strip()
+        insurance_bet = 0
+        try:
+            insurance_bet = int(insurance_bet_str)
+            if insurance_bet > max_bet:
+                cprint(f"The maximum bet is {max_bet} chips.")
+                continue
+        except ValueError:
+            cprint(INVALID_BET_MSG)
+            continue
+        try:
+            account.withdraw(insurance_bet)
+        except ValueError:
+            cprint(f"Insufficient funds. You only have {account.balance} chips.")
+            continue
+        return insurance_bet, True # success
+
+    return 0, False
+
+def resolve_insurance_win(account, insurance_bet, insurance_taken):
+    """Payout 2:1 insurance if dealer has blackjack."""
+    if insurance_taken and insurance_bet > 0:
+        # payout = return bet + 2× profit
+        account.deposit(insurance_bet * 3)
+        return f"Insurance pays out: +{insurance_bet * 2} chips\n"
+    else:
+        return ""
+
+def resolve_insurance_loss(insurance_bet, insurance_taken):
+    """Player loses insurance immediately when dealer does not have blackjack."""
+    if insurance_taken and insurance_bet > 0:
+        return f"You lose your insurance bet: -{insurance_bet} chips\n"
+    else:
+        return ""
+
+
 def play_blackjack(ctx: GameContext) -> None:
     """Play a blackjack game."""
     account = ctx.account
