@@ -27,12 +27,13 @@ GAME_CHOICE_PROMPT = "Please choose a game to play: "
 # To add a new game, just add a handler function to GAME_HANDLERS
 
 GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
-    "blackjack": games.blackjack.play_blackjack,
+    "blackjack (U.S.)": games.blackjack.play_blackjack,
+    "blackjack (E.U.)": games.blackjack.play_european_blackjack,
     "slots": games.slots.play_slots,
     "poker": games.poker.play_poker,
     "roulette": games.roulette.play_roulette,
-    "uno": games.uno.play_uno
-
+    "uno": games.uno.play_uno,
+    "european roulette": games.roulette.play_european_roulette,
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
 
@@ -103,7 +104,9 @@ def main_menu(ctx: GameContext) -> None:
             cprint("┌" + "─" * 30 + "┐")
             cprint("│" + " " * 30 + "│")
             for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
+                cprint(
+                    f"│{('[{}] {}'.format(i, name.title()) + ' ' * (max_length - len(name))).center(30)}│".center(width)
+                )
             cprint("│" + " " * 30 + "│")
             cprint("└" + "─" * 30 + "┘")
 

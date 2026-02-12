@@ -6,6 +6,8 @@ from typing import Optional
 from casino.accounts import Account
 from pathlib import Path
 
+from .cards import Card
+
 BASE_DIR = Path(__file__).resolve().parent
 THEME_DIR = BASE_DIR / "themes"
 
@@ -136,3 +138,29 @@ def display_topbar(
         cprint(f"{left_text}{right_text.rjust(inner_width - len(left_text))}")
     # Add margin after
     print("\n" * margin, end="")
+
+def print_cards(hand: list[Card]) -> None:
+    """Print ASCII card faces side by side."""
+
+    # Get front or back of card depending on if it is hidden or not
+    card_str = [card.back if card.hidden else card.front for card in hand]
+
+    # Split each card into lines
+    card_lines = [card.strip().splitlines() for card in card_str]
+
+    # Find the tallest card
+    max_height = max(len(lines) for lines in card_lines)
+
+    # Normalize all cards to the same height
+    for lines in card_lines:
+        width = len(lines[0])
+        lines.extend([" " * width] * (max_height - len(lines)))
+
+    # Build each horizontal row across all cards
+    rows = [
+        "  ".join(lines[i] for lines in card_lines)
+        for i in range(max_height)
+    ]
+
+    # Print as a single block
+    cprint("\n".join(rows))

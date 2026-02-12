@@ -2,6 +2,9 @@ import random
 from typing import List, Optional
 from time import sleep
 import time
+import sys
+import shutil
+import re
 
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
@@ -12,6 +15,61 @@ ROULETTE_HEADER = """
 │     ♠ R O U L E T T E ♠     │
 └─────────────────────────────┘
 """
+
+HEADER_OPTIONS = {
+    "header": ROULETTE_HEADER,
+    "margin": 1,
+}
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+def _visible_len(s: str) -> int:
+    return len(ANSI_RE.sub("", s))
+
+def cprint_ansi_center(line: str, end: str = "\n") -> None:
+    """Center a string that may contain ANSI escape codes."""
+    width = shutil.get_terminal_size().columns
+    vis = _visible_len(line)
+    pad_left = max(0, (width - vis) // 2)
+    print((" " * pad_left) + line, end=end)
+
+def cprint_table_center(block: str) -> None:
+    lines = block.strip("\n").splitlines()
+    term_width = shutil.get_terminal_size().columns
+    
+    max_len = max(_visible_len(line) for line in lines)
+    pad_left = max(0, (term_width - max_len) // 2)
+    
+    for line in lines:
+        padded_line = " " * pad_left + line
+        print(padded_line)
+
+def display_roulette_topbar(ctx: GameContext) -> None:
+    display_topbar(ctx.account, **HEADER_OPTIONS)
+
+
+def refresh_roulette_topbar(ctx: GameContext) -> None:
+    # Number of lines occupied by the topbar: header (3 lines) + user/balance line + margin
+    header_lines = len(ROULETTE_HEADER.strip("\n").splitlines())
+    margin = HEADER_OPTIONS.get("margin", 1)
+    total_lines = header_lines + 1 + margin
+
+    sys.stdout.write("\x1b[s")  # Save current cursor position
+    sys.stdout.write("\x1b[H")  # Move cursor to top-left corner
+
+    # Clear all topbar lines
+    for _ in range(total_lines):
+        sys.stdout.write("\x1b[2K")  # clear line
+        sys.stdout.write("\x1b[1B")  # down 1 line
+
+    # Move back to top-left and redraw the topbar
+    sys.stdout.write("\x1b[H")
+    display_roulette_topbar(ctx)
+
+    # Restore cursor position so the rest of the screen stays intact
+    sys.stdout.write("\x1b[u")
+    sys.stdout.flush()
+
 
 STANDARD_AMERICAN_ROULETTE_WHEEL = [
     ("0", "green", 0, 13),
@@ -184,17 +242,18 @@ class Roulette:
             else:
                 ROULETTE_GRID[row][col] = f"\x1b[41m\x1b[97m{num_str}\x1b[0m"
 
-        for row in ROULETTE_GRID:
-            print("".join(row))
+        wheel_lines = ["".join(row) for row in ROULETTE_GRID]
+        for line in wheel_lines:
+            cprint_ansi_center(line)
 
-    def wheel_animation(self, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
+    def wheel_animation(self, ctx: GameContext, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
         for num in sequence:
             clear_screen()
-            cprint(ROULETTE_HEADER)
+            display_roulette_topbar(ctx)
             self.print_wheel(highlighted_num = num)
             time.sleep(sec_btwn_spins)
 
-    def spin_wheel(self) -> tuple[str, str, int, int]:
+    def spin_wheel(self, ctx: GameContext) -> tuple[str, str, int, int]:
         """
         Pick a winning color and number.
 
@@ -213,7 +272,7 @@ class Roulette:
 
         # do TOTAL_ROTATIONS number of rotations before landing on number
         sequence = (wheel_sequence * TOTAL_ROTATIONS) + wheel_sequence[:random_index + 1]
-        self.wheel_animation(sequence)
+        self.wheel_animation(ctx, sequence)
 
         winning_number = self.winning_value[0]
         winning_color  = self.winning_value[1]
@@ -223,7 +282,11 @@ class Roulette:
 
         return self.winning_value
 
-    def submit_bets(self) -> None | str:
+    def reset_round(self) -> None:
+        self.bets.clear()
+        self.winning_value = None
+
+    def submit_bets(self, ctx: GameContext) -> None | str:
         """
         Instruct users to submit bets.
 
@@ -264,7 +327,7 @@ class Roulette:
                 continue
 
             clear_screen()
-            cprint(ROULETTE_HEADER)
+            display_roulette_topbar(ctx)
             # Input bet amount
             bet_amount = cinput(f"Player {i+1}'s Bet: ")
 
@@ -289,7 +352,7 @@ class Roulette:
                 continue
 
             clear_screen()
-            cprint(ROULETTE_HEADER)
+            display_roulette_topbar(ctx)
             cprint(f"Successfully withdrew {bet_amount} coins from Player {i+1}.")
             cprint(f"Player {i+1} remaining balance: "
                   f"{self.accounts[i].balance} coins.")
@@ -310,7 +373,7 @@ class Roulette:
                           "Choose either 'color' or 'number'.")
 
             clear_screen()
-            cprint(ROULETTE_HEADER)
+            display_roulette_topbar(ctx)
 
             ############################################################
 
@@ -418,8 +481,9 @@ def play_roulette(context: GameContext) -> None:
 
     roulette = AmericanRoulette(accounts)
     while continue_game:
+        roulette.reset_round()
         clear_screen()
-        cprint(ROULETTE_HEADER)
+        display_roulette_topbar(context)
 
         # Input to stop loop from running constantly
         choice = cinput("Press [Enter] to start a new round and [q] to quit: ")
@@ -428,12 +492,13 @@ def play_roulette(context: GameContext) -> None:
             continue_game = False
             break
 
-        status = roulette.submit_bets()
+        status = roulette.submit_bets(context)
         if status == "BANKRUPT":
             break
 
-        roulette.spin_wheel()
+        roulette.spin_wheel(context)
         roulette.payout()
+        refresh_roulette_topbar(context)
 
         play_again = None
 

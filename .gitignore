@@ -30,4 +30,7 @@ Thumbs.db
 desktop.ini
 
 #local venv
-venv/
+.venv/
+
+# Zensical-ignored folders
+site/
