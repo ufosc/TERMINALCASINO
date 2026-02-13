@@ -1,4 +1,6 @@
 import shutil
+import time
+import sys
 from typing import Callable
 
 from . import games
@@ -18,6 +20,26 @@ CASINO_HEADER_OPTIONS = {
     "header": CASINO_HEADER,
     "margin": 3,
 }
+WELCOME_LOGO1 = r" /$$$$$$$$ /$$$$$$$$ /$$$$$$$  /$$      /$$ /$$$$$$ /$$   /$$  /$$$$$$  /$$        /$$$$$$   /$$$$$$   /$$$$$$  /$$$$$$ /$$   /$$  /$$$$$$ "
+WELCOME_LOGO2 = r"|__  $$__/| $$_____/| $$__  $$| $$$    /$$$|_  $$_/| $$$ | $$ /$$__  $$| $$       /$$__  $$ /$$__  $$ /$$__  $$|_  $$_/| $$$ | $$ /$$__  $$"
+WELCOME_LOGO3 = r"   | $$   | $$      | $$  \ $$| $$$$  /$$$$  | $$  | $$$$| $$| $$  \ $$| $$      | $$  \__/| $$  \ $$| $$  \__/  | $$  | $$$$| $$| $$  \ $$"
+WELCOME_LOGO4 = r"   | $$   | $$$$$   | $$$$$$$/| $$ $$/$$ $$  | $$  | $$ $$ $$| $$$$$$$$| $$      | $$      | $$$$$$$$|  $$$$$$   | $$  | $$ $$ $$| $$  | $$"
+WELCOME_LOGO5 = r"   | $$   | $$__/   | $$__  $$| $$  $$$| $$  | $$  | $$  $$$$| $$__  $$| $$      | $$      | $$__  $$ \____  $$  | $$  | $$  $$$$| $$  | $$"
+WELCOME_LOGO6 = r"   | $$   | $$      | $$  \ $$| $$\  $ | $$  | $$  | $$\  $$$| $$  | $$| $$      | $$    $$| $$  | $$ /$$  \ $$  | $$  | $$\  $$$| $$  | $$"
+WELCOME_LOGO7 = r"   | $$   | $$$$$$$$| $$  | $$| $$ \/  | $$ /$$$$$$| $$ \  $$| $$  | $$| $$$$$$$$|  $$$$$$/| $$  | $$|  $$$$$$/ /$$$$$$| $$ \  $$|  $$$$$$/"
+WELCOME_LOGO8 = r"   |__/   |________/|__/  |__/|__/     |__/|______/|__/  \__/|__/  |__/|________/ \______/ |__/  |__/ \______/ |______/|__/  \__/ \______/ "
+
+WELCOME_LOGO = [
+    WELCOME_LOGO1,
+    WELCOME_LOGO2,
+    WELCOME_LOGO3,
+    WELCOME_LOGO4,
+    WELCOME_LOGO5,
+    WELCOME_LOGO6,
+    WELCOME_LOGO7,
+    WELCOME_LOGO8,
+]
+
 ACCOUNT_STARTING_BALANCE = 100
 
 ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: "
@@ -102,8 +124,8 @@ def main_menu(ctx: GameContext) -> None:
             max_length = max(map(len, ALL_GAMES))
             cprint("┌" + "─" * 30 + "┐")
             cprint("│" + " " * 30 + "│")
-            for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
+            #for i, name in enumerate(ALL_GAMES, start=1):
+                #cprint(f"│{(f"[{i}] {name.title()}" + " " * (max_length - len(name))).center(30)}│".center(width))
             cprint("│" + " " * 30 + "│")
             cprint("└" + "─" * 30 + "┘")
 
@@ -129,12 +151,19 @@ def main_menu(ctx: GameContext) -> None:
 
 def main():
     clear_screen()
-    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
+    built_logo = ""
+
+    for line in WELCOME_LOGO:
+        built_logo += line + "\n"
+        clear_screen()
+        display_topbar(account=None, header=built_logo, margin=3)
+        sys.stdout.flush()
+        time.sleep(.25)
 
     name = cinput("Enter your name: ").strip()
     while not name:
         clear_screen()
-        display_topbar(account=None, **CASINO_HEADER_OPTIONS)
+        display_topbar(account=None, header=WELCOME_LOGO, margin=3)
         cprint("\nInvalid input. Please enter a valid name.\n")
         name = cinput("Enter your name: ").strip()
     
