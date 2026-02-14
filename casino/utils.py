@@ -155,12 +155,13 @@ def cinput(prompt: str = "") -> str:
             print()
             return text.strip()
         elif ch in ('\x08', '\x7f'):
-            text = text[:-1]
-            _print_centered_input(text, terminal_width)
+            if text:
+                text = text[:-1]
+                _print_centered_input(text, terminal_width)
         elif ch == '\x03':
             print()
             raise KeyboardInterrupt
-        elif ch in ('\x04', '\x1a'):
+        elif ch == '\x04' or (ch == '\x1a' and os.name != 'nt'):
             print()
             raise EOFError
         elif ch and ch.isprintable():
