@@ -105,18 +105,77 @@ def cprint(*args, sep: str = " ", end: str = "\n") -> None:
             print(colored_line, end=end)
 
 
+def _read_char() -> str:
+    """Read a single character from stdin (cross-platform)."""
+    if os.name == "nt":
+        import msvcrt
+        ch = msvcrt.getwch()
+        if ch in ('\x00', '\xe0'):
+            msvcrt.getwch()  # consume scan code for special keys
+            return ''
+        return ch
+    else:
+        import sys
+        import tty
+        import termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+
+def _print_centered_input(text: str, terminal_width: int) -> None:
+    """Clear current line and reprint text centered, cursor after text."""
+    left_pad = max(0, (terminal_width - len(text)) // 2)
+    line = " " * left_pad + text
+    colored_line = f"{theme['color']}{line}{theme['reset']}"
+    # hide cursor → redraw → show cursor (atomic visual update)
+    print(f"\033[?25l\r{colored_line}\033[K\033[?25h", end="", flush=True)
+
+
 def cinput(prompt: str = "") -> str:
     """Get input from the user in the center of the screen."""
     terminal_width = shutil.get_terminal_size().columns
-    # center text then print colored
+    # center prompt text then print colored
     prompt_center = prompt.center(terminal_width)
     colored_prompt = f"{theme['color']}{prompt_center}{theme['reset']}"
     print(colored_prompt)
 
-    # move cursor to the center for input
-    cursor_padding = (terminal_width // 2) + 1
-    print(" " * cursor_padding, end="")
-    return input().strip()
+    # read input char by char, re-centering after every keystroke
+    text = ""
+    _print_centered_input(text, terminal_width)
+
+    while True:
+        ch = _read_char()
+        if ch in ('\r', '\n'):
+            print()
+            return text.strip()
+        elif ch in ('\x08', '\x7f'):
+            text = text[:-1]
+            _print_centered_input(text, terminal_width)
+        elif ch == '\x03':
+            print()
+            raise KeyboardInterrupt
+        elif ch in ('\x04', '\x1a'):
+            print()
+            raise EOFError
+        elif ch and ch.isprintable():
+            old_pad = max(0, (terminal_width - len(text)) // 2)
+            text += ch
+            new_pad = max(0, (terminal_width - len(text)) // 2)
+            if new_pad == old_pad:
+                # padding unchanged — just append char at cursor (no redraw)
+                colored_ch = f"{theme['color']}{ch}{theme['reset']}"
+                print(colored_ch, end="", flush=True)
+            else:
+                # padding changed — full centered redraw
+                _print_centered_input(text, terminal_width)
+        else:
+            continue
 
 
 def display_topbar(

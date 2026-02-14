@@ -82,7 +82,7 @@ def main_menu(ctx: GameContext) -> None:
 
         action = prompt_with_refresh(
             render_fn = render_welcome,
-            prompt = ENTER_OR_QUIT_PROMPT.center(term_width()),
+            prompt = ENTER_OR_QUIT_PROMPT,
             error_message = INVALID_CHOICE_PROMPT,
             validator = lambda x: x.lower() in {"e", "q"},
             transform = lambda s: s.strip().lower(),
@@ -114,7 +114,7 @@ def main_menu(ctx: GameContext) -> None:
 
         choice = prompt_with_refresh(
             render_fn = render_choose_game,
-            prompt = GAME_CHOICE_PROMPT.center(term_width()),
+            prompt = GAME_CHOICE_PROMPT,
             error_message = INVALID_CHOICE_PROMPT,
             validator = lambda x: x.isdigit() and 1 <= int(x) <= len(ALL_GAMES),
         )
@@ -134,7 +134,7 @@ def main():
     clear_screen()
     display_topbar(account=None, **CASINO_HEADER_OPTIONS)
 
-    name = cinput("Enter your name: ").strip()
+    name = cinput("Enter your name:").strip()
     while not name:
         clear_screen()
         display_topbar(account=None, **CASINO_HEADER_OPTIONS)
