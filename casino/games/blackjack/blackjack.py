@@ -1,4 +1,5 @@
 import random
+import sys
 from typing import Optional, List
 from abc import ABC, abstractmethod
 from time import sleep
@@ -47,17 +48,13 @@ class Blackjack(ABC):
     def __init__(self, ctx: GameContext) -> None:
         self.context = ctx
         self.configurations = ctx.config
-        # NEW: added a shoe_size constant in config (6 pairs is used)
+        #added a shoe_size constant in config (6 pairs is used)
         shoe_size = self.configurations.blackjack_shoe_size
         self.deck: StandardDeck = StandardDeck(shoe_size)
-        # NEW: initialize multiple players
+        #initialize multiple players
         self.players: list[Player] = self._init_players()
-        # NEW: dealer is now a Hand object
         self.dealer_hand: Hand = Hand()
         self.MINIMUM_BET = self.configurations.blackjack_min_bet
-        # NEW: FACE_CARD_VALUES dict removed (redundant)
-        # NEW: player_win_status removed
-        # NEW: each Hand object tracks its own result status, set by game engine
 
     def _init_players(self) -> list[Player]:
         while True:
@@ -83,13 +80,13 @@ class Blackjack(ABC):
                 players.append(Player(guest_account))
         return players
 
-    # NEW: top bar do not print bet size
-    # NEW: player could have two hands with different bet size
+    #top bar do not print bet size
+    #player could have two hands with different bet size
     def display_blackjack_topbar(self) -> None:
         if not hasattr(self, 'players') or len(self.players) <= 1:
             display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
             return
-        # NEW: print top bar for multi players
+        #print top bar for multi players
         header = BLACKJACK_HEADER_OPTIONS.get("header", "")
         margin = BLACKJACK_HEADER_OPTIONS.get("margin", 1)
         cprint(header)
@@ -102,7 +99,7 @@ class Blackjack(ABC):
         cprint(combined_info.center(header_width))
         print("\n" * margin, end="")
 
-    #a new method to render table
+    #a method to render table
     def render_table(self, current_player:Player = None, active_hand_idx: int = 0)->None:
         clear_screen()
         self.display_blackjack_topbar()
@@ -129,6 +126,13 @@ class Blackjack(ABC):
 
         # Done: Refactor so that this function works for multiple players
         for player in self.players:
+
+            # Kick from casino if player has 0 chips
+            if player.balance == 0:
+                clear_screen()
+                cprint("GAME OVER")
+                cprint("You have lost all your chips. Security is escorting you out.")
+                sys.exit()
             if player.balance < self.MINIMUM_BET:
                 cprint(NO_FUNDS_MSG)
                 cinput("Press [Enter] to continue")
@@ -173,14 +177,11 @@ class Blackjack(ABC):
         """
         pass
 
+
     def reset(self, context = None):
         """
-        Reset a Blackjack object.
-
-        This function is typically run in between rounds to reset the state of Blackjack
-        """
-
-        # Reset Blackjack with old configuration
+        Resets the round state without destroying player objects.
+        ""
         if context is not None:
             self.context = context
             self.configurations = context.config
@@ -188,7 +189,7 @@ class Blackjack(ABC):
         for player in self.players:
             player.hands = []
 
-    # NEW: deal card method
+    #deal card method
     def deal_card(self, hand: Hand, hidden: bool = False) -> None:
         card = self.deck.draw()
         card.hidden = hidden
@@ -291,7 +292,8 @@ class StandardBlackjack(Blackjack):
     #step 4 of 8
     def player_decision(self) -> None | str:
         """
-        Phase of blackjack where players make decision.
+        Phase where players make decisions. 
+        Handles Hit, Stand, Double Down, and Double for Less.
         """
         for i, player in enumerate(self.players):
             stubborn = 0
@@ -311,7 +313,7 @@ class StandardBlackjack(Blackjack):
 
                 while not hand.is_bust and hand.total < 21:
                     self.render_table(current_player=player, active_hand_idx=hand_idx)
-                    # NEW build an option string (NEW Section)
+                    #build an option string
                     allowed_actions = {"S", "STAND", "H", "HIT"}
                     options_str = "[S]tand   [H]it"
                     can_double = len(hand.cards) == 2 and player.balance >= hand.bet
@@ -337,7 +339,7 @@ class StandardBlackjack(Blackjack):
                     if action in {"S", "STAND"}:
                         break
                     elif action in {"H", "HIT"}:
-                        self.deal_card(hand)  # NEW
+                        self.deal_card(hand)
                         cprint("Player drawing...")
                         sleep(0.8)
                         if hand.total == 21:
@@ -348,7 +350,7 @@ class StandardBlackjack(Blackjack):
                     elif action in {"D", "DOUBLE"}:
                         player.balance -= hand.bet
                         hand.bet *= 2
-                        self.deal_card(hand)  # NEW
+                        self.deal_card(hand) 
                         player.update_account()
                         cprint(f"💰 Doubling down! New bet: {hand.bet}")
                         cprint("Dealing your final card...")
@@ -361,7 +363,7 @@ class StandardBlackjack(Blackjack):
                         new_hand.cards.append(hand.cards.pop())
                         cprint("✂️ Splitting the pair...")
                         sleep(0.8)
-                        self.deal_card(hand)  # NEW
+                        self.deal_card(hand)
                         self.deal_card(new_hand)
                         player.hands.insert(hand_idx + 1, new_hand)
                         player.update_account()
@@ -409,7 +411,6 @@ class StandardBlackjack(Blackjack):
         dealer_bust = self.dealer_hand.is_bust
 
         for player in self.players:
-            # NEW Add hand loop
             for hand in player.hands:
                 if hand.is_blackjack and dealer_bj:
                     result = "blackjack_tie"
@@ -448,10 +449,9 @@ class StandardBlackjack(Blackjack):
         self.render_table()
         cprint("=" * 40)
         cprint(" ROUND FINISHED - RESULTS AS SHOWN ABOVE ".center(45, "#"))
-        cinput("Press [Enter] to continue ... ")  # NEW
+        cinput("Press [Enter] to continue ... ") 
 
     #combining the 8 steps
-
     def play_round(self) -> str:
         """
         Plays a single round of Standard Blackjack
@@ -470,7 +470,7 @@ class StandardBlackjack(Blackjack):
         self.display_results()  # Step 8
 
         status: str = self.play_again()
-        return status
+        return status if status else "EXIT"
 
     #method to update result recorded by each hand object
     def update_hand_results(self, hand: Hand, result_key: str) -> None:
