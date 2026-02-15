@@ -119,12 +119,14 @@ class StandardDeck(Deck):
         super().__init__(self.cards)
 
     def generate_deck(self, num_decks: int = 1) -> List[Card]:
-        single_deck = [
+        new_decks = [
             StandardCard(rank, suit)
+            for _ in range(num_decks)  # NEW! must create card here
             for suit in self.SUITS
             for rank in self.RANKS
         ]
-        self.cards = single_deck * num_decks  # Repeat the deck num_decks times
+        # BUG! If 2 decks, single_deck * 2 only creates 108 pointers
+        self.cards = new_decks
         self.shuffle()
         return self.cards
 

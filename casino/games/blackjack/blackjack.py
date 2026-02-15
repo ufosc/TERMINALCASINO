@@ -9,33 +9,7 @@ from casino.types import GameContext
 from casino.accounts import Account
 from casino.utils import clear_screen, cprint, cinput, display_topbar, print_cards
 from .constants import *
-
-FULL_DECK: StandardDeck = StandardDeck()
-
-def calc_hand_total(hand: list[StandardCard]) -> int:
-    """Calculate the total of each hand."""
-    total = 0
-    aces  = 0
-
-    for card in hand:
-        if not isinstance(card, StandardCard):
-            raise ValueError(f"Expected StandardCard, got {type(card)}.")
-        if card.rank in {"J", "Q", "K"}:
-            # Face card
-            total += 10
-        elif card.rank == "A":
-            # Special case: Ace card
-            total += 11
-            aces += 1
-        else:
-            total += int(card.rank)
-    
-    # Adjust Ace card value if exceeding 21
-    while aces > 0 and total > 21:
-        total -= 10
-        aces  -= 1
-    
-    return total
+from .hand import Hand
 
 
 class Player:
@@ -44,68 +18,24 @@ class Player:
     """
 
     def __init__(self, account: Account) -> None:
-        self.hand: List[StandardCard] = []
+        self.hands: list[Hand] = [] #player has multiple hands
 
         # Define Player object's attributes in terms of the Account object's attributes
         self.account = account
         self.name = account.name
         self.balance = account.balance
 
-        self.bet = 0
-
-        # Special flags
-        self.initial_hand: bool = True
-        self.has_blackjack: bool = False
-        self.skip: bool = False
-
-    def reveal_hand(self) -> None:
-        for card in self.hand:
-            print(card)
-
-    def update_account(self) -> Account:
+    def update_account(self) -> None:
         """
         Update Account object's balance
         """
-
         # Compare Player.balance with Player's account balance
         difference = self.balance - self.account.balance
-
         if difference < 0:
             self.account.withdraw(abs(difference))
         elif difference > 0:
             self.account.deposit(difference)
-        
-        return self.account
 
-    @property
-    def hand_total(self):
-        """
-        Total value of Player's hand
-
-        This attribute holds the sum of the values of all cards in the player's hand.
-        It is updated whenever the player's hand changes (e.g., when new cards are drawn).
-        """
-        return calc_hand_total(self.hand)
-
-
-class Dealer:
-    """
-    Defines dealer in blackjack
-    """
-    
-    def __init__(self) -> None:
-        self.has_blackjack: bool = False
-        self.hand: List[StandardCard] = []
-
-    @property
-    def hand_total(self):
-        """
-        Total value of Dealer's hand
-
-        This attribute holds the sum of the values of all cards in the dealer's hand.
-        It is updated whenever the dealer's hand changes (e.g., when new cards are drawn).
-        """
-        return calc_hand_total(self.hand)
 
 class Blackjack(ABC):
     """
@@ -116,37 +46,76 @@ class Blackjack(ABC):
     """
     
     def __init__(self, ctx: GameContext) -> None:
-        self.deck: StandardDeck = StandardDeck()
         self.context = ctx
         self.configurations = ctx.config
-
-        self.players: List[Player] = []
-        self.dealer: Dealer = Dealer()
-        self.round_results: List[str] = []
-
-        # Define a single player
-        # NOTE: This must be updated if local multiplayer is added
-        player = Player(ctx.account)
-        self.players.append(player)
-
-        self.FACE_CARD_VALUES: dict[str, int | List[int]] = {
-            "J": 10,
-            "Q": 10,
-            "K": 10,
-            "A": [1, 11]
-        }
-
-        self.player_win_status: List[str | None] = [None] * len(self.players)
-        
+        #added a shoe_size constant in config (6 pairs is used)
+        shoe_size = self.configurations.blackjack_shoe_size
+        self.deck: StandardDeck = StandardDeck(shoe_size)
+        #initialize multiple players
+        self.players: list[Player] = self._init_players()
+        self.dealer_hand: Hand = Hand()
         self.MINIMUM_BET = self.configurations.blackjack_min_bet
 
-    def display_blackjack_topbar(self, bet: Optional[int] = None) -> None:
-        """
-        Prints top bar for player to view how much they bet.
-        """
-        display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
-        if bet is not None:
-            cprint(f"Bet: {bet}")
+    def _init_players(self) -> list[Player]:
+        while True:
+            try:
+                clear_screen()
+                self.display_blackjack_topbar()
+                num_str = cinput("Enter number of Players: ").strip()
+                num_players = int(num_str)
+                if 1 <= num_players <= 4:
+                    break
+                cprint("Please enter a number between 1 and 4.")
+            except ValueError:
+                cprint("Invalid input. Please enter a number.")
+        players = []
+        players.append(Player(self.context.account))
+        if num_players > 1:
+            for i in range(2, num_players + 1):
+                name = cinput(f"Enter name for Player {i}: ").strip()
+                if not name:
+                    name = f"Guest {i}"
+                start_bal = self.context.account.balance
+                guest_account = Account.generate(name=name, balance=start_bal)
+                players.append(Player(guest_account))
+        return players
+
+    #top bar do not print bet size
+    #player could have two hands with different bet size
+    def display_blackjack_topbar(self) -> None:
+        if not hasattr(self, 'players') or len(self.players) <= 1:
+            display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
+            return
+        #print top bar for multi players
+        header = BLACKJACK_HEADER_OPTIONS.get("header", "")
+        margin = BLACKJACK_HEADER_OPTIONS.get("margin", 1)
+        cprint(header)
+        header_lines = header.splitlines()
+        header_width = max(len(line) for line in header_lines if line.strip())
+        player_info_list = []
+        for p in self.players:
+            player_info_list.append(f"👤 {p.name} 💰 {p.balance}")
+        combined_info = "  |  ".join(player_info_list)
+        cprint(combined_info.center(header_width))
+        print("\n" * margin, end="")
+
+    #a method to render table
+    def render_table(self, current_player:Player = None, active_hand_idx: int = 0)->None:
+        clear_screen()
+        self.display_blackjack_topbar()
+        self.dealer_hand.print_hand(label = "Dealer's Hand")
+        cprint("="*40)
+        # Print all players' hands
+        for player in self.players:
+            num_hands = len(player.hands)
+            for idx, hand in enumerate(player.hands):
+                is_active = (player == current_player and idx == active_hand_idx)
+                if num_hands > 1:
+                    hand_label = f"{player.name} - Hand {idx + 1}"
+                else:
+                    hand_label = f"{player.name}"
+                hand.print_hand(label=hand_label, is_active=is_active)
+                print()
 
     def play_again(self) -> str:
         """
@@ -155,7 +124,7 @@ class Blackjack(ABC):
         clear_screen()
         self.display_blackjack_topbar()
 
-        # TODO: Refactor so that this function works for multiple players
+        # Done: Refactor so that this function works for multiple players
         for player in self.players:
 
             # Kick from casino if player has 0 chips
@@ -169,24 +138,26 @@ class Blackjack(ABC):
                 cinput("Press [Enter] to continue")
                 return "EXIT"
 
-            # Ask user if they would like to stay at the table  
-            cprint(STAY_AT_TABLE_PROMPT)
-            play_again: str = cinput(YES_OR_NO_PROMPT)
+            # Ask user if they would like to stay at the table
+            while True:# avoid raising error
+                cprint(STAY_AT_TABLE_PROMPT)
+                play_again: str = cinput(YES_OR_NO_PROMPT)
 
-            status: str = ""
-            if play_again.upper() in {"", "Y", "YES"}:
-                status = "CONTINUE"
-            elif play_again.upper() in {"V", "VARIANT"}:
-                status = "VARIANT"
-            elif play_again.upper() in {"N", "NO"}:
-                clear_screen()
-                cprint("\nThanks for playing!\n\n")
-                status = "EXIT"
-            else:
-                # Notify user that they must enter a valid input
-                cprint(f"{play_again} is not a valid value.")
+                status: str = ""
+                if play_again.upper() in {"", "Y", "YES"}:
+                    status = "CONTINUE"
+                elif play_again.upper() in {"V", "VARIANT"}:
+                    status = "VARIANT"
+                elif play_again.upper() in {"N", "NO"}:
+                    clear_screen()
+                    cprint("\nThanks for playing!\n\n")
+                    status = "EXIT"
+                else:
+                    # Notify user that they must enter a valid input
+                    cprint(f"{play_again} is not a valid value.")
+                    continue
 
-            return status
+                return status
 
     @abstractmethod
     def play_round(self):
@@ -195,38 +166,41 @@ class Blackjack(ABC):
 
         Note that most Blackjack variants will execute the following steps in this exact order:
 
-        self.bet()             # Users place bets. Take placed bet amount from users
-        self.deal_cards()      # Deal cards to users
-        self.blackjack_check() # Check if players or dealer has blackjack. Offer insurance.
-        self.player_decision() # Player chooses desired moves during round
-        self.dealer_draw()     # Dealer draws once every player has busted or stands
-        self.check_win()       # Check which player has won
-        self.payout()          # Pay players who won or tied the appropriate amount
-        self.display_results() # Show who won or lost
+        self.bet()             # 1Users place bets. Take placed bet amount from users
+        self.deal_cards()      # 2Deal cards to users
+        self.blackjack_check() # 3Check if players or dealer has blackjack. Offer insurance.
+        self.player_decision() # 4Player chooses desired moves during round
+        self.dealer_draw()     # 5Dealer draws once every player has busted or stands
+        self.check_win()       # 6Check which player has won
+        self.payout()          # 7Pay players who won or tied the appropriate amount
+        self.display_results() # 8Show who won or lost
         """
         pass
 
 
-    def reset(self):
+    def reset(self, context = None):
         """
         Resets the round state without destroying player objects.
-        """
-        self.deck = StandardDeck()
-        self.dealer.hand = []
-        self.dealer.has_blackjack = False
-        self.player_win_status = [None] * len(self.players)
-
+        ""
+        if context is not None:
+            self.context = context
+            self.configurations = context.config
+        self.dealer_hand = None
         for player in self.players:
-            player.hand = []
-            player.bet = 0
-            player.initial_hand = True
-            player.has_blackjack = False
-            player.skip = False
+            player.hands = []
+
+    #deal card method
+    def deal_card(self, hand: Hand, hidden: bool = False) -> None:
+        card = self.deck.draw()
+        card.hidden = hidden
+        hand.cards.append(card)
+
 
 class StandardBlackjack(Blackjack):
     def __init__(self, ctx: GameContext) -> None:
         super().__init__(ctx)
 
+    #step 1 of 8
     def bet(self):
         """
         Asks all users to submit a bet.
@@ -248,9 +222,10 @@ class StandardBlackjack(Blackjack):
 
                 if error_msg != "":
                     cprint(error_msg)
-                
+
                 # Ask user how much to bet
-                bet_str = cinput(BET_PROMPT).strip()
+                prompt = f"🤵 : {player.name}, how much would you like to bet? "
+                bet_str = cinput(prompt).strip()
 
                 # Check that input is a number
                 try:
@@ -269,153 +244,135 @@ class StandardBlackjack(Blackjack):
                         raise ValueError("Player betting more than their balance")
 
                     player.balance -= bet
+                    player.hands = [Hand(bet=bet)] #initialize player hand
                     player.update_account()
+                    error_msg = ""#clear error message
+
                 except ValueError:
                     error_msg = f"Insufficient funds. You only have {player.balance} chips."
                     continue
                 break
 
+    #step 2 of 8
     def deal_cards(self):
         """
         Deals cards out to all players and dealer.
         """
-        # Deal cards to players
         for player in self.players:
-            cards = [self.deck.draw(), self.deck.draw()]
-            for card in cards:
-                card.hidden = False
-            
-            player.hand = cards
+            for hand in player.hands:
+                self.deal_card(hand)
+                self.deal_card(hand)
+        self.dealer_hand = Hand()
+        self.deal_card(self.dealer_hand)
+        self.deal_card(self.dealer_hand, hidden=True)
 
-        # Deal cards to dealer
-        cards = [self.deck.draw(), self.deck.draw()]
-        cards[0].hidden = False
-        self.dealer.hand = cards
-
-    def blackjack_check(self) -> None:
-        """
-        Check hands for potential blackjack.
-
-        A blackjack is when:
-
-            - A player has an Ace and a card worth 10 (10, Jack, Queen, King)
-            - The dealer has an Ace as its face-up card and a card worth 10 (10, J, Q, K) as its face-down card
-        """
-
-        # Check for player blackjacks
+    #step 3 of 8
+    def blackjack_check(self) -> bool:
+        dealer_bj = self.dealer_hand.is_blackjack
+        all_players_done = True
         for player in self.players:
-            if len(player.hand) != 2:
-                player.has_blackjack = False
-                continue
-            else:
-                # Get the name of the cards in the player's hand
-                player_ranks = set([card.rank for card in player.hand])
+            for hand in player.hands:
+                if hand.is_blackjack:
+                    if dealer_bj:
+                        self.update_hand_results(hand, "blackjack_tie")
+                    else:
+                        self.update_hand_results(hand, "player_blackjack")
+                else:
+                    if dealer_bj:
+                        self.update_hand_results(hand, "dealer_blackjack")
+                    else:
+                        all_players_done = False
+        if dealer_bj:
+            self.dealer_hand.reveal_all()
+            cprint("Dealer has a BLACKJACK! Checking hands...")
+            sleep(1.0)
+            return True  # Player can not continue if dealer BJ
+        return all_players_done
 
-                if "A" in player_ranks:
-                    # Check for face card or 10
-                    if any(rank in player_ranks for rank in (10, "J", "Q", "K")):
-                        player.has_blackjack = True
-                
-                if player.has_blackjack:
-                    continue
-        
-        # Check for dealer blackjack
-        if len(self.dealer.hand) != 2:
-            self.dealer.has_blackjack = False
-            return
-        
-        face_up = self.dealer.hand[0]
-        hidden  = self.dealer.hand[1]
-        self.dealer.has_blackjack = face_up.rank == "A" and hidden.rank in [10, "J", "Q", "K"]
-        
-    def player_decision(self) -> str:
+    #step 4 of 8
+    def player_decision(self) -> None | str:
         """
         Phase where players make decisions. 
         Handles Hit, Stand, Double Down, and Double for Less.
         """
         for i, player in enumerate(self.players):
-            if self.player_win_status[i] is not None:
-                continue
-            
-            if player.hand_total == 21:
-                self.show_table_state(player)
-                if player.has_blackjack:
-                    cprint(f"!!! {player.name.upper()} HAS A NATURAL BLACKJACK !!!")
-                else:
-                    cprint(f"!!! {player.name.upper()} HAS 21 !!!")
-                sleep(2.0)
-                continue 
-                
-            while True:
-                self.show_table_state(player)
-                
-                options = "[S]tay   [H]it"
-                can_double = player.initial_hand and player.balance > 0
-                
-                if can_double:
-                    if player.balance >= player.bet:
-                        options += "   [D]ouble Down"
-                    else:
-                        options += "   [D]ouble for Less"
-                
-                action = cinput(options).upper()
+            stubborn = 0
+            hand_idx = 0
+            # DO NOT USE FOR LOOP DUE TO POSSIBLE SPLITTING
+            while hand_idx < len(player.hands):
+                hand = player.hands[hand_idx]
+                if hand.is_blackjack:
+                    hand_idx += 1
+                    continue
 
-                if action in {"S", "STAND", "STAY"}:
-                    break
+                # local method for deciding card value so "Q""J" pair can be split
+                def card_val(card):
+                    if card.rank in {"J", "Q", "K"}: return 10
+                    if card.rank == "A": return 11
+                    return int(card.rank)
 
-                elif action in {"H", "HIT"}:
-                    card = self.deck.draw()
-                    card.hidden = False
-                    player.hand.append(card)
-                    player.initial_hand = False
+                while not hand.is_bust and hand.total < 21:
+                    self.render_table(current_player=player, active_hand_idx=hand_idx)
+                    #build an option string
+                    allowed_actions = {"S", "STAND", "H", "HIT"}
+                    options_str = "[S]tand   [H]it"
+                    can_double = len(hand.cards) == 2 and player.balance >= hand.bet
+                    if can_double:
+                        allowed_actions.update({"D", "DOUBLE"})
+                        options_str += "   [D]ouble"
+                    can_split = (len(hand.cards) == 2 and
+                                 card_val(hand.cards[0]) == card_val(hand.cards[1]) and
+                                 player.balance >= hand.bet)
+                    if can_split:
+                        allowed_actions.update({"P", "SPLIT"})
+                        options_str += "   s[P]lit"
 
-                    if player.hand_total == 21:
-                        self.show_table_state(player)
-                        cprint(f"!!! {player.name.upper()} HIT 21 !!!")
-                        sleep(2.0)
-                        break 
-                    elif player.hand_total > 21:
-                        self.player_win_status[i] = "lose"
+                    action = cinput(options_str).strip().upper()
+                    if action not in allowed_actions:
+                        stubborn += 1
+                        if stubborn >= 13:
+                            return "kicked"
+                        cprint(INVALID_CHOICE_MSG)
+                        continue
+
+                    # Player action stage
+                    if action in {"S", "STAND"}:
                         break
-                
-                elif action in {"D", "DOUBLE", "DOUBLE DOWN", "DOUBLE FOR LESS"} and can_double:
-                    # Logic to determine how much extra we can actually take
-                    if player.balance >= player.bet:
-                        extra_bet = player.bet
-                        cprint(f"Doubling Down! Adding {extra_bet} to your bet.")
-                    else:
-                        extra_bet = player.balance
-                        cprint(f"Doubling for Less! Adding your remaining {extra_bet} to your bet.")
-                    
-                    player.balance -= extra_bet
-                    player.bet += extra_bet
-                    player.update_account()
-                    sleep(1.5)
+                    elif action in {"H", "HIT"}:
+                        self.deal_card(hand)
+                        cprint("Player drawing...")
+                        sleep(0.8)
+                        if hand.total == 21:
+                            self.render_table(current_player=player, active_hand_idx=hand_idx)
+                            cprint("Player hand reached 21!")
+                            sleep(1.0)
+                            break
+                    elif action in {"D", "DOUBLE"}:
+                        player.balance -= hand.bet
+                        hand.bet *= 2
+                        self.deal_card(hand) 
+                        player.update_account()
+                        cprint(f"💰 Doubling down! New bet: {hand.bet}")
+                        cprint("Dealing your final card...")
+                        sleep(1.0)
+                        break
+                    elif action in {"P", "SPLIT"}:
+                        player.balance -= hand.bet
+                        hand.is_split_hand = True
+                        new_hand = Hand(bet=hand.bet, is_split_hand=True)
+                        new_hand.cards.append(hand.cards.pop())
+                        cprint("✂️ Splitting the pair...")
+                        sleep(0.8)
+                        self.deal_card(hand)
+                        self.deal_card(new_hand)
+                        player.hands.insert(hand_idx + 1, new_hand)
+                        player.update_account()
+                        cprint("Dealing new cards to split hands...")
+                        sleep(0.8)
+                    # end of not_busted loop
+                hand_idx += 1
 
-                    card = self.deck.draw()
-                    card.hidden = False
-                    player.hand.append(card)
-                    
-                    self.show_table_state(player)
-                    if player.hand_total == 21:
-                        cprint(f"!!! {player.name.upper()} DOUBLED TO 21 !!!")
-                        sleep(2.0)
-                    elif player.hand_total > 21:
-                        self.player_win_status[i] = "lose"
-                    
-                    break # Turn always ends after any double action
-
-        return "proceed"
-
-    def show_table_state(self, player: Player):
-        """Helper to maintain UI consistency across prompts and pauses."""
-        clear_screen()
-        self.display_blackjack_topbar(player.bet)
-        cprint("Dealer Hand:")
-        print_cards(self.dealer.hand)
-        cprint(f"Your Hand: {player.hand_total}")
-        print_cards(player.hand)
-
+    #step 5 of 8
     def dealer_draw(self) -> None:
         """
         Phase of blackjack where dealer draws cards.
@@ -429,196 +386,124 @@ class StandardBlackjack(Blackjack):
         Since the dealer must stand on 17, they will stand in this
         specific situation.
         """
+        self.dealer_hand.reveal_all()
+        #dealer draw cards when at least one player hand not bust or not black jack
+        dealer_draw_or_not = any(
+            not h.is_bust and not h.is_blackjack
+            for p in self.players
+            for h in p.hands
+        )
+        if dealer_draw_or_not:
+            while self.dealer_hand.total < 17:
+                self.render_table()
+                cprint("Dealer drawing...")
+                sleep(0.8)
+                self.deal_card(self.dealer_hand)
+        self.render_table()
 
-        for card in self.dealer.hand:
-            card.hidden = False
-
-        while self.dealer.hand_total < 17:
-            new_card: StandardCard = self.deck.draw()
-            new_card.hidden = False
-            self.dealer.hand.append(new_card)
-
-    @staticmethod
-    def outcome_msg(result: str, bet: int) -> List[str]:
-        """
-        Returns a message that notifies the player of the game's status,
-        and if they won or lost.
-        """
-
-        OUTCOME_MESSAGES = {
-            "blackjack_tie": {
-                "message": "Player and dealer have a blackjack",
-                "bet_result": "Push",
-            },
-            "tie": {
-                "message": "Player and dealer have the same amount!",
-                "bet_result": "Push",
-            },
-            "dealer_blackjack": {
-                "message": "Dealer has a blackjack",
-                "bet_result": "You lose: -{bet} chips",
-            },
-            "player_blackjack": {
-                "message": "Player has a blackjack",
-                "bet_result": "You win: +{bet} chips",
-            },
-            "player_bust": {
-                "message": "You busted.",
-                "bet_result": "You lose: -{bet} chips",
-            },
-            "dealer_bust": {
-                "message": "Dealer busted",
-                "bet_result": "You win: +{bet} chips",
-            },
-            "dealer_wins": {
-                "message": "Dealer wins",
-                "bet_result": "You lose: -{bet} chips",
-            },
-            "player_wins": {
-                "message": "Player wins",
-                "bet_result": "You win: +{bet} chips",
-            },
-        }
-
-        if result not in OUTCOME_MESSAGES:
-            raise KeyError(f"Undefined outcome key: {result}")
-        if not isinstance(bet, int):
-            raise TypeError(f"bet must be `int`. bet data type: {type(bet)}")
-        if bet <= 0:
-            raise ValueError(f"bet must be greater than 0. bet = {bet}")
-
-        return OUTCOME_MESSAGES[result]
-
+    #step 6 of 8
     def check_win(self):
         """
         Phase of blackjack where game checks who won and pays out to users.
         """
-        
-        self.round_results: List[str] = []
-        dealer_won = False
+        dealer_total = self.dealer_hand.total
+        dealer_bj = self.dealer_hand.is_blackjack
+        dealer_bust = self.dealer_hand.is_bust
 
-        # Alias for quickly evaluating totals
-        d = self.dealer.hand_total
+        for player in self.players:
+            for hand in player.hands:
+                if hand.is_blackjack and dealer_bj:
+                    result = "blackjack_tie"
+                elif dealer_bj:
+                    result = "dealer_blackjack"
+                elif hand.is_blackjack:
+                    result = "player_blackjack"
+                elif hand.is_bust:
+                    result = "player_bust"
+                elif dealer_bust:
+                    result = "dealer_bust"
+                elif dealer_total == hand.total:
+                    result = "tie"
+                elif hand.total < dealer_total:
+                    result = "dealer_wins"
+                else:  # dealer_total < hand_total:
+                    result = "player_wins"
+                self.update_hand_results(hand, result)
 
-        for i, player in enumerate(self.players):
-            win_msg: List[str] = []
-            
-            # Player total
-            p: int = player.hand_total
-
-            # Player's win status
-            win_status: str = None
-
-            if player.has_blackjack and self.dealer.has_blackjack:
-                win_status = "tie"
-                result = "blackjack_tie"
-            elif self.dealer.has_blackjack:
-                win_status = "lose"
-                result = "dealer_blackjack"
-            elif player.has_blackjack:
-                win_status = "win"
-                result = "player_blackjack"
-            elif p > 21:
-                win_status = "lose"
-                result = "player_bust"
-            elif d > 21:
-                win_status = "win"
-                result = "dealer_bust"
-            elif p == d:
-                win_status = "tie"
-                result = "tie"
-            elif p < d:
-                win_status = "lose"
-                result = "dealer_wins"
-            elif p > d:
-                win_status = "win"
-                result = "player_wins"
-
-            outcome_dict = self.outcome_msg(result, player.bet)
-
-            formatted_bet_msg = outcome_dict["bet_result"].format(bet=player.bet)
-            full_outcome = f"{outcome_dict['message']}\n{formatted_bet_msg}"
-
-            self.player_win_status[i] = win_status
-            self.round_results.append(full_outcome)
-
+    #step 7 of 8
     def payout(self):
         """
         Phase of blackjack where winners get paid.
         """
-
-        for i, status in enumerate(self.player_win_status):
-            # Determines how much player will get back, relative to their bet
-            multiplier = 1
-
-            player = self.players[i]
-
-            if status == "win":
-                # Player wins amount they bet
-                multiplier = 2
-
-                # Player wins amount they bet PLUS bonus from BLACKJACK_MULTIPLIER
-                if player.has_blackjack:
-                    multiplier = 1 + BLACKJACK_MULTIPLIER
-            elif status == "lose":
-                multiplier = 0
-            elif status == "tie":
-                # Refund bet if tied
-                multiplier = 1
-            else:
-                raise ValueError(f"{status} must be 'win', 'lose', or 'tie' in self.player_win_status")
-
-            # Update account balance
-            player.balance += player.bet * multiplier
+        for player in self.players:
+            for hand in player.hands:
+                player.balance += hand.payout_amount
             player.update_account()
-    
+
+    #step 8 of 8
     def display_results(self) -> None:
         """
         Displays final result of game, including who won or lost.
         """
+        self.dealer_hand.reveal_all()
+        self.render_table()
+        cprint("=" * 40)
+        cprint(" ROUND FINISHED - RESULTS AS SHOWN ABOVE ".center(45, "#"))
+        cinput("Press [Enter] to continue ... ") 
 
-        # TODO: rework function so that it works for local multiplayer
-        for i, player in enumerate(self.players):
-            clear_screen()
-            self.display_blackjack_topbar(player.bet)
-
-            cprint(f"Dealer Hand: {self.dealer.hand_total}")
-            print_cards(self.dealer.hand)
-
-            cprint(f"Your Hand: {player.hand_total}")
-            print_cards(player.hand)
-
-            # Print the detailed message
-            cprint("\n" + "="*30)
-            cprint(self.round_results[i]) # This is the "Dealer wins / Player lose" text
-            cprint("="*30 + "\n")
-
-            # Force the pause here so the user can actually read it
-            action = None
-            while action != "":
-                action = cinput("Press [Enter] to continue...")
-
+    #combining the 8 steps
     def play_round(self) -> str:
         """
         Plays a single round of Standard Blackjack
         """
-
-        self.bet()
-        self.deal_cards()
-        self.blackjack_check()
-
-        kicked: str = self.player_decision()
-        if kicked == "kicked":
-            return "kicked"
-
-        self.dealer_draw()
-        self.check_win()
-        self.payout()
-        self.display_results()
+        self.bet()  # Step 1
+        self.deal_cards()  # Step 2
+        self.render_table()
+        is_over = self.blackjack_check()  # Step 3
+        if not is_over:
+            kicked: str = self.player_decision()  # Step 4
+            if kicked == "kicked":
+                return "kicked"
+            self.dealer_draw()  # Step 5
+            self.check_win()  # Step 6
+        self.payout()  # Step 7
+        self.display_results()  # Step 8
 
         status: str = self.play_again()
         return status if status else "EXIT"
 
+    #method to update result recorded by each hand object
+    def update_hand_results(self, hand: Hand, result_key: str) -> None:
+        templates = {
+            "player_blackjack": (
+                "Player has a BLACKJACK.", "Player win: +{bj_bonus} chips."),
+            "player_wins": ("Player wins.", "Player win: +{bet} chips."),
+            "dealer_bust": ("Dealer BUSTED.", "Player win: +{bet} chips."),
+            "tie": ("Push.", "Tie: 0 chips."),
+            "blackjack_tie": ("Push.", "Tie: 0 chips."),
+            "player_bust": ("Player BUSTED.", "Player lose: -{bet} chips."),
+            "dealer_blackjack": (
+                "Dealer has a BLACKJACK.", "Player lose: -{bet} chips."),
+            "dealer_wins": ("Dealer wins.", "Player lose: -{bet} chips."),
+        }
+        msg, bet_res = templates.get(result_key,
+                                     ("Unknown outcome.", "Outcome: Unknown."))
+        bet_result_str = bet_res.format(
+            bet=hand.bet,
+            bj_bonus=int(hand.bet * BLACKJACK_MULTIPLIER)
+        )
+
+        if result_key == "player_blackjack":
+            pay_ratio = 1 + BLACKJACK_MULTIPLIER
+        elif result_key in {"player_wins", "dealer_bust"}:
+            pay_ratio = 2.0
+        elif result_key in {"tie", "blackjack_tie"}:
+            pay_ratio = 1.0
+        else:
+            pay_ratio = 0.0
+        payout_amount = int(hand.bet * pay_ratio)
+
+        hand.set_hand_results(result_key, msg, bet_result_str, payout_amount)
 
 def play_blackjack(context: GameContext):
     VARIANTS: dict[str, type[Blackjack]] = {
