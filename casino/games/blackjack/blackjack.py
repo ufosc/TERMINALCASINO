@@ -181,7 +181,7 @@ class Blackjack(ABC):
     def reset(self, context = None):
         """
         Resets the round state without destroying player objects.
-        ""
+        """
         if context is not None:
             self.context = context
             self.configurations = context.config
