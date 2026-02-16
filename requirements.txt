@@ -53,3 +53,6 @@ tifffile==2024.2.12
 tqdm==4.66.2
 tzdata==2023.3
 urllib3==2.2.1
+
+# Optional: install for live Alpaca paper-trading in day trading game
+# pip install alpaca-py

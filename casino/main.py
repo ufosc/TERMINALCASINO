@@ -34,6 +34,7 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "roulette": games.roulette.play_roulette,
     "uno": games.uno.play_uno,
     "european roulette": games.roulette.play_european_roulette,
+    "day trading": games.daytrading.play_daytrading,
 }
 ALL_GAMES = list(GAME_HANDLERS.keys())
 
