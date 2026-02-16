@@ -7,7 +7,8 @@
  - [ ] Other (please describe)
 
 ## Related Issue
-Fixes issue [#XX](issues/XX) (replace XXs with the issue number)
+<!--- replace XXs with the issue number --->
+Fixes issue [#XX](issues/XX) 
 
 ## Changes
 *Describe any/all changes made to the repository.*
