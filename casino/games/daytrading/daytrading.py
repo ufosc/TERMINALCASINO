@@ -317,8 +317,12 @@ def _buy_stock(portfolio: Portfolio, market: MarketProvider) -> None:
         cprint(f"\nSymbol '{symbol}' not found.\n")
         return
 
+    if quote.price <= 0:
+        cprint(f"\nInvalid quote for '{symbol}': non-positive price received. Please try again later.\n")
+        return
+
     cprint(f"\n  {quote.symbol}: ${quote.price:,.2f}")
-    max_qty = int(portfolio.cash // quote.price) if quote.price > 0 else 0
+    max_qty = int(portfolio.cash // quote.price)
     cprint(f"  Trading cash: ${portfolio.cash:,.2f} (max {max_qty} shares)\n")
 
     qty_str = cinput("Quantity: ").strip()
