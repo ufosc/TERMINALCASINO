@@ -60,7 +60,6 @@ def choose_game_screen(
         box_inner_width = 30
 
         TL, TR, BL, BR = "♦", "♣", "♠", "♥"
-
         top_border = f"┌{TL}{'─' * (box_inner_width - 2)}{TR}┐"
         bottom_border = f"└{BL}{'─' * (box_inner_width - 2)}{BR}┘"
 
