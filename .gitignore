@@ -1,0 +1,36 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ IDEA
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Neovim swap & backup files
+*.swp
+*.swo
+*.swm
+*~
+
+# macOS Finder files
+.DS_Store
+
+# Windows Explorer files
+Thumbs.db
+desktop.ini
+
+#local venv
+.venv/
+
+# Zensical-ignored folders
+site/
