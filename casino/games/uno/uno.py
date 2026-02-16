@@ -2,6 +2,7 @@ from enum import nonmember
 import time
 import random
 
+from .player import Player
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.cards import UnoDeck, UnoCard
