@@ -468,4 +468,5 @@ def play_daytrading(ctx: GameContext) -> None:
                     cprint("\nInvalid input. Please try again.\n")
                     cinput("Press Enter to continue...")
     finally:
+        portfolio.save()
         updater.stop()
