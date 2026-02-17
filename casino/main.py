@@ -30,6 +30,7 @@ GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
     "blackjack (U.S.)": games.blackjack.play_blackjack,
     "blackjack (E.U.)": games.blackjack.play_european_blackjack,
     "slots": games.slots.play_slots,
+    "slots (Expanded)": games.slots.play_slots_expanded,
     "poker": games.poker.play_poker,
     "roulette": games.roulette.play_roulette,
     "uno": games.uno.play_uno,
