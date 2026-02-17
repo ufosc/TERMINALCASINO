@@ -41,3 +41,7 @@ For example: visual updates, before/after a bugged output, new feature output
 ### Next Steps
 <!--- Remove this section if it is not needed --->
 What is there TODO following this pull request?
+
+### AI Disclosure
+<!--- Remove this section if it is not needed --->
+To what degree did you use AI for this pull request? 
