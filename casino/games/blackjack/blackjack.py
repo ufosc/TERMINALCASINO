@@ -278,13 +278,15 @@ def play_blackjack(ctx: GameContext) -> None:
 
         # player BJ check
         if hand_total(player_hand) == 21:
-            player_bj = True
+            if len(player_hand) == 2:
+                player_bj = True
             player_status = False
 
         # dealer BJ check
         if hand_total(dealer_hand) == 21:
             # dealer blackjack in initial deal
-            dealer_bj = True
+            if len(dealer_hand) == 2:
+                dealer_bj = True
             player_status = False
             dealer_status = False
             cprint("Dealer hand:")
