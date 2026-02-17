@@ -32,5 +32,8 @@ desktop.ini
 #local venv
 .venv/
 
+# Day trading portfolio saves (user-generated JSON)
+casino/games/daytrading/portfolios/
+
 # Zensical-ignored folders
 site/
