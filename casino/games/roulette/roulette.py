@@ -3,6 +3,8 @@ from typing import List, Optional
 from time import sleep
 import time
 import sys
+import shutil
+import re
 
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
@@ -19,6 +21,28 @@ HEADER_OPTIONS = {
     "margin": 1,
 }
 
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+def _visible_len(s: str) -> int:
+    return len(ANSI_RE.sub("", s))
+
+def cprint_ansi_center(line: str, end: str = "\n") -> None:
+    """Center a string that may contain ANSI escape codes."""
+    width = shutil.get_terminal_size().columns
+    vis = _visible_len(line)
+    pad_left = max(0, (width - vis) // 2)
+    print((" " * pad_left) + line, end=end)
+
+def cprint_table_center(block: str) -> None:
+    lines = block.strip("\n").splitlines()
+    term_width = shutil.get_terminal_size().columns
+    
+    max_len = max(_visible_len(line) for line in lines)
+    pad_left = max(0, (term_width - max_len) // 2)
+    
+    for line in lines:
+        padded_line = " " * pad_left + line
+        print(padded_line)
 
 def display_roulette_topbar(ctx: GameContext) -> None:
     display_topbar(ctx.account, **HEADER_OPTIONS)
@@ -218,8 +242,9 @@ class Roulette:
             else:
                 ROULETTE_GRID[row][col] = f"\x1b[41m\x1b[97m{num_str}\x1b[0m"
 
-        for row in ROULETTE_GRID:
-            print("".join(row))
+        wheel_lines = ["".join(row) for row in ROULETTE_GRID]
+        for line in wheel_lines:
+            cprint_ansi_center(line)
 
     def wheel_animation(self, ctx: GameContext, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
         for num in sequence:

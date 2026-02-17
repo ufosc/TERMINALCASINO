@@ -1,4 +1,5 @@
-from pathlib import Path
+
+from casino.types import UnoCard
 
 ############## UNO CARD ARTS ##############
 
@@ -605,53 +606,8 @@ uno_card_dict: dict[str, str] = {
     "flipped": flipped_uno
 }
 
-color_map = {
-    "r": "red",
-    "g": "green",
-    "b": "blue",
-    "y": "yellow",
-}
-
-action_map = {
-    "skip": "skip",
-    "rev": "reverse",
-    "+2": "draw_2",
-    "wild": "wild",
-    "wild+4": "wild_draw_4",
-    "flipped": "flipped"
-}
-
-def to_filename(key: str) -> str:
-    """
-    Converts key to file name for export()
-    """
-
-    # Handle wild cards and flipped directly
-    if key in ("wild", "wild+4", "flipped"):
-        return f"{action_map[key]}.txt"
-
-    color = color_map.get(key[0], "")
-    value = key[1:]
-
-    # Translate special actions like skip/rev/+2
-    if value in action_map:
-        value = action_map[value]
-
-    return f"{color}_{value}.txt"
-
-def assign_uno_card_art(card) -> str:
+def assign_uno_card_art(card: UnoCard) -> str:
     """Return UNO card art from dict."""
     _, card_id = card
     return uno_card_dict[card_id]
 
-def export():
-    for keys, card in uno_card_dict.items():
-        file_name = to_filename(keys)
-        card = card.lstrip("\n")
-
-        ASSET_DIR = Path(f"./assets/cards/uno/{file_name}")
-
-        with open(ASSET_DIR, "w", encoding="utf-8") as file:
-            file.write(card)
-
-export()

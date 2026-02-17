@@ -479,6 +479,8 @@ def play_poker(ctx: GameContext) -> None:
             opponent_chips += pot
             cprint(f"Your balance: {account.balance} chips\n")
         
+        # Regenerate the deck (i.e. return all cards to deck and shuffle)
+        deck.generate_deck()
         
         # game restart?
         if account.balance < 20: # The starting bet pre-flop
