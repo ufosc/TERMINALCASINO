@@ -96,6 +96,8 @@ def play_uno(ctx: GameContext) -> None:
     continueGame = True
     currentPlayerIndex = 0
     direction = 1
+    winner = None
+
     while(continueGame) :
         i = players[currentPlayerIndex]
         current_card = discard[-1]
@@ -116,6 +118,8 @@ def play_uno(ctx: GameContext) -> None:
         if (answer == "d" or answer == "draw") :
             new_card = i.draw(current_deck)
             cprint("You drew \n" + str(new_card) + " from the pile.")
+            i.draws_taken += 1
+        
         elif (answer == "p" or answer == "play") :
             VALID_COLORS = ["red", "green", "blue", "yellow"]
             VALID_RANKS  = [str(n) for n in range(0, 10)] + ["draw_2", "skip", "reverse"]
@@ -155,14 +159,35 @@ def play_uno(ctx: GameContext) -> None:
                     answer = cinput(INVALID_CARD_MSG).lower()
                     if (answer == "draw" or answer == "d"):
                         new_card = i.draw(current_deck)
+                        i.draws_taken += 1
                         cprint("You drew \n" + str(new_card) + " from the pile.")
                         break
+            #If actual valid card is chosen
+            if valid_card:
+                i.hand.remove(new_card)
+                i.cards_played += 1
 
-            i.hand.remove(new_card)
+                if new_card.color == "wild":
+                    if new_card.rank == "wild_draw_4":
+                        i.draw4_played += 1
+                    else:
+                        i.wilds_played += 1
+
+            # i.hand.remove(new_card)
             if len(i.hand) == 0:
                 continueGame = False
+                winner = i
                 display_uno_topbar(ctx)
                 cprint(f"{i.name} is the winner!")
+                cprint("\n" + "═"*34)
+                cprint("       FINAL STATISTICS")
+                cprint("═"*34)
+                cprint(f"{'Player':<12}  Cards left   Played   Draws   Wild   +4")
+                cprint("-"*50)
+                for p in players:
+                    left = len(p.hand)
+                    cprint(f"{p.name:<12}  {left:>9}     {p.cards_played:>5}    {p.draws_taken:>5}    {p.wilds_played:>4}   {p.draw4_played:>3}")
+                cprint("═"*50 + "\n")
                 cinput("Press enter when ready to exit")
                 break
             match new_card.rank:
