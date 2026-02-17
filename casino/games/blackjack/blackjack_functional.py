@@ -249,7 +249,7 @@ def play_blackjack(ctx: GameContext) -> None:
             dealer_bj = True
             player_status = False
             dealer_status = False
-            cprint("Your hand:")
+            cprint("Dealer hand:")
             print_hand(dealer_hand)
             cprint("Your hand:")
             print_hand(player_hand)
