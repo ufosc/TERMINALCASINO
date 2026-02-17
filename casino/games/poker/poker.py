@@ -4,6 +4,7 @@ import shutil
 
 from casino.card_assets import assign_card_art
 from casino.cards import Deck, StandardDeck, StandardCard
+from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
@@ -239,6 +240,7 @@ def play_poker(ctx: GameContext) -> None:
         return
     continue_game = True
     stubborn = 0 # gets to 7 and you're out
+    stats = GameStats("Poker", account.balance)
 
     while continue_game:
         clear_screen()
@@ -454,6 +456,7 @@ def play_poker(ctx: GameContext) -> None:
                 player_status = False
 
         #showdown
+        stats.rounds_played += 1
         if not player_folded:
             print_game(ctx, "SHOWDOWN", player_hand, opponent_hand, board, pot)
 
@@ -463,20 +466,24 @@ def play_poker(ctx: GameContext) -> None:
             if player_score > opponent_score:
                 cprint(f"You win with a {hand_name(player_score)}!")
                 account.deposit(pot)
+                stats.wins += 1
             elif opponent_score > player_score:
                 cprint(f"Opponent wins with a {hand_name(opponent_score)}.")
                 opponent_chips += pot
+                stats.losses += 1
             else:
                 cprint(f"It's a tie with both players having a {hand_name(player_score)}.")
                 account.deposit(pot//2)
                 opponent_chips += pot // 2
-                
+                stats.pushes += 1
+
             cprint(f"Your balance: {account.balance} chips\n")
         else:
             clear_screen()
             display_poker_topbar(ctx)
             cprint("You folded. Opponent wins the pot.")
             opponent_chips += pot
+            stats.losses += 1
             cprint(f"Your balance: {account.balance} chips\n")
         
         # Regenerate the deck (i.e. return all cards to deck and shuffle)
@@ -486,6 +493,8 @@ def play_poker(ctx: GameContext) -> None:
         if account.balance < 20: # The starting bet pre-flop
             cprint(NO_FUNDS_MSG)
             cinput("Press enter to continue.")
+            stats.ending_balance = account.balance
+            display_stats(stats)
             continue_game = False
             continue
         cprint(STAY_AT_TABLE_PROMPT)
@@ -496,6 +505,8 @@ def play_poker(ctx: GameContext) -> None:
             if stubborn >= 13:
                 clear_screen()
                 cprint(SECURITY_MSG)
+                stats.ending_balance = account.balance
+                display_stats(stats)
                 return
             clear_screen()
             display_poker_topbar(ctx)
@@ -504,6 +515,6 @@ def play_poker(ctx: GameContext) -> None:
 
         # play / leave
         if play_again in "Nn":
-            clear_screen()
-            cprint(f"\nThanks for playing.\n\n")
+            stats.ending_balance = account.balance
+            display_stats(stats)
             continue_game = False

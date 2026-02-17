@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from time import sleep
 
 from casino.cards import StandardCard, StandardDeck, Card
+from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from casino.accounts import Account
 from casino.utils import clear_screen, cprint, cinput, display_topbar, print_cards
@@ -199,6 +200,7 @@ class Blackjack(ABC):
 class StandardBlackjack(Blackjack):
     def __init__(self, ctx: GameContext) -> None:
         super().__init__(ctx)
+        self.stats = GameStats("Blackjack (U.S.)", ctx.account.balance)
 
     #step 1 of 8
     def bet(self):
@@ -410,6 +412,7 @@ class StandardBlackjack(Blackjack):
         dealer_bj = self.dealer_hand.is_blackjack
         dealer_bust = self.dealer_hand.is_bust
 
+        primary_player = self.players[0]
         for player in self.players:
             for hand in player.hands:
                 if hand.is_blackjack and dealer_bj:
@@ -429,6 +432,14 @@ class StandardBlackjack(Blackjack):
                 else:  # dealer_total < hand_total:
                     result = "player_wins"
                 self.update_hand_results(hand, result)
+                if player == primary_player:
+                    self.stats.rounds_played += 1
+                    if result in {"player_blackjack", "player_wins", "dealer_bust"}:
+                        self.stats.wins += 1
+                    elif result in {"tie", "blackjack_tie"}:
+                        self.stats.pushes += 1
+                    else:
+                        self.stats.losses += 1
 
     #step 7 of 8
     def payout(self):
@@ -517,6 +528,8 @@ def play_blackjack(context: GameContext):
         end_of_round_status = blackjack.play_round()
 
         if end_of_round_status.upper() == "EXIT":
+            blackjack.stats.ending_balance = context.account.balance
+            display_stats(blackjack.stats)
             cprint("Exiting Blackjack...")
             sleep(1.0)
             break
@@ -527,6 +540,8 @@ def play_blackjack(context: GameContext):
             blackjack.reset()
             continue
         elif end_of_round_status.upper() == "KICKED":
+            blackjack.stats.ending_balance = context.account.balance
+            display_stats(blackjack.stats)
             action: str = None
             while action != "":
                 clear_screen()

@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from .constants import *
 from .core import BlackjackCore
@@ -42,9 +43,10 @@ class EuropeanBlackjackGame:
     def __init__(self, ctx: GameContext):
         self.ctx = ctx
         self.ui = BlackjackUI(ctx)
-        self.core: BlackjackCore = None 
+        self.core: BlackjackCore = None
         self.bet = 0
         self.stubborn_counter = 0
+        self.stats = GameStats("Blackjack (E.U.)", ctx.account.balance)
 
     def run(self):
         if not self._check_funds(): return
@@ -57,8 +59,8 @@ class EuropeanBlackjackGame:
             if not self._check_funds(): break
             if not self.ask_play_again(): break
         
-        self.ui.clear()
-        self.ui.print_simple_message("\nThanks for playing.\n\n")
+        self.stats.ending_balance = self.ctx.account.balance
+        display_stats(self.stats)
 
     def _check_funds(self) -> bool:
         if self.ctx.account.balance < self.ctx.config.blackjack_min_bet:
@@ -163,6 +165,14 @@ class EuropeanBlackjackGame:
             return RoundResult.PUSH
 
     def _handle_resolution(self, result: RoundResult):
+        self.stats.rounds_played += 1
+        if result in {RoundResult.PLAYER_WIN, RoundResult.PLAYER_BJ, RoundResult.DEALER_BUST}:
+            self.stats.wins += 1
+        elif result in {RoundResult.DEALER_WIN, RoundResult.PLAYER_BUST}:
+            self.stats.losses += 1
+        else:
+            self.stats.pushes += 1
+
         msg = ""
         payout_mult = EuropeanRules.get_payout(result)
 
