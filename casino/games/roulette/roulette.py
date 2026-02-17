@@ -247,11 +247,19 @@ class Roulette:
             cprint_ansi_center(line)
 
     def wheel_animation(self, ctx: GameContext, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
+    _hide_cursor()
+    _clear_once()
+    try:
         for num in sequence:
-            clear_screen()
+            _cursor_home()
             display_roulette_topbar(ctx)
-            self.print_wheel(highlighted_num = num)
+            self.print_wheel(highlighted_num=num)
+            sys.stdout.flush()
             time.sleep(sec_btwn_spins)
+    finally:
+        _show_cursor()
+        sys.stdout.flush()
+
 
     def spin_wheel(self, ctx: GameContext) -> tuple[str, str, int, int]:
         """
