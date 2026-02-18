@@ -6,12 +6,25 @@ from .accounts import Account
 from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
-
+from .visuals.game_choice_screen import choose_game_screen
 
 CASINO_HEADER = """
-┌──────────────────────────────────────┐
-│   ♦ T E R M I N A L  C A S I N O ♦   │
-└──────────────────────────────────────┘
+                           ♠                           
+                          ╔║╗                          
+                        ╔═║║║═╗                         
+                        ║ ║║║ ║                        
+                    ╔═══╬═╬╬╬═╬═══╗                    
+                   ╔╝   ║ ║║║ ║   ╚╗                   
+                  ╔║    ║ ║║║ ║    ║╗                  
+                ╔═╝║    ║ ║║║ ║    ║╚═╗                
+════════════════╝  ║    ║ ║║║ ║    ║  ╚════════════════
+║    ╔═════════════╩════╩═╩╩╩═╩════╩═════════════╗    ║
+║════║  ╔═════════════════════════════════════╗  ║════║
+║♠♥♦♣║  ║  ♦ T E R M I N A L   C A S I N O ♦  ║  ║♣♦♥♠║
+║════║  ╚═════════════════════════════════════╝  ║════║
+║    ╚═════════════╦══════╦╦╦══════╦═════════════╝    ║
+║                  ║      ║║║      ║                  ║
+╚══════════════════╩══════╩╩╩══════╩══════════════════╝
 """
 
 CASINO_HEADER_OPTIONS = {
@@ -95,31 +108,17 @@ def main_menu(ctx: GameContext) -> None:
             break  # exit loop -> program ends
 
         # --- choose game ---
-        def render_choose_game():
-            clear_screen()
-            display_topbar(account, **CASINO_HEADER_OPTIONS)
-            cprint("")  # spacing
-            width = term_width()
-            max_length = max(map(len, ALL_GAMES))
-            cprint("┌" + "─" * 30 + "┐")
-            cprint("│" + " " * 30 + "│")
-            for i, name in enumerate(ALL_GAMES, start=1):
-                cprint(
-                    f"│{('[{}] {}'.format(i, name.title()) + ' ' * (max_length - len(name))).center(30)}│".center(width)
-                )
-            cprint("│" + " " * 30 + "│")
-            cprint("└" + "─" * 30 + "┘")
-
-
-
-        choice = prompt_with_refresh(
-            render_fn = render_choose_game,
-            prompt = GAME_CHOICE_PROMPT.center(term_width()),
-            error_message = INVALID_CHOICE_PROMPT,
-            validator = lambda x: x.isdigit() and 1 <= int(x) <= len(ALL_GAMES),
+        selected_index = choose_game_screen(
+            ctx=ctx,
+            game_names=ALL_GAMES,
+            header_options=CASINO_HEADER_OPTIONS,
         )
 
-        selected_game = ALL_GAMES[int(choice) - 1]
+        # user hit Q (or EOF/ctrl-c) -> go back to Enter/Quit screen
+        if selected_index is None:
+            continue
+
+        selected_game = ALL_GAMES[selected_index]
         handler = GAME_HANDLERS.get(selected_game)
         if handler:
             clear_screen()
