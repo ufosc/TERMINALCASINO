@@ -3,6 +3,7 @@ import time
 from typing import Literal
 
 from casino.accounts import Account
+from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
@@ -239,6 +240,7 @@ def play_slots(ctx: GameContext) -> None:
     """Play slots game."""
     account = ctx.account
     min_bet = ctx.config.slots_min_line_bet
+    stats = GameStats("Slots", account.balance)
     take_new_bet = True
     bet_amount = 0
     while True:
@@ -248,6 +250,8 @@ def play_slots(ctx: GameContext) -> None:
             if account.balance < min_bet:
                 cprint("You don't have enough money to make a bet.\n\n")
                 cinput("Press Enter to continue...")
+                stats.ending_balance = account.balance
+                display_stats(stats)
                 return
             bet_amount = get_bet_amount(ctx)
             take_new_bet = False
@@ -273,6 +277,8 @@ def play_slots(ctx: GameContext) -> None:
             display_topbar(account, **HEADER_OPTIONS)
             print_spin(items, 0)
             cprint(f"MATCH: +{money_gain} chips")
+            stats.rounds_played += 1
+            stats.wins += 1
         else:
             items = (get_rand_item(), get_rand_item(), get_rand_item())
             while len(set(items)) == 1:
@@ -282,11 +288,15 @@ def play_slots(ctx: GameContext) -> None:
             display_topbar(account, **HEADER_OPTIONS)
             print_spin(items, 0)
             cprint(f"NO MATCH: -{bet_amount} chips")
+            stats.rounds_played += 1
+            stats.losses += 1
 
         # Choose what to do after spin
         choice = get_player_choice(ctx, items, bet_amount)
         match choice:
             case "quit":
+                stats.ending_balance = account.balance
+                display_stats(stats)
                 return
             case "change_bet":
                 take_new_bet = True
