@@ -300,14 +300,14 @@ if __name__ == "__main__":
     try:
 
         name = ""
-        app = NameSelect()
+        app = NameSelect() #username select
         name = app.run()
         account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
         config = Config.default()
         ctx = GameContext(account=account, config=config)
         while True:
         
-            app = MenuSelect(username=name)
+            app = MenuSelect(username=name) #Quit or Enter the Casino
 
             step = app.run()
 
@@ -315,14 +315,14 @@ if __name__ == "__main__":
                 exit()
 
 
-            app = GameSelect(username=name)
+            app = GameSelect(username=name) #Select Game Mode
             
             iden = app.run()
 
             print(f"selected {iden}")
             choice = int(iden[1:])
 
-            selected_game = ALL_GAMES[int(choice) - 1]
+            selected_game = ALL_GAMES[int(choice) - 1] #Go to Desired Game
             handler = GAME_HANDLERS.get(selected_game)
             clear_screen()
             handler(ctx)  # returns to loop after game finishes
