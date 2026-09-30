@@ -234,7 +234,7 @@ class StandardBlackjack(Blackjack):
                     result = "tie"
                 elif hand.total < dealer_total:
                     result = "dealer_wins"
-                elif dealer_total < hand_total:
+                elif dealer_total < hand.total:
                     result = "player_wins"
                 else:
                     raise ValueError(f"Invalid game result. result = {result}")
