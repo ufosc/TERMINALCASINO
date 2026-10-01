@@ -8,9 +8,7 @@ from casino.types import GameContext
 from casino.games.blackjack.variants.standard import StandardBlackjack
 from casino.games.blackjack.variants.european import EuropeanBlackjack
 
-# Blackjack is single-player only (issue #199): these tests make sure the
-# "number of players" prompt and the per-player loops stay removed.
-
+# Blackjack is single-player only.
 VARIANTS = [StandardBlackjack, EuropeanBlackjack]
 BLACKJACK_MODULES = [
     "casino.games.blackjack.base",
