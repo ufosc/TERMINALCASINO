@@ -276,12 +276,6 @@ def main(name: str):
     clear_screen()
     display_topbar(account=None, **CASINO_HEADER_OPTIONS)
 
-   # name = cinput("Enter your name: ").strip()
-   # while not name:
-    #    clear_screen()
-    #    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
-    #    cprint("\nInvalid input. Please enter a valid name.\n")
-     #   name = cinput("Enter your name: ").strip()
     
     name =name
     # theme selection
