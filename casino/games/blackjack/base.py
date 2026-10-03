@@ -36,69 +36,46 @@ class Blackjack(ABC):
         self.view = BlackjackView(ctx)
         shoe_size = self.configurations.blackjack_shoe_size
         self.deck: StandardDeck = StandardDeck(shoe_size)
-        self.players: list[Player] = self._init_players()
+        self.player: Player = Player(ctx.account)
         self.dealer_hand: Hand = Hand()
         self.MINIMUM_BET = self.configurations.blackjack_min_bet
-
-    def _init_players(self) -> list[Player]:
-        while True:
-            try:
-                num_str = cinput("Enter number of Players: ").strip()
-                num_players = int(num_str)
-                if 1 <= num_players <= 4:
-                    break
-                cprint("Please enter a number between 1 and 4.")
-            except ValueError:
-                cprint("Invalid input. Please enter a number.")
-        players = []
-        players.append(Player(self.context.account))
-        if num_players > 1:
-            for i in range(2, num_players + 1):
-                name = cinput(f"Enter name for Player {i}: ").strip()
-                if not name:
-                    name = f"Guest {i}"
-                start_bal = self.context.account.balance
-                guest_account = Account.generate(name=name, balance=start_bal)
-                players.append(Player(guest_account))
-        return players
 
     def play_again(self) -> str:
         """
         Asks user if they would like to play again.
         """
-        self.view.display_topbar(self.players)
+        self.view.display_topbar()
 
-        for player in self.players:
-            # Kick from casino if player has 0 chips
-            if player.account.balance == 0:
+        # Kick from casino if player has 0 chips
+        if self.player.account.balance == 0:
+            clear_screen()
+            cprint("GAME OVER")
+            cprint("You have lost all your chips. Security is escorting you out.")
+            sys.exit()
+        if self.player.account.balance < self.MINIMUM_BET:
+            cprint(NO_FUNDS_MSG)
+            cinput("Press [Enter] to continue")
+            return "EXIT"
+
+        # Ask user if they would like to stay at the table
+        while True:# avoid raising error
+            cprint(STAY_AT_TABLE_PROMPT)
+            play_again: str = cinput(YES_OR_NO_PROMPT)
+
+            status: str = ""
+            if play_again.upper() in {"", "Y", "YES"}:
+                status = "CONTINUE"
+            elif play_again.upper() in {"V", "VARIANT"}:
+                status = "VARIANT"
+            elif play_again.upper() in {"N", "NO"}:
                 clear_screen()
-                cprint("GAME OVER")
-                cprint("You have lost all your chips. Security is escorting you out.")
-                sys.exit()
-            if player.account.balance < self.MINIMUM_BET:
-                cprint(NO_FUNDS_MSG)
-                cinput("Press [Enter] to continue")
-                return "EXIT"
+                cprint("\nThanks for playing!\n\n")
+                status = "EXIT"
+            else:
+                cprint(f"{play_again} is not a valid value.")
+                continue
 
-            # Ask user if they would like to stay at the table
-            while True:# avoid raising error
-                cprint(STAY_AT_TABLE_PROMPT)
-                play_again: str = cinput(YES_OR_NO_PROMPT)
-
-                status: str = ""
-                if play_again.upper() in {"", "Y", "YES"}:
-                    status = "CONTINUE"
-                elif play_again.upper() in {"V", "VARIANT"}:
-                    status = "VARIANT"
-                elif play_again.upper() in {"N", "NO"}:
-                    clear_screen()
-                    cprint("\nThanks for playing!\n\n")
-                    status = "EXIT"
-                else:
-                    cprint(f"{play_again} is not a valid value.")
-                    continue
-
-                return status
+            return status
 
     @abstractmethod
     def play_round(self):
@@ -121,14 +98,13 @@ class Blackjack(ABC):
 
     def reset(self, context = None):
         """
-        Resets the round state without destroying player objects.
+        Resets the round state without destroying the player object.
         """
         if context is not None:
             self.context = context
             self.configurations = context.config
         self.dealer_hand = None
-        for player in self.players:
-            player.hands = []
+        self.player.hands = []
 
     #deal card method
     def deal_card(self, hand: Hand, hidden: bool = False) -> None:

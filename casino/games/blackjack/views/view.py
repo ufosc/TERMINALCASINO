@@ -15,51 +15,25 @@ class BlackjackView:
     def __init__(self, context) -> None:
         self.context = context
 
-    def display_topbar(self, players: list) -> None:
-        if len(players) <= 1:
-            display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
-            return
+    def display_topbar(self) -> None:
+        display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
 
-        header = BLACKJACK_HEADER_OPTIONS.get("header", "")
-        margin = BLACKJACK_HEADER_OPTIONS.get("margin", 1)
-        cprint(header)
-        header_lines = header.splitlines()
-        header_width = max(len(line) for line in header_lines if line.strip())
-        info = "  |  ".join(f"👤 {p.name} 💰 {p.balance}" for p in players)
-        cprint(info.center(header_width))
-        print("\n" * margin, end="")
-
-    def render_table(self, players: list, dealer_hand, current_player=None,
-                      active_hand_idx: int = 0) -> None:
+    def render_table(self, player, dealer_hand,
+                      active_hand_idx: int | None = None) -> None:
         clear_screen()
-        self.display_topbar(players)
+        self.display_topbar()
         dealer_hand.print_hand(label="Dealer's Hand")
         cprint("=" * 40)
-        for player in players:
-            num_hands = len(player.hands)
-            for idx, hand in enumerate(player.hands):
-                is_active = (player == current_player and idx == active_hand_idx)
-                label = f"{player.name} - Hand {idx + 1}" if num_hands > 1 else player.name
-                hand.print_hand(label=label, is_active=is_active)
-                print()
-
-    def prompt_num_players(self, players_so_far: list) -> int:
-        while True:
-            try:
-                self.view.display_topbar()
-                num = int(cinput("Enter number of Players: ").strip())
-                if 1 <= num <= 4:
-                    return num
-                cprint("Please enter a number between 1 and 4.")
-            except ValueError:
-                cprint("Invalid input. Please enter a number.")
-
-    def prompt_player_name(self, index: int) -> str:
-        return cinput(f"Enter name for Player {index}: ").strip()
+        num_hands = len(player.hands)
+        for idx, hand in enumerate(player.hands):
+            is_active = (idx == active_hand_idx)
+            label = f"{player.name} - Hand {idx + 1}" if num_hands > 1 else player.name
+            hand.print_hand(label=label, is_active=is_active)
+            print()
 
     def prompt_bet(self, player, error_msg: str = "") -> str:
         clear_screen()
-        self.display_topbar([player])
+        self.display_topbar()
         if error_msg:
             cprint(error_msg)
         return cinput(f"🤵 : {player.name}, how much would you like to bet? ").strip()
