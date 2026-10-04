@@ -313,6 +313,7 @@ class Roulette:
 
             if (self.accounts[i].balance == 0):
                 cprint(f"Skipping player {i+1} because of empty balance...")
+                i += 1
                 continue
 
             will_bet = cinput(f"🤵: Would you like to bet, Player {i+1} (y/N): ")
