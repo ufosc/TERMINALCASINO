@@ -29,8 +29,9 @@ class SlotsView:
     def announce(self, message: str) -> None:
         cprint(message)
 
-    def render_row(self, items: tuple[str, str, str], frame: int = 0) -> None:
-        """Draw the base game's single payline at the given animation frame."""
+    def render_slot_machine(self, data: tuple, frame: int) -> str:
+        """Renders and returns the formatted slot machine output string at the given animation frame."""
+        
         legend_lines = PAYOUT_LEGEND.splitlines()
         low_line = legend_lines[0] if len(legend_lines) > 0 else ""
         high_line = legend_lines[1] if len(legend_lines) > 1 else ""
@@ -41,21 +42,32 @@ class SlotsView:
         low_line = pad_line(low_line)
         high_line = pad_line(high_line)
 
+        if isinstance(data[0], tuple):
+            # 3x3 grid
+            row0 = [item.center(7) for item in data[0]]
+            row1 = [item.center(7) for item in data[1]]
+            row2 = [item.center(7) for item in data[2]]
+        else:
+            # Middle slot row only
+            row0 = ["       ", "       ", "       "]
+            row1 = [item.center(7) for item in data]
+            row2 = ["       ", "       ", "       "]
+
         match frame:
             case 0 | 5:
-                cprint(f"""
+                return f"""
 ┌───────────────────────────────────────┐
 │   ♦ T E R M I N A L  C A S I N O ♦    │
 │───────────────────────────────────────│
     │                                       │┌───┐
     │   ┌───────┐   ┌───────┐   ┌───────┐   ││   │
-    │   │       │   │       │   │       │   │└───┘
+    │   │{row0[0]}│   │{row0[1]}│   │{row0[2]}│   │└───┘
     │   └───────┘   └───────┘   └───────┘   │ │ │
     │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
-    │ - │{items[0].center(7)}│   │{items[1].center(7)}│   │{items[2].center(7)}│ - │ │ │
+    │ - │{row1[0]}│   │{row1[1]}│   │{row1[2]}│ - │ │ │
     │   └───────┘   └───────┘   └───────┘   │ │ │
     │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
-    │   │       │   │       │   │       │   │─┘ │
+    │   │{row2[0]}│   │{row2[1]}│   │{row2[2]}│   │─┘ │
     │   └───────┘   └───────┘   └───────┘   │───┘
 │                                       │
 │───────────────────────────────────────│
@@ -65,22 +77,22 @@ class SlotsView:
 │ {high_line}│
 │                                       │
 └───────────────────────────────────────┘
-                """.strip())
-
+                """.strip()
+            
             case 1 | 4:
-                cprint(f"""
+                return f"""
 ┌───────────────────────────────────────┐
 │   ♦ T E R M I N A L  C A S I N O ♦    │
 │───────────────────────────────────────│
 │                                       │
 │   ┌───────┐   ┌───────┐   ┌───────┐   │
-    │   │       │   │       │   │       │   │┌───┐
+    │   │{row0[0]}│   │{row0[1]}│   │{row0[2]}│   │┌───┐
     │   └───────┘   └───────┘   └───────┘   ││   │
     │   ┌───────┐   ┌───────┐   ┌───────┐   │└───┘
-    │ - │{items[0].center(7)}│   │{items[1].center(7)}│   │{items[2].center(7)}│ - │ │ │
+    │ - │{row1[0]}│   │{row1[1]}│   │{row1[2]}│ - │ │ │
     │   └───────┘   └───────┘   └───────┘   │ │ │
     │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
-    │   │       │   │       │   │       │   │─┘ │
+    │   │{row2[0]}│   │{row2[1]}│   │{row2[2]}│   │─┘ │
     │   └───────┘   └───────┘   └───────┘   │───┘
 │                                       │
 │───────────────────────────────────────│
@@ -90,22 +102,22 @@ class SlotsView:
 │ {high_line}│
 │                                       │
 └───────────────────────────────────────┘
-                """.strip())
+                """.strip()
 
             case 2 | 3:
-                cprint(f"""
+                return f"""
 ┌───────────────────────────────────────┐
 │   ♦ T E R M I N A L  C A S I N O ♦    │
 │───────────────────────────────────────│
 │                                       │
 │   ┌───────┐   ┌───────┐   ┌───────┐   │
-│   │       │   │       │   │       │   │
+│   │{row0[0]}│   │{row0[1]}│   │{row0[2]}│   │
 │   └───────┘   └───────┘   └───────┘   │
 │   ┌───────┐   ┌───────┐   ┌───────┐   │
-    │ - │{items[0].center(7)}│   │{items[1].center(7)}│   │{items[2].center(7)}│ - │┌───┐
+    │ - │{row1[0]}│   │{row1[1]}│   │{row1[2]}│ - │┌───┐
     │   └───────┘   └───────┘   └───────┘   ││   │
     │   ┌───────┐   ┌───────┐   ┌───────┐   │└───┘
-    │   │       │   │       │   │       │   │─┘ │
+    │   │{row2[0]}│   │{row2[1]}│   │{row2[2]}│   │─┘ │
     │   └───────┘   └───────┘   └───────┘   │───┘
 │                                       │
 │───────────────────────────────────────│
@@ -115,92 +127,14 @@ class SlotsView:
 │ {high_line}│
 │                                       │
 └───────────────────────────────────────┘
-                """.strip())
+                """.strip()
+
+        return "" 
+
+    def render_row(self, items: tuple[str, str, str], frame: int = 0) -> None:
+        """Draw the base game's single payline at the given animation frame."""
+        cprint(self.render_slot_machine(items, frame))
 
     def render_grid(self, grid, frame: int = 0) -> None:
         """Draw the expanded game's 3x3 payline grid at the given animation frame."""
-        legend_lines = PAYOUT_LEGEND.splitlines()
-        low_line = legend_lines[0] if len(legend_lines) > 0 else ""
-        high_line = legend_lines[1] if len(legend_lines) > 1 else ""
-
-        def pad_line(line: str, width: int = 38) -> str:
-            return line.ljust(width)
-
-        low_line = pad_line(low_line)
-        high_line = pad_line(high_line)
-
-        match frame:
-            case 0 | 5:
-                cprint(f"""
-┌───────────────────────────────────────┐
-│   ♦ T E R M I N A L  C A S I N O ♦    │
-│───────────────────────────────────────│
-    │                                       │┌───┐
-    │   ┌───────┐   ┌───────┐   ┌───────┐   ││   │
-    │   │{grid[0][0].center(7)}│   │{grid[0][1].center(7)}│   │{grid[0][2].center(7)}│   │└───┘
-    │   └───────┘   └───────┘   └───────┘   │ │ │
-    │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
-    │ - │{grid[1][0].center(7)}│   │{grid[1][1].center(7)}│   │{grid[1][2].center(7)}│ - │ │ │
-    │   └───────┘   └───────┘   └───────┘   │ │ │
-    │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
-    │   │{grid[2][0].center(7)}│   │{grid[2][1].center(7)}│   │{grid[2][2].center(7)}│   │─┘ │
-    │   └───────┘   └───────┘   └───────┘   │───┘
-│                                       │
-│───────────────────────────────────────│
-│                PAYOUTS                │
-│                                       │
-│ {low_line}│
-│ {high_line}│
-│                                       │
-└───────────────────────────────────────┘
-                """.strip())
-
-            case 1 | 4:
-                cprint(f"""
-┌───────────────────────────────────────┐
-│   ♦ T E R M I N A L  C A S I N O ♦    │
-│───────────────────────────────────────│
-│                                       │
-│   ┌───────┐   ┌───────┐   ┌───────┐   │
-    │   │{grid[0][0].center(7)}│   │{grid[0][1].center(7)}│   │{grid[0][2].center(7)}│   │┌───┐
-    │   └───────┘   └───────┘   └───────┘   ││   │
-    │   ┌───────┐   ┌───────┐   ┌───────┐   │└───┘
-    │ - │{grid[1][0].center(7)}│   │{grid[1][1].center(7)}│   │{grid[1][2].center(7)}│ - │ │ │
-    │   └───────┘   └───────┘   └───────┘   │ │ │
-    │   ┌───────┐   ┌───────┐   ┌───────┐   │ │ │
-    │   │{grid[2][0].center(7)}│   │{grid[2][1].center(7)}│   │{grid[2][2].center(7)}│   │─┘ │
-    │   └───────┘   └───────┘   └───────┘   │───┘
-│                                       │
-│───────────────────────────────────────│
-│                PAYOUTS                │
-│                                       │
-│ {low_line}│
-│ {high_line}│
-│                                       │
-└───────────────────────────────────────┘
-                """.strip())
-
-            case 2 | 3:
-                cprint(f"""
-┌───────────────────────────────────────┐
-│   ♦ T E R M I N A L  C A S I N O ♦    │
-│───────────────────────────────────────│
-│                                       │
-│   ┌───────┐   ┌───────┐   ┌───────┐   │
-│   │{grid[0][0].center(7)}│   │{grid[0][1].center(7)}│   │{grid[0][2].center(7)}│   │
-│   └───────┘   └───────┘   └───────┘   │
-│   ┌───────┐   ┌───────┐   ┌───────┐   │
-    │ - │{grid[1][0].center(7)}│   │{grid[1][1].center(7)}│   │{grid[1][2].center(7)}│ - │┌───┐
-    │   └───────┘   └───────┘   └───────┘   ││   │
-    │   ┌───────┐   ┌───────┐   ┌───────┐   │└───┘
-    │   │{grid[2][0].center(7)}│   │{grid[2][1].center(7)}│   │{grid[2][2].center(7)}│   │─┘ │
-    │   └───────┘   └───────┘   └───────┘   │───┘
-│                                       │
-│───────────────────────────────────────│
-│                PAYOUTS                │
-│                                       │
-│ {low_line}│
-│ {high_line}│
-│                                       │
-└───────────────────────────────────────┘
-                """.strip())
+        cprint(self.render_slot_machine(grid, frame))
