@@ -103,7 +103,34 @@ class UnoView:
             cprint(
                 f"{p.name:<12}  {left:>9}     {p.cards_played:>5}    {p.draws_taken:>5}    {p.wilds_played:>4}   {p.draw4_played:>3}")
         cprint("═" * 50 + "\n")
-        cinput("Press enter when ready to exit")
+        #cinput("Press enter when ready to exit")
+        
+        #Nemrod for issue 187 for CEN3031 class open source project  
+        choice = cinput("Press [S] to see stats for each player, or Enter to exit: ").lower()
+        if choice == "s":
+            self.show_stat_pages(players)
+    def show_stat_pages(self, players) -> None:
+        index =0 
+        veiwing = True
+        while veiwing:
+            self.display_topbar()
+            p = players[index]
+            cprint(f"Stats for {p.name} ({index +1} / {len(players)})")
+            cprint("-" *40)
+            cprint(f"Cards left: {len(p.hand)}")
+            cprint(f"Cards played: {p.cards_played}")
+            cprint(f"Draws taken: {p.draws_taken}")
+            cprint(f"Wilds played: {p.wilds_played}")
+            cprint(f"+4 cards played: {p.draw4_played}")
+            cprint("\n [N]ext player, [P]revious player, [E]xit")
+            key = cinput("Choose an option: ").lower()
+
+            if key == "n":
+                index = (index + 1) % len(players)
+            elif key == "p":
+                index = (index - 1) % len(players)
+            elif key == "e":
+                   veiwing = False
 
     def prompt_wild_color(self) -> str:
         new_color = cinput("Choose a color for the wild card (green, yellow, red, or blue)!").lower()
