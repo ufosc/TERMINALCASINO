@@ -8,34 +8,190 @@ from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
 from typing import Callable
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, Label
+from textual.widgets import Button, Footer, Header, Label, Input
 
 class CasinoApp(App):
-    """Textual app for Terminal Casino."""
+    """Textual homepage for Terminal Casino."""
 
-    BINDINGS = [("d", "toggle_dark", "Toggle dark mode"), 
-                ("e", "exit_app", "Exit App"),
-                Binding("ctrl+c", "exit_popup", "Exit Popup", show=False)]
+    CSS = """
+    Screen {
+        align: center middle;
+    }
+
+    #homepage {
+        width: 70;
+        height: auto;
+        padding: 1 3;
+        border: round $accent;
+    }
+
+    #casino-title {
+        width: 100%;
+        text-align: center;
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
+    #name-input {
+        margin-bottom: 1;
+    }
+
+    #game-label {
+        width: 100%;
+        text-align: center;
+        text-style: bold;
+        margin: 1 0;
+    }
+
+    .game-row {
+        width: 100%;
+        height: auto;
+        align: center middle;
+    }
+
+    .game-button {
+        margin: 0 1;
+        min-width: 20;
+    }
+
+    #message {
+        width: 100%;
+        text-align: center;
+        margin-top: 1;
+    }
+    """
+
+    BINDINGS = [
+        ("d", "toggle_dark", "Toggle dark mode"),
+        ("e", "exit_app", "Exit App"),
+        Binding("ctrl+c", "exit_popup", "Exit Popup", show=False),
+    ]
 
     def compose(self) -> ComposeResult:
-        """Create child widgets for the app."""
+        """Create the Terminal Casino homepage."""
         yield Header()
+
+        yield Vertical(
+            Label(
+                "♦ T E R M I N A L   C A S I N O ♦",
+                id="casino-title",
+            ),
+
+            Label("Enter your player name:"),
+
+            Input(
+                placeholder="Player name",
+                id="name-input",
+            ),
+
+            Label("Select a Game", id="game-label"),
+
+            Horizontal(
+                Button(
+                    "Blackjack (U.S.)",
+                    id="blackjack-us",
+                    classes="game-button",
+                ),
+                Button(
+                    "Blackjack (E.U.)",
+                    id="blackjack-eu",
+                    classes="game-button",
+                ),
+                classes="game-row",
+            ),
+
+            Horizontal(
+                Button(
+                    "Slots",
+                    id="slots",
+                    classes="game-button",
+                ),
+                Button(
+                    "Poker",
+                    id="poker",
+                    classes="game-button",
+                ),
+                classes="game-row",
+            ),
+
+            Horizontal(
+                Button(
+                    "Roulette",
+                    id="roulette",
+                    classes="game-button",
+                ),
+                Button(
+                    "European Roulette",
+                    id="european-roulette",
+                    classes="game-button",
+                ),
+                classes="game-row",
+            ),
+
+            Horizontal(
+                Button(
+                    "UNO",
+                    id="uno",
+                    classes="game-button",
+                ),
+                classes="game-row",
+            ),
+
+            Label("", id="message"),
+
+            id="homepage",
+        )
+
         yield Footer()
 
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle game-selection buttons."""
+
+        game_map = {
+            "blackjack-us": "blackjack (U.S.)",
+            "blackjack-eu": "blackjack (E.U.)",
+            "slots": "slots",
+            "poker": "poker",
+            "roulette": "roulette",
+            "european-roulette": "european roulette",
+            "uno": "uno",
+        }
+
+        button_id = event.button.id
+
+        if button_id not in game_map:
+            return
+
+        name_input = self.query_one("#name-input", Input)
+        message = self.query_one("#message", Label)
+
+        player_name = name_input.value.strip()
+
+        if not player_name:
+            message.update("Please enter a valid player name before selecting a game.")
+            name_input.focus()
+            return
+
+        selected_game = game_map[button_id]
+
+        self.exit((player_name, selected_game))
+
     def action_toggle_dark(self) -> None:
-        """An action to toggle dark mode."""
+        """Toggle between Textual light and dark themes."""
         self.theme = (
-            "textual-dark" if self.theme == "textual-light" else "textual-light"
+            "textual-dark"
+            if self.theme == "textual-light"
+            else "textual-light"
         )
 
     def action_exit_app(self) -> None:
-        """An action to exit the app."""
+        """Exit Terminal Casino."""
         self.exit()
-    
+
     def action_exit_popup(self) -> None:
-        """Override the native ctrl+c binding popup."""
+        """Override the native Ctrl+C binding popup."""
         self.push_screen(ExitPopup())
 
 # TODO: clean up the UI, currently extremely rough
@@ -196,15 +352,27 @@ def main():
     ctx = GameContext(account=account, config=config)
     main_menu(ctx)
 
-
 if __name__ == "__main__":
     app = CasinoApp()
-    app.run()
-    """ -- OLD MAIN --
-    try:
-        main()
-    except (KeyboardInterrupt, EOFError):
-        clear_screen()
-        display_topbar(account=None, **CASINO_HEADER_OPTIONS)
-        cprint("\nGoodbye! (Interrupted)\n")
-    """
+    result = app.run()
+
+    if result is not None:
+        player_name, selected_game = result
+
+        account = Account.generate(
+            player_name,
+            ACCOUNT_STARTING_BALANCE,
+        )
+
+        config = Config.default()
+
+        ctx = GameContext(
+            account=account,
+            config=config,
+        )
+
+        handler = GAME_HANDLERS.get(selected_game)
+
+        if handler:
+            clear_screen()
+            handler(ctx)
