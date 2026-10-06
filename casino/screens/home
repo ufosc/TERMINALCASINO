@@ -1,0 +1,101 @@
+# casino/screens/home.py
+
+import subprocess
+import sys
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Button, Label, Input
+from textual.containers import Container, Vertical
+
+
+GAMES = [
+    ("🃏  Blackjack",  "blackjack"),
+    ("🎰  Slots",      "slots"),
+    ("🎲  Craps",      "craps"),
+    ("🃏  Poker",      "poker"),
+    ("🔴  Roulette",   "roulette"),
+]
+
+
+class HomePage(Screen):
+    """
+    Terminal Casino homepage.
+    - Collects the player's name via a text input.
+    - Displays a game selection menu.
+    - Exits Textual and launches the selected game in the original terminal UI.
+    """
+
+    CSS = """
+    HomePage {
+        align: center middle;
+    }
+
+    #home-container {
+        width: 64;
+        height: auto;
+        border: double $accent;
+        padding: 2 4;
+        align: center middle;
+    }
+
+    #casino-title {
+        text-align: center;
+        text-style: bold;
+        color: $success;
+        margin-bottom: 1;
+    }
+
+    #name-label {
+        text-align: center;
+        color: $text;
+        margin-bottom: 1;
+    }
+
+    #name-input {
+        margin-bottom: 2;
+    }
+
+    #games-label {
+        text-align: center;
+        color: $text-muted;
+        margin-bottom: 1;
+    }
+
+    Button {
+        width: 100%;
+        margin-bottom: 1;
+    }
+    """
+
+    BINDINGS = [
+        ("q", "quit", "Quit"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Container(id="home-container"):
+            yield Label("🎰  Terminal Casino  🎰", id="casino-title")
+            yield Label("Enter your name:", id="name-label")
+            yield Input(placeholder="Your name...", id="name-input")
+            yield Label("Select a game:", id="games-label")
+            with Vertical():
+                for display_name, game_id in GAMES:
+                    yield Button(display_name, id=f"game-{game_id}", variant="primary")
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Exit Textual and launch the selected game in the original terminal UI."""
+        button_id = event.button.id
+        if not button_id or not button_id.startswith("game-"):
+            return
+
+        game_id = button_id.removeprefix("game-")
+        player_name = self.query_one("#name-input", Input).value.strip() or "Player"
+
+        # Exit Textual cleanly, then hand off to the original terminal game runner
+        self.app.exit(result=(game_id, player_name))
+
+    def action_quit(self) -> None:
+        self.app.exit()
+
+      
