@@ -3,6 +3,9 @@ from collections import Counter
 
 from casino.cards import StandardCard
 
+# ---------------------------------------------------------------------------
+# Hand evaluation utilities
+# ---------------------------------------------------------------------------
 
 def get_card_value(rank: int | str) -> int:
     """Get the numeric value of a card rank."""
