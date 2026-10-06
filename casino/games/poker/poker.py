@@ -8,6 +8,8 @@ from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 
+from .constants import *
+
 from itertools import combinations
 from collections import Counter
 
