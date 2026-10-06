@@ -11,7 +11,7 @@ from .views import PokerView
 FULL_DECK: StandardDeck = StandardDeck()
 
 
-class PokerGame:
+class Poker:
     """Encapsulates a single session of Texas Hold'em Poker."""
 
     MIN_BALANCE = 20
