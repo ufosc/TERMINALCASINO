@@ -191,7 +191,7 @@ class PokerGame:
         else:
             prompt = "[F]old   [C]heck   [R]aise\n"
 
-        self._print_game(stage, player_hand, opponent_hand, board, pot)
+        self.view.print_game(stage, player_hand, opponent_hand, board, pot)
         action = cinput(prompt)
         raise_amount = 0
 
@@ -209,14 +209,14 @@ class PokerGame:
                 )
                 if not validation_msg:
                     break
-                self._print_game(stage, player_hand, opponent_hand, board, pot, validation_msg)
+                self.view.print_game(stage, player_hand, opponent_hand, board, pot, validation_msg)
             elif cant_call:
-                self._print_game(
+                self.view.print_game(
                     stage, player_hand, opponent_hand, board, pot,
                     f"🤵: You don't have enough chips to call {current_bet}."
                 )
             else:
-                self._print_game(stage, player_hand, opponent_hand, board, pot, INVALID_CHOICE_MSG)
+                self.view.print_game(stage, player_hand, opponent_hand, board, pot, INVALID_CHOICE_MSG)
 
             self.stubborn += 1
             if self.stubborn >= 7:
@@ -268,7 +268,7 @@ class PokerGame:
             cprint(f"Your balance: {self.account.balance} chips\n")
             return
 
-        self._print_game("SHOWDOWN", player_hand, opponent_hand, board, pot)
+        self.view.print_game("SHOWDOWN", player_hand, opponent_hand, board, pot)
 
         player_score = hand_score(player_hand, board)
         opponent_score = hand_score(opponent_hand, board)
