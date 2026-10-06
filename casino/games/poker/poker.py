@@ -10,52 +10,9 @@ from casino.utils import clear_screen, cprint, cinput, display_topbar
 
 from .constants import *
 from .hand import hand_score, hand_name
+from .views import PokerView
 
 FULL_DECK: StandardDeck = StandardDeck()
-
-# ---------------------------------------------------------------------------
-# Display helpers
-# ---------------------------------------------------------------------------
-
-def display_poker_topbar(ctx: GameContext) -> None:
-    display_topbar(ctx.account, **HEADER_OPTIONS)
-
-
-def print_cards(hand: list[StandardCard]) -> None:
-    """Print cards side by side (face-up)."""
-    if not hand:
-        return
-    card_lines = [card.front.strip("\n").splitlines() for card in hand]
-    max_lines = max(len(lines) for lines in card_lines)
-    for lines in card_lines:
-        while len(lines) < max_lines:
-            lines.append(" " * len(lines[0]))
-    hand_string = "\n".join(
-        "  ".join(card_lines[j][i] for j in range(len(hand)))
-        for i in range(max_lines)
-    )
-    cprint(hand_string)
-
-
-def print_opponent_cards(opponent_hand: list[StandardCard]) -> None:
-    """Print opponent's cards face-down."""
-    if not opponent_hand:
-        cprint("")
-        return
-    hidden_cards = [card.back for card in opponent_hand]
-    hand_string = "\n".join(
-        "  ".join(lines)
-        for lines in zip(*[card.strip("\n").splitlines() for card in hidden_cards])
-    )
-    cprint(hand_string)
-
-
-def print_hand(hand: list[StandardCard], hidden: bool = False) -> None:
-    if hidden:
-        print_opponent_cards(hand)
-    else:
-        print_cards(hand)
-
 
 # ---------------------------------------------------------------------------
 # PokerGame class
@@ -330,38 +287,6 @@ class PokerGame:
             self.stats.pushes += 1
 
         cprint(f"Your balance: {self.account.balance} chips\n")
-
-    # ------------------------------------------------------------------
-    # Display
-    # ------------------------------------------------------------------
-
-    def _print_game(
-        self,
-        stage: str,
-        player_hand: list[StandardCard],
-        opponent_hand: list[StandardCard],
-        board: list[StandardCard],
-        pot: int,
-        message: str = "",
-    ) -> None:
-        clear_screen()
-        display_poker_topbar(self.ctx)
-        if message:
-            cprint(message + "\n")
-        cprint(f"=== {stage.upper()} ===\n")
-        cprint("Opponent hand:")
-        print_hand(opponent_hand, hidden=(stage != "SHOWDOWN"))
-        cprint("Board:")
-        if not board:
-            cprint("No cards on the board yet.")
-        else:
-            print_hand(board)
-        cprint("Your hand:")
-        print_hand(player_hand)
-        cprint(f"Your current hand type: {hand_name(hand_score(player_hand, board))}")
-        cprint(f"Pot: {pot} chips")
-        cprint(f"Your balance: {self.account.balance} chips\n")
-
 
 # ---------------------------------------------------------------------------
 # Input validation helper (module-level, reusable by subclasses / variants)
