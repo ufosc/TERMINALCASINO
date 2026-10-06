@@ -2,6 +2,42 @@ from dataclasses import dataclass
 
 from .utils import cprint, cinput, clear_screen
 
+@dataclass
+class UnoGameStats:
+    number_of_players: int
+    number_of_rounds: int
+    wins: list[int]
+
+def display_uno_stats(stats: UnoGameStats) -> None:
+    """Display a post-game session summary for UNO."""
+    clear_screen()
+
+    rows = [
+        ("Number of Players", str(stats.number_of_players)),
+        ("Number of Rounds", str(stats.number_of_rounds)),
+        ("Wins per Player", ", ".join(str(w) for w in stats.wins)),
+    ]
+
+    label_width = max(len(r[0]) for r in rows)
+    value_width = max(len(r[1]) for r in rows)
+    inner_width = label_width + value_width + 6  # padding + colon + spaces
+    box_width = inner_width + 4  # borders + margin
+
+    title = " Session Summary "
+    side = (box_width - 2 - len(title)) // 2
+    top_border = f"┌{'─' * side}{title}{'─' * (box_width - 2 - side - len(title))}┐"
+    bot_border = f"└{'─' * (box_width - 2)}┘"
+
+    cprint(top_border)
+    for label, value in rows:
+        line = f"  {label + ':':<{label_width + 1}}  {value:>{value_width}}  "
+        cprint(f"│{line}│")
+    cprint(bot_border)
+
+    cprint("")
+    cinput("Press Enter to return to menu...")
+
+
 
 @dataclass
 class GameStats:
