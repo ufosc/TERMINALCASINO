@@ -1,28 +1,45 @@
 # casino/screens/home.py
 
-import subprocess
-import sys
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Button, Label, Input
 from textual.containers import Container, Vertical
+from textual.binding import Binding
 
 
+# Game IDs must exactly match the keys in GAME_HANDLERS in main.py
 GAMES = [
-    ("🃏  Blackjack",  "blackjack"),
-    ("🎰  Slots",      "slots"),
-    ("🎲  Craps",      "craps"),
-    ("🃏  Poker",      "poker"),
-    ("🔴  Roulette",   "roulette"),
+    ("🃏  Blackjack (U.S.)",  "blackjack (U.S.)"),
+    ("🃏  Blackjack (E.U.)",  "blackjack (E.U.)"),
+    ("🎰  Slots",             "slots"),
+    ("♠️  Poker",             "poker"),
+    ("🔴  Roulette",          "roulette"),
+    ("🔴  European Roulette", "european roulette"),
+    ("🎴  Uno",               "uno"),
 ]
 
 
 class HomePage(Screen):
     """
-    Terminal Casino homepage.
-    - Collects the player's name via a text input.
-    - Displays a game selection menu.
-    - Exits Textual and launches the selected game in the original terminal UI.
+    Terminal Casino homepage screen.
+
+    Collects the player's name via a text input and presents
+    clickable game buttons. On selection, exits Textual and returns
+    a (player_name, game_id) tuple to main() for terminal UI handoff.
+
+    To wire this into CasinoApp in main.py, a maintainer needs to:
+        1. Import HomePage:
+               from casino.screens.home import HomePage
+        2. Register the screen in CasinoApp:
+               SCREENS = {"home": HomePage}
+        3. Add on_mount to CasinoApp:
+               def on_mount(self) -> None:
+                   self.push_screen("home")
+        4. Update main() to handle the result:
+               result = app.run()
+               if isinstance(result, tuple) and len(result) == 2:
+                   player_name, game_id = result
+                   ...
     """
 
     CSS = """
@@ -51,6 +68,12 @@ class HomePage(Screen):
         margin-bottom: 1;
     }
 
+    #name-error {
+        text-align: center;
+        color: $error;
+        margin-bottom: 1;
+    }
+
     #name-input {
         margin-bottom: 2;
     }
@@ -68,34 +91,54 @@ class HomePage(Screen):
     """
 
     BINDINGS = [
-        ("q", "quit", "Quit"),
+        Binding("e", "exit_app", "Exit App"),
+        Binding("ctrl+c", "exit_app", "Exit App", show=False),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Container(id="home-container"):
-            yield Label("🎰  Terminal Casino  🎰", id="casino-title")
+            yield Label("♦  T E R M I N A L   C A S I N O  ♦", id="casino-title")
             yield Label("Enter your name:", id="name-label")
+            yield Label("", id="name-error")
             yield Input(placeholder="Your name...", id="name-input")
-            yield Label("Select a game:", id="games-label")
+            yield Label("Select a game to play:", id="games-label")
             with Vertical():
                 for display_name, game_id in GAMES:
                     yield Button(display_name, id=f"game-{game_id}", variant="primary")
         yield Footer()
 
+    def on_mount(self) -> None:
+        """Focus the name input field on load."""
+        self.query_one("#name-input", Input).focus()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Exit Textual and launch the selected game in the original terminal UI."""
+        """
+        Validate name input, then exit Textual and pass
+        (player_name, game_id) back to main() for terminal handoff.
+        """
         button_id = event.button.id
         if not button_id or not button_id.startswith("game-"):
             return
 
+        name_input = self.query_one("#name-input", Input)
+        name_error = self.query_one("#name-error", Label)
+        player_name = name_input.value.strip()
+
+        # Enforce name entry before allowing game selection
+        if not player_name:
+            name_error.update("⚠  Please enter your name before selecting a game.")
+            name_input.focus()
+            return
+
+        name_error.update("")
+
+        # Strip prefix to match exact GAME_HANDLERS key
         game_id = button_id.removeprefix("game-")
-        player_name = self.query_one("#name-input", Input).value.strip() or "Player"
 
-        # Exit Textual cleanly, then hand off to the original terminal game runner
-        self.app.exit(result=(game_id, player_name))
+        # Exit Textual cleanly — result is handled by main()
+        self.app.exit(result=(player_name, game_id))
 
-    def action_quit(self) -> None:
+    def action_exit_app(self) -> None:
+        """Exit the app cleanly with no game selected."""
         self.app.exit()
-
-      
