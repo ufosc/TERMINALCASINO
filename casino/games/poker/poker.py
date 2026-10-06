@@ -41,7 +41,7 @@ class PokerGame:
         """Run the full poker session (multiple rounds) until the player leaves."""
         if self.account.balance < self.MIN_BALANCE:
             clear_screen()
-            display_poker_topbar(self.ctx)
+            self.view.display_topbar()
             cprint(NO_FUNDS_MSG)
             cinput("Press enter to continue.")
             return
@@ -68,7 +68,7 @@ class PokerGame:
                     display_stats(self.stats)
                     return
                 clear_screen()
-                display_poker_topbar(self.ctx)
+                self.view.display_topbar()
                 cprint(INVALID_YES_OR_NO_MSG)
                 play_again = cinput(YES_OR_NO_PROMPT)
 
@@ -84,7 +84,7 @@ class PokerGame:
     def _play_round(self) -> None:
         """Play a single round of poker."""
         clear_screen()
-        display_poker_topbar(self.ctx)
+        self.view.display_topbar()
 
         deck = FULL_DECK
         player_hand: list[StandardCard] = []
@@ -261,7 +261,7 @@ class PokerGame:
         """Resolve the round and update balances/stats."""
         if player_folded:
             clear_screen()
-            display_poker_topbar(self.ctx)
+            self.view.display_topbar()
             cprint("You folded. Opponent wins the pot.")
             opponent_chips += pot
             self.stats.losses += 1
