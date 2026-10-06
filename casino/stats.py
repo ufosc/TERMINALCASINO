@@ -7,11 +7,13 @@ from .utils import cprint, cinput, clear_screen
 class GameStats:
     game_name: str
     starting_balance: int
+    game_type: str # card or other
     ending_balance: int = 0
     rounds_played: int = 0
     wins: int = 0
     losses: int = 0
     pushes: int = 0
+    biggest_payout: int = 0;
 
     @property
     def net(self) -> int:
@@ -33,10 +35,10 @@ def display_stats(stats: GameStats) -> None:
 
     rows = [
         ("Game", stats.game_name),
-        ("Hands Played", str(stats.rounds_played)),
+        ("Hands Played" if stats.game_type == "card" else "Rounds Played", str(stats.rounds_played)),
         ("Wins", str(stats.wins)),
         ("Losses", str(stats.losses)),
-        ("Pushes", str(stats.pushes)),
+        ("Pushes", str(stats.pushes)) if stats.game_type == "card" else ("Biggest Payout", str(stats.biggest_payout)),
         ("Win Rate", stats.win_rate),
         ("", ""),
         ("Starting Balance", str(stats.starting_balance)),

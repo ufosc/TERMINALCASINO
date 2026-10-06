@@ -240,7 +240,7 @@ def play_slots(ctx: GameContext) -> None:
     """Play slots game."""
     account = ctx.account
     min_bet = ctx.config.slots_min_line_bet
-    stats = GameStats("Slots", account.balance)
+    stats = GameStats("Slots", account.balance, "other")
     take_new_bet = True
     bet_amount = 0
     while True:
@@ -272,6 +272,7 @@ def play_slots(ctx: GameContext) -> None:
                 win_item = LOW_ITEMS[random.randint(0, len(LOW_ITEMS) - 1)]
                 money_gain = int(bet_amount * 1.5)
             items = (win_item, win_item, win_item)
+            stats.biggest_payout = max(stats.biggest_payout, money_gain)
             account.deposit(money_gain)
             clear_screen()
             display_topbar(account, **HEADER_OPTIONS)

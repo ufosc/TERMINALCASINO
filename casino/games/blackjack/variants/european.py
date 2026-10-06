@@ -22,7 +22,7 @@ class EuropeanBlackjack(Blackjack):
 
     def __init__(self, ctx: GameContext) -> None:
         super().__init__(ctx)
-        self.stats = GameStats("Blackjack (E.U.)", ctx.account.balance)
+        self.stats = GameStats("Blackjack (E.U.)", ctx.account.balance, "card")
 
     def bet(self):
         """

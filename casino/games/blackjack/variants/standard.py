@@ -11,7 +11,7 @@ from ..base import Blackjack
 class StandardBlackjack(Blackjack):
     def __init__(self, ctx: GameContext) -> None:
         super().__init__(ctx)
-        self.stats = GameStats("Blackjack (U.S.)", ctx.account.balance)
+        self.stats = GameStats("Blackjack (U.S.)", ctx.account.balance, "card")
 
     def bet(self):
         """

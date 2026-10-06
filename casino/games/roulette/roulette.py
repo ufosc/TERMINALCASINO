@@ -6,6 +6,7 @@ import sys
 import shutil
 import re
 
+from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
@@ -138,6 +139,8 @@ class Roulette:
         wheel (list[tuple[str, str]]): The roulette wheel, where each entry is
             a tuple like ("0", "green").
         accounts (list[Account]): List of all player accounts.
+        name (str): name of the game
+        stats (GameStats): GameStats obj to track player statistics
         bets (dict[str, dict[str, str, int]]): Maps each account UUID to a bet record.
 
         Each key is a unique account UUID, and each value is a dictionary with the fields:
@@ -166,6 +169,7 @@ class Roulette:
         self.valid_numbers = []
 
         self.accounts = accounts
+        self.stats = GameStats("Roulette", self.accounts[0].balance, "other")
 
         # Current round's bets
         self.bets = {}
@@ -445,15 +449,24 @@ class Roulette:
 
             if win_multiplier > 1:
                 win_amount = bet_amount * win_multiplier
+                if i == 0:
+                    self.stats.wins += 1 
+                    self.stats.biggest_payout = max(self.stats.biggest_payout, win_amount)
                 self.accounts[i].deposit(win_amount)
                 cprint(f"Player {i+1}: Won {win_amount} coins.")
             else:
+                if i == 0:
+                    self.stats.losses += 1
                 cprint(f"Player {i+1}: Lost {bet_amount} coins.")
             
             i += 1
 
+        self.stats.rounds_played += 1
         cprint("Finished payout.")
 
+    def end_of_game_stats(self) -> None:
+        self.stats.ending_balance = self.accounts[0].balance
+        display_stats(self.stats)
 
 class AmericanRoulette(Roulette):
     """Plays roulette using American rules."""
@@ -516,6 +529,8 @@ def play_roulette(context: GameContext) -> None:
             elif play_again == "" or play_again.lower() in {"y", "yes"}:
                 continue_game = True
                 break
+
+    roulette.end_of_game_stats() #Final stats displayed
 
     #cprint("Exiting roulette...")
     #sleep(0.5)

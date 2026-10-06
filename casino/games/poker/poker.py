@@ -191,7 +191,7 @@ class PokerGame:
         self.ctx = ctx
         self.account = ctx.account
         self.min_raise: int = ctx.config.poker_min_raise
-        self.stats = GameStats("Poker", self.account.balance)
+        self.stats = GameStats("Poker", self.account.balance, "card")
         self.stubborn = 0
 
     # ------------------------------------------------------------------
