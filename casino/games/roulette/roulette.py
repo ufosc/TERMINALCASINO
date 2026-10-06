@@ -509,13 +509,13 @@ def play_roulette(context: GameContext) -> None:
                 number_bets += 1
             else:
                 color_bets += 1
-
+        # Track biggest win/loss for the summary
         roulette.spin_wheel(context)
         roulette.payout()
         round_net = context.account.balance - prev_balance
         if round_net > 0:
-            stats.win += 1
-            stats.round_played += 1
+            stats.wins += 1
+            stats.rounds_played += 1
             biggest_win = max(biggest_win, round_net)
         elif round_net < 0:
             stats.losses += 1
