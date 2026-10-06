@@ -1,3 +1,4 @@
+
 import random
 from typing import List, Optional
 from time import sleep
@@ -6,6 +7,7 @@ import sys
 import shutil
 import re
 
+from dataclasses import dataclass, field
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
@@ -482,6 +484,11 @@ def play_roulette(context: GameContext) -> None:
 
     roulette = AmericanRoulette(accounts)
     stats = GameStats("American Roulette", context.account.balance)
+    biggest_win = 0
+    biggest_loss = 0
+    color_bets = 0
+    number_bets = 0
+
     while continue_game:
         roulette.reset_round()
         clear_screen()
@@ -497,15 +504,23 @@ def play_roulette(context: GameContext) -> None:
         status = roulette.submit_bets(context)
         if status == "BANKRUPT":
             break
+        for bet in roulette.bets.values():
+            if bet["type"] == "numer":
+                number_bets += 1
+            else:
+                color_bets += 1
 
         roulette.spin_wheel(context)
         roulette.payout()
-        if context.account.balance > prev_balance:
-            stats.wins += 1
-            stats.rounds_played += 1
-        elif context.account.balance < prev_balance:
+        round_net = context.account.balance - prev_balance
+        if round_net > 0:
+            stats.win += 1
+            stats.round_played += 1
+            biggest_win = max(biggest_win, round_net)
+        elif round_net < 0:
             stats.losses += 1
             stats.rounds_played += 1
+            biggest_loss = max(biggest_loss, -round_net)
         refresh_roulette_topbar(context)
 
         play_again = None
@@ -525,6 +540,12 @@ def play_roulette(context: GameContext) -> None:
                 continue_game = True
                 break
     stats.ending_balance = context.account.balance
+    stats.extra = {
+        "Biggest Win": str(biggest_win),
+        "Biggest Loss": str(biggest_loss),
+        "Color Bets": str(color_bets),
+        "Number Bets": str(number_bets),
+    }
     display_stats(stats)
     #cprint("Exiting roulette...")
     #sleep(0.5)

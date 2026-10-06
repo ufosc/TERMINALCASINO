@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .utils import cprint, cinput, clear_screen
 
@@ -12,6 +12,7 @@ class GameStats:
     wins: int = 0
     losses: int = 0
     pushes: int = 0
+    extra: dict[str, str] = field(default_factory=dict)
 
     @property
     def net(self) -> int:
@@ -38,6 +39,10 @@ def display_stats(stats: GameStats) -> None:
         ("Losses", str(stats.losses)),
         ("Pushes", str(stats.pushes)),
         ("Win Rate", stats.win_rate),
+    ]
+    for label, value in stats.extra.items():
+        rows.append((label, value))
+    rows += [
         ("", ""),
         ("Starting Balance", str(stats.starting_balance)),
         ("Ending Balance", str(stats.ending_balance)),
