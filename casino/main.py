@@ -11,6 +11,8 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Label
+from textual.widgets import Input
+from textual.containers import VerticalScroll
 
 class CasinoApp(App):
     """Textual app for Terminal Casino."""
@@ -23,6 +25,45 @@ class CasinoApp(App):
         """Create child widgets for the app."""
         yield Header()
         yield Footer()
+        #set the title shown in the top bar
+        self.title = "Terminal Casino"
+        #display the casino heading in the homepage
+        yield Label("TERMINAL CASINO", id="casino-title")
+        #allow the player to enter their name
+        yield Input(placeholder="Enter your name", id="name-input")
+        #display a bytton for each game
+        with VerticalScroll(id="game-list"):
+            for index, game_name in enumerate(ALL_GAMES, start=1):
+                yield Button(
+                    game_name.title(),
+                    id=f"game-{index}"
+                )
+
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        button_id = event.button.id or ""
+
+        #ignora butao que nao e escolha
+        if not button_id.startswith("game-"):
+            return
+
+        name_input = self.query_one("#name-input", Input)
+        name = name_input.value.strip()
+
+        #requer um nome antes do jogo
+        if not name:
+            self.notify("Please enter your name.", severity="warning")
+            name_input.focus()
+            return
+
+        game_index = int(button_id.removeprefix("game-")) - 1
+        game_name = ALL_GAMES[game_index]
+
+        #return player name/ game selcted
+        self.exit((name, game_name))
+
+
+
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
@@ -199,7 +240,22 @@ def main():
 
 if __name__ == "__main__":
     app = CasinoApp()
-    app.run()
+    #receive the player name and game
+    result = app.run()
+
+    #start a game only when the player selected one
+    if result is not None:
+        name, game_name = result
+
+        #create a player using the account system
+        account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
+        config = Config.default()
+        ctx = GameContext(account=account, config=config)
+
+        #open the game outside textual
+        handler = GAME_HANDLERS[game_name]
+        clear_screen()
+        handler(ctx)
     """ -- OLD MAIN --
     try:
         main()
