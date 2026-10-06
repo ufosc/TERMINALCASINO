@@ -31,6 +31,7 @@ class PokerGame:
         self.min_raise: int = ctx.config.poker_min_raise
         self.stats = GameStats("Poker", self.account.balance)
         self.stubborn = 0
+        self.view = PokerView(ctx)
 
     # ------------------------------------------------------------------
     # Public entry point
