@@ -1,6 +1,6 @@
 from casino.types import GameContext
 
-from .base import PokerGame
+from .base import Poker
 
 
 def play_poker(ctx: GameContext) -> None:
