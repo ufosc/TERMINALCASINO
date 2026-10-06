@@ -32,7 +32,7 @@ class EuropeanBlackjack(Blackjack):
 
         for player in self.players:
             if player.account.balance < self.MINIMUM_BET:
-                self.view.show_no_funds()
+                self.view.show_no_funds(player)
                 continue
 
             # Determine player's bet
@@ -123,6 +123,9 @@ class EuropeanBlackjack(Blackjack):
                 first_turn = True
                 while not hand.is_bust and hand.total < 21:
                     self.view.render_table(self.players, self.dealer_hand)
+
+                    if len(self.players) > 1:
+                        cprint(f"{player.name}'s turn")
 
                     allowed_actions = {"S", "STAND", "H", "HIT"}
                     options_str = "[S]tand   [H]it"

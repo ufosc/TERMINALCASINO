@@ -17,7 +17,8 @@ class BlackjackView:
 
     def display_topbar(self, players: list) -> None:
         if len(players) <= 1:
-            display_topbar(self.context.account, **BLACKJACK_HEADER_OPTIONS)
+            account = players[0].account
+            display_topbar(account, **BLACKJACK_HEADER_OPTIONS)
             return
 
         header = BLACKJACK_HEADER_OPTIONS.get("header", "")
@@ -25,7 +26,7 @@ class BlackjackView:
         cprint(header)
         header_lines = header.splitlines()
         header_width = max(len(line) for line in header_lines if line.strip())
-        info = "  |  ".join(f"👤 {p.name} 💰 {p.balance}" for p in players)
+        info = "  |  ".join(f"👤 {p.name} 💰 {p.account.balance}" for p in players)
         cprint(info.center(header_width))
         print("\n" * margin, end="")
 
@@ -64,9 +65,9 @@ class BlackjackView:
             cprint(error_msg)
         return cinput(f"🤵 : {player.name}, how much would you like to bet? ").strip()
 
-    def show_no_funds(self) -> None:
+    def show_no_funds(self, player) -> None:
         clear_screen()
-        self.display_topbar()
+        self.display_topbar([player])
         cprint(NO_FUNDS_MSG)
         cinput("Press [Enter] to continue.")
 
