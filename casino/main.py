@@ -10,7 +10,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, Label
+from textual.widgets import Button, Footer, Header, Input, Label, Static
 
 class CasinoApp(App):
     """Textual app for Terminal Casino."""
@@ -22,7 +22,21 @@ class CasinoApp(App):
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header()
+        yield Static(CASINO_HEADER)
+        yield Input(placeholder="Enter your name")
+        for game in ALL_GAMES:
+            yield Button(game.title(), name=game)
         yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Exit Textual with the player's name and chosen game."""
+        if event.button.name not in GAME_HANDLERS:
+            return
+        name = self.query_one(Input).value.strip()
+        if not name:
+            self.notify("Please enter your name.", severity="error")
+            return
+        self.exit((name, event.button.name))
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
@@ -199,7 +213,13 @@ def main():
 
 if __name__ == "__main__":
     app = CasinoApp()
-    app.run()
+    result = app.run()
+    if result is not None:
+        name, game = result
+        account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
+        ctx = GameContext(account=account, config=Config.default())
+        clear_screen()
+        GAME_HANDLERS[game](ctx)
     """ -- OLD MAIN --
     try:
         main()
