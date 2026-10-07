@@ -12,7 +12,7 @@ VARIANTS = [EuropeanBlackjack]
 BLACKJACK_MODULES = [
     "casino.games.blackjack.base",
     "casino.games.blackjack.views.view",
-    "casino.games.blackjack.variants.standard",
+    # "casino.games.blackjack.variants.standard",   Don't believe this is required
     "casino.games.blackjack.variants.european",
 ]
 
@@ -80,12 +80,6 @@ def test_european_double_requires_balance(balance_after_bet, double_offered):
     menu = mock_cinput.call_args_list[0].args[0]
     assert ("[D]ouble" in menu) == double_offered
 
-EUROPEAN_MODULES = [
-    "casino.games.blackjack.base",
-    "casino.games.blackjack.views.view",
-    "casino.games.blackjack.variants.european",
-]
-
 @pytest.mark.parametrize("bet, balance_after_bet, win", [
     (10, 80, False),
     (20, 60, False),
@@ -102,7 +96,7 @@ def test_european_double_balance(bet, balance_after_bet, win):
 
     inputs = iter([str(bet), "d", "", "n"])  # bet, double, continue, leave table
     patches = []
-    for module in EUROPEAN_MODULES:
+    for module in BLACKJACK_MODULES:
         patches.append(patch(f"{module}.cinput", side_effect=lambda *_: next(inputs)))
         patches.append(patch(f"{module}.clear_screen"))
     patches += [
@@ -118,7 +112,6 @@ def test_european_double_balance(bet, balance_after_bet, win):
             status = blackjack.play_round()
             assert status == "EXIT" # Should not be a system exit
 
-        # Status = blackjack.play_round()
     finally:
         for p in patches:
             p.stop()
