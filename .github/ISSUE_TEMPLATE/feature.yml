@@ -2,3 +2,45 @@ name: Feature Request
 description: Propose an idea or improvement for TERMINALCASINO
 title: "[Feature]: "
 labels: ["feature"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement!
+        Please explain the problem you're trying to solve with this new feature.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Explain the problem or limitation you're experiencing.
+      placeholder: |
+        Currently: 
+        This is a problem because: 
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or change you'd like to see.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe other solutions or approaches you've considered if applicable.
+    validations:
+      required: false
+
+  - type: textarea
+    id: advice
+    attributes:
+      label: Advice
+      description: Provide any advice or suggestions you have for implementing this feature.
+    validations:
+      required: false
