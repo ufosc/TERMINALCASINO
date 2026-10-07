@@ -1,7 +1,19 @@
 # Tests
 
-To run unit tests for this repository, please change to the root directory, `TERMINALCASINO/`, and run the following command:
+## Run the games
+
+From the repository root, run the interactive runner:
 
 ```shell
-python -m unittest discover tests
+python testing_script.py
+```
+
+It starts each game handler in turn. Exit the current game to continue to the next handler.
+
+## Run the tests
+
+To run the unit tests, change to the repository root, `TERMINALCASINO/`, and run:
+
+```shell
+python -m pytest
 ```

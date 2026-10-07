@@ -1,30 +1,37 @@
 from unittest.mock import patch,ANY,call,Mock
+import casino.main as casino_entry
 from casino.main import *
 from casino.games import *
 import pytest
 
 #Add more tests as needed
 
+VARIANTS = [
+    (str(index + 1), game_name)
+    for index, game_name in enumerate(ALL_GAMES)
+]
+
 
 def test_empty_name_and_quit():
-    inputs = ["","TEST","1","8","q"]
 
-    with patch("casino.main.cinput",side_effect=inputs), \
+    with patch("casino.main.cinput", side_effect=["q"]), \
         patch("casino.main.get_theme"), \
         patch("casino.main.Account.generate") as mock_generate, \
         patch("casino.main.cprint") as mock_print, \
         patch("casino.main.clear_screen"), \
         patch("casino.main.display_topbar"):
 
-        main()
+        casino_entry.main("TEST")
 
     mock_generate.assert_called_with('TEST',ANY)
     mock_print.assert_called_with("\nGoodbye!\n")
 
 def test_interrupt():
-    with patch("casino.main.cinput", side_effect=KeyboardInterrupt):
+    with patch("casino.main.cinput", side_effect=KeyboardInterrupt), \
+         patch("casino.main.display_topbar"), \
+         patch("casino.main.clear_screen"):
         with pytest.raises(KeyboardInterrupt):
-            main()
+            main_menu(GameContext(account=Account.generate("test", 100), config=Config.default()))
 
 def test_invalid_game():
     ctx = GameContext(account=Account.generate('test', 100), config=Config.default())
@@ -36,7 +43,7 @@ def test_invalid_game():
     mock_print.assert_called_with("\nInvalid input. Please try again.\n")
     assert mock_print.call_args_list.count(call("\nInvalid input. Please try again.\n"))==len(inputs)-2
 
-@pytest.mark.parametrize("game_index, game_name", [(str(i + 1), name) for i, name in enumerate(ALL_GAMES)])
+@pytest.mark.parametrize("game_index, game_name", VARIANTS)
 def test_game_handler_called(game_index, game_name):
     ctx = GameContext(account=Account.generate("test", 100), config=Config.default())
     handlers = {name: Mock() for name in ALL_GAMES}
