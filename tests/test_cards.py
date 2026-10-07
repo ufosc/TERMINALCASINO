@@ -57,3 +57,18 @@ class TestUnoCardClass(unittest.TestCase):
 """.lstrip("\n")
 
         self.assertEqual(str(card), comparison)
+
+
+def main():
+    standard_tests = TestStandardCardClass()
+    standard_tests.test_cards()
+    standard_tests.test_deck()
+    standard_tests.test_back()
+
+    uno_tests = TestUnoCardClass()
+    uno_tests.test_cards()
+    print("Card checks passed.")
+
+
+if __name__ == "__main__":
+    main()
