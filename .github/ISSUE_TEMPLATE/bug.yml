@@ -10,6 +10,14 @@ body:
         Thank you for taking the time to report a bug.
         Please provide as much detail as possible so we can reproduce and fix it.
 
+  - type: checkboxes
+    id: existing-issues
+    attributes:
+      label: Existing issues
+      options:
+        - label: I have searched the existing issues and this bug has not already been reported.
+          required: true
+
   - type: textarea
     id: problem
     attributes:
