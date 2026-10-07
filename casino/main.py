@@ -9,8 +9,8 @@ from typing import Callable
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, Label
+from textual.screen import ModalScreen, Screen
+from textual.widgets import Button, Footer, Header, Label, Static, Input
 
 class CasinoApp(App):
     """Textual app for Terminal Casino."""
@@ -19,10 +19,15 @@ class CasinoApp(App):
                 ("e", "exit_app", "Exit App"),
                 Binding("ctrl+c", "exit_popup", "Exit Popup", show=False)]
 
+    player_name: str | None = None
+    selected_game: str | None = None
+
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
-        yield Header()
         yield Footer()
+    
+    def on_mount(self) -> None:
+        self.push_screen(HomeScreen())
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
@@ -37,6 +42,36 @@ class CasinoApp(App):
     def action_exit_popup(self) -> None:
         """Override the native ctrl+c binding popup."""
         self.push_screen(ExitPopup())
+
+class HomeScreen(Screen):
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=False)
+
+        yield Static(CASINO_HEADER, id="casino_header")
+
+        yield Input(placeholder="Enter your name", id="player_name_input")
+
+        for i, name in enumerate(ALL_GAMES):
+            yield Button(name.title(), id=f"game_{i}")
+
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if not event.button.id or not event.button.id.startswith("game_"):
+            return
+
+        name_input = self.query_one("#player_name_input", Input)
+        player_name = name_input.value.strip()
+
+        if not player_name:
+            name_input.focus()
+            return
+
+        idx = int(event.button.id.split("_")[1])
+        app: CasinoApp = self.app
+        app.player_name = player_name
+        app.selected_game = ALL_GAMES[idx]
+        app.exit()
 
 # TODO: clean up the UI, currently extremely rough
 class ExitPopup(ModalScreen):
@@ -200,11 +235,12 @@ def main():
 if __name__ == "__main__":
     app = CasinoApp()
     app.run()
-    """ -- OLD MAIN --
-    try:
-        main()
-    except (KeyboardInterrupt, EOFError):
-        clear_screen()
-        display_topbar(account=None, **CASINO_HEADER_OPTIONS)
-        cprint("\nGoodbye! (Interrupted)\n")
-    """
+
+    if app.selected_game and app.player_name:
+        account = Account.generate(app.player_name, ACCOUNT_STARTING_BALANCE)
+        config = Config.default()
+        ctx = GameContext(account=account, config=config)
+        handler = GAME_HANDLERS.get(app.selected_game)
+        if handler:
+            clear_screen()
+            handler(ctx)
