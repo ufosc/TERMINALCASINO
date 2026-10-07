@@ -10,6 +10,7 @@ import casino.utils as utils
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
+from casino.stats import GameStats, display_stats
 
 ROULETTE_HEADER = """
 ┌────────────────────────────────────────────────┐
@@ -582,11 +583,14 @@ class Roulette:
                 is_zero=is_zero
             )
 
+            self.stats.rounds_played += 1
             if win_multiplier > 1:
                 win_amount = bet_amount * win_multiplier
                 account.deposit(win_amount)
+                self.stats.wins += 1
                 cprint(f"Player {player_number}: Won {win_amount} coins.")
             else:
+                self.stats.losses += 1
                 cprint(f"Player {player_number}: Lost {bet_amount} coins.")
 
         cprint("Finished payout.")
@@ -636,6 +640,7 @@ class EuropeanRoulette(Roulette):
 
     def __init__(self, accounts: List[Account]):
         super().__init__(accounts)
+        self.stats = GameStats("European Roulette", accounts[0].balance)
         self.wheel = STANDARD_EUROPEAN_ROULETTE_WHEEL
         self.valid_numbers = [number for (number, _, _, _) in self.wheel]
 
@@ -657,10 +662,14 @@ def play_european_roulette(context: GameContext) -> None:
         choice = cinput("Press [Enter] to start a new round and [q] to quit: ").strip().lower()
 
         if choice in {"q", "quit"}:
+            roulette.stats.ending_balance = context.account.balance
+            display_stats(roulette.stats)
             return
 
         status = roulette.submit_bets(context)
         if status == "BANKRUPT":
+            roulette.stats.ending_balance = context.account.balance
+            display_stats(roulette.stats)
             return
 
         roulette.spin_wheel(context)
@@ -672,6 +681,8 @@ def play_european_roulette(context: GameContext) -> None:
         if play_again in {"", "y", "yes"}:
             pass  # next round
         elif play_again in {"n", "no"}:
+            roulette.stats.ending_balance = context.account.balance
+            display_stats(roulette.stats)
             return
         else:
             play_again = prompt_with_error(
@@ -683,4 +694,7 @@ def play_european_roulette(context: GameContext) -> None:
                 transform=lambda s: s.strip().lower(),
             )
             if play_again in {"n", "no"}:
+                roulette.stats.ending_balance = context.account.balance
+                display_stats(roulette.stats)
                 return
+

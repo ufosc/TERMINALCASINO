@@ -9,6 +9,7 @@ import re
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
+from casino.stats import GameStats, display_stats
 
 ROULETTE_HEADER = """
 ┌─────────────────────────────┐
@@ -442,12 +443,15 @@ class Roulette:
             elif bet_type == "number" and bet_value == winning_number:
                 # Find account and pay back 36 times original amount
                 win_multiplier += 35
-
+            
+            self.stats.rounds_played += 1
             if win_multiplier > 1:
                 win_amount = bet_amount * win_multiplier
                 self.accounts[i].deposit(win_amount)
+                self.stats.wins += 1
                 cprint(f"Player {i+1}: Won {win_amount} coins.")
             else:
+                self.stats.losses += 1
                 cprint(f"Player {i+1}: Lost {bet_amount} coins.")
             
             i += 1
@@ -460,6 +464,7 @@ class AmericanRoulette(Roulette):
 
     def __init__(self, accounts: List[Account]):
         super().__init__(accounts)
+        self.stats = GameStats("American Roulette", accounts[0].balance)
         self.wheel = STANDARD_AMERICAN_ROULETTE_WHEEL
         self.valid_numbers = [number for (number, _, _, _) in self.wheel]
 
@@ -516,6 +521,9 @@ def play_roulette(context: GameContext) -> None:
             elif play_again == "" or play_again.lower() in {"y", "yes"}:
                 continue_game = True
                 break
+
+    roulette.stats.ending_balance = context.account.balance
+    display_stats(roulette.stats)
 
     #cprint("Exiting roulette...")
     #sleep(0.5)
