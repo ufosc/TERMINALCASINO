@@ -2,3 +2,43 @@ name: Bug Report
 description: Report a bug or unexpected behavior
 title: "[Bug]: "
 labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug.
+        Please provide as much detail as possible so we can reproduce and fix it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened or went wrong?
+      description: Clearly describe the problem you encountered.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      description: Clearly describe what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Give us the steps needed to reproduce the problem.
+  
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add screenshots, logs, or anything else that may help.
+    validations:
+      required: false
