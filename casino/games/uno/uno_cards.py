@@ -1,5 +1,5 @@
 
-from casino.types import UnoCard
+from casino.cards import UnoCard
 
 ############## UNO CARD ARTS ##############
 
