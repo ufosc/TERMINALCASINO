@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from casino.cards import StandardDeck
 from casino.types import GameContext
 from casino.accounts import Account
+from casino.players import load_balances, save_balances
 from casino.utils import clear_screen, cprint, cinput
 from .constants import *
 from .hand import Hand
@@ -53,11 +54,13 @@ class Blackjack(ABC):
         players = []
         players.append(Player(self.context.account))
         if num_players > 1:
+            saved = load_balances()
             for i in range(2, num_players + 1):
                 name = cinput(f"Enter name for Player {i}: ").strip()
                 if not name:
                     name = f"Guest {i}"
-                start_bal = self.context.account.balance
+                # Returning players keep their saved balance
+                start_bal = saved.get(name.lower(), self.context.account.balance)
                 guest_account = Account.generate(name=name, balance=start_bal)
                 players.append(Player(guest_account))
         return players
@@ -66,6 +69,8 @@ class Blackjack(ABC):
         """
         Asks user if they would like to play again.
         """
+        # Save alternate players' balances after every round
+        save_balances([p.account for p in self.players[1:]])
         self.view.display_topbar(self.players)
 
         for player in self.players:
