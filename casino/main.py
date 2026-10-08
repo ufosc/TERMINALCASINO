@@ -11,6 +11,7 @@ from textual.widgets import Footer, Header, Input, Label,SelectionList, Static, 
 from textual import on
 from textual.containers import Horizontal
 from textual.widgets.selection_list import Selection
+from .settings import Settings
 
 
 
@@ -198,7 +199,9 @@ class MenuSelect(App):
         yield Static(f"Welcome {self.username}!",id="subtitle")
         with Horizontal():
             yield Button("Enter", id="enter")
+            yield Button("Settings", id="settings")
             yield Button("Exit", id="exit")
+            
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.exit(str(event.button.id))
@@ -276,13 +279,6 @@ def main(name: str):
     clear_screen()
     display_topbar(account=None, **CASINO_HEADER_OPTIONS)
 
-    
-    name =name
-    # theme selection
-    clear_screen()
-    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
-    get_theme()
-
 
     account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
     config = Config.default()
@@ -308,6 +304,10 @@ if __name__ == "__main__":
             if(step == "exit"):
                 exit()
 
+            if step == "settings":
+                # open settings, then return to the main menu
+                Settings().run()
+                continue
 
             app = GameSelect(username=name) #Select Game Mode
             
