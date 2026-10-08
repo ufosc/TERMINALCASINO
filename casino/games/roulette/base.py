@@ -172,6 +172,9 @@ class Roulette:
         self.bets = {}
         self.winning_value: Optional[tuple[str, str]] = None
 
+        from .views import RouletteView
+        self.view = RouletteView(self)
+
     @staticmethod
     def normalize_color(input_value: str) -> str:
         """
@@ -221,38 +224,7 @@ class Roulette:
             return 0
         return int(value)
 
-    def print_wheel(self, highlighted_num = None) -> None:
-        # clear current grid
-        for row in range(len(ROULETTE_GRID)):
-            for col in range(len(ROULETTE_GRID[0])):
-                ROULETTE_GRID[row][col] = ' ' # each empty spot is 2 spaces
 
-        for (num_str, color, row, col) in STANDARD_AMERICAN_ROULETTE_WHEEL:
-            # col += 29
-            if num_str != "00" and int(num_str.strip()) < 10:
-                num_str = " " + num_str
-            if num_str.strip() == highlighted_num.strip():
-                # the spot in the column before and column after the number become *'s
-                ROULETTE_GRID[row][col-1] = "*"
-                ROULETTE_GRID[row][col+1] = "*"
-
-            if color == "green":
-                ROULETTE_GRID[row][col] = f"\x1b[42m\x1b[97m{num_str}\x1b[0m"
-            elif color == "black":
-                ROULETTE_GRID[row][col] = f"\x1b[40m\x1b[97m{num_str}\x1b[0m"
-            else:
-                ROULETTE_GRID[row][col] = f"\x1b[41m\x1b[97m{num_str}\x1b[0m"
-
-        wheel_lines = ["".join(row) for row in ROULETTE_GRID]
-        for line in wheel_lines:
-            cprint_ansi_center(line)
-
-    def wheel_animation(self, ctx: GameContext, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
-        for num in sequence:
-            clear_screen()
-            display_roulette_topbar(ctx)
-            self.print_wheel(highlighted_num = num)
-            time.sleep(sec_btwn_spins)
 
     def spin_wheel(self, ctx: GameContext) -> tuple[str, str, int, int]:
         """
@@ -273,7 +245,7 @@ class Roulette:
 
         # do TOTAL_ROTATIONS number of rotations before landing on number
         sequence = (wheel_sequence * TOTAL_ROTATIONS) + wheel_sequence[:random_index + 1]
-        self.wheel_animation(ctx, sequence)
+        self.view.wheel_animation(ctx, sequence)
 
         winning_number = self.winning_value[0]
         winning_color  = self.winning_value[1]
@@ -456,75 +428,3 @@ class Roulette:
         cprint("Finished payout.")
 
 
-class AmericanRoulette(Roulette):
-    """Plays roulette using American rules."""
-
-    def __init__(self, accounts: List[Account]):
-        super().__init__(accounts)
-        self.wheel = STANDARD_AMERICAN_ROULETTE_WHEEL
-        self.valid_numbers = [number for (number, _, _, _) in self.wheel]
-
-
-def play_roulette(context: GameContext) -> None:
-    continue_game = True
-
-    # Temporary fix
-    # TODO: fix argument in play_roulette to only except `List[GameContext]`
-    # and not `GameContext`
-    contexts = [context]
-
-    # Access account data
-    accounts = [account.account for account in contexts]
-
-    if not isinstance(accounts, list):
-        raise ValueError("accounts is not a list. "
-                         f"accounts is a {type(accounts)}")
-
-    roulette = AmericanRoulette(accounts)
-    stats = GameStats("American Roulette", context.account.balance)
-    while continue_game:
-        roulette.reset_round()
-        clear_screen()
-        display_roulette_topbar(context)
-
-        # Input to stop loop from running constantly
-        choice = cinput("Press [Enter] to start a new round and [q] to quit: ")
-
-        if choice.lower() in {"q", "quit"}:
-            continue_game = False
-            break
-        prev_balance = context.account.balance
-        status = roulette.submit_bets(context)
-        if status == "BANKRUPT":
-            break
-
-        roulette.spin_wheel(context)
-        roulette.payout()
-        if context.account.balance > prev_balance:
-            stats.wins += 1
-            stats.rounds_played += 1
-        elif context.account.balance < prev_balance:
-            stats.losses += 1
-            stats.rounds_played += 1
-        refresh_roulette_topbar(context)
-
-        play_again = None
-
-        while True:
-            valid_choices = ["N", "NO", "Y", "YES", ""]
-            play_again = cinput("🤵: Would you like to play another round (Y/n): ")
-
-            if play_again.upper() not in valid_choices:
-                cprint("Please enter 'Yes' or 'No'.")
-                continue
-            if play_again.lower() in {"n", "no"}:
-                #cprint("Quitting roulette...")
-                continue_game = False
-                break
-            elif play_again == "" or play_again.lower() in {"y", "yes"}:
-                continue_game = True
-                break
-    stats.ending_balance = context.account.balance
-    display_stats(stats)
-    #cprint("Exiting roulette...")
-    #sleep(0.5)

@@ -4,13 +4,17 @@ from time import sleep
 import time
 import sys
 import shutil
-import re
 import casino.utils as utils
 
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
 from casino.stats import display_stats, GameStats
+from ..base import (
+    TOTAL_ROTATIONS,
+    _visible_len,
+    Roulette,
+)
 
 ROULETTE_HEADER = """
 ┌────────────────────────────────────────────────┐
@@ -97,15 +101,6 @@ MULTIPLIER_EVEN_MONEY = 2    # 1:1 payout
 MULTIPLIER_TWO_TO_ONE = 3    # 2:1 payout
 MULTIPLIER_STRAIGHT_UP = 36  # 35:1 payout
 
-TOTAL_ROTATIONS = 2
-SEC_BTWN_SPIN = 0.04
-
-ROWS, COLS = 17, 33
-ROULETTE_GRID = [['  ' for _ in range(COLS)] for _ in range(ROWS)]
-
-ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
-
-
 def display_roulette_topbar(ctx: GameContext) -> None:
     display_topbar(ctx.account, **HEADER_OPTIONS)
 
@@ -131,18 +126,6 @@ def refresh_roulette_topbar(ctx: GameContext) -> None:
     # Restore cursor position so the rest of the screen stays intact
     sys.stdout.write("\x1b[u")
     sys.stdout.flush()
-
-
-def _visible_len(s: str) -> int:
-    return len(ANSI_RE.sub("", s))
-
-
-def cprint_ansi_center(line: str, end: str = "\n") -> None:
-    """Center a string that may contain ANSI escape codes."""
-    width = shutil.get_terminal_size().columns
-    vis = _visible_len(line)
-    pad_left = max(0, (width - vis) // 2)
-    print((" " * pad_left) + line, end=end)
 
 
 def cprint_table_center(block: str) -> None:
@@ -212,7 +195,7 @@ def prompt_with_error(ctx: GameContext, prompt: str, validator, error_text: str,
         last_error = error_text
 
 
-class Roulette:
+class EuropeanRoulette(Roulette):
     """
     Abstract base class to play roulette.
 
@@ -242,45 +225,15 @@ class Roulette:
         """
         Initializes roulette
         """
-        # Will be populated with numbers and colors
-        self.wheel = list[tuple[str, str, int, int]]()
-
-        # Colors on wheel. Includes initials
+        super().__init__(accounts)
         self.valid_colors = ["red", "black", "r", "b"]
-        self.valid_numbers = []
+        self.wheel = STANDARD_EUROPEAN_ROULETTE_WHEEL
+        self.valid_numbers = [number for (number, _, _, _) in self.wheel]
 
-        self.accounts = accounts
+        from ..views.european_view import EuropeanRouletteView
+        self.view = EuropeanRouletteView(self)
 
-        # Current round's bets
-        self.bets = {}
-        self.winning_value: Optional[tuple[str, str]] = None
 
-    def print_wheel(self, highlighted_num=None) -> None:
-        # clear current grid
-        for row in range(ROWS):
-            for col in range(COLS):
-                ROULETTE_GRID[row][col] = ' '  # each empty spot is 2 spaces
-
-        for (num_str, color, row, col) in self.wheel:
-            if int(num_str.strip()) < 10:
-                num_str = " " + num_str
-            if highlighted_num is not None and num_str.strip() == highlighted_num.strip():
-                # the spot in the column before and column after the number become *'s
-                ROULETTE_GRID[row][col - 1] = "*"
-                ROULETTE_GRID[row][col + 1] = "*"
-            ROULETTE_GRID[row][col] = render_cell(num_str, color)
-
-        wheel_lines = ["".join(row) for row in ROULETTE_GRID]
-        # Center the wheel in the terminal
-        for line in wheel_lines:
-            cprint_ansi_center(line)
-
-    def wheel_animation(self, ctx: GameContext, sequence, sec_btwn_spins: float = SEC_BTWN_SPIN) -> None:
-        for num in sequence:
-            clear_screen()
-            display_roulette_topbar(ctx)
-            self.print_wheel(highlighted_num=num)
-            time.sleep(sec_btwn_spins)
 
     def spin_wheel(self, ctx: GameContext) -> tuple[str, str, int, int]:
         """
@@ -301,7 +254,7 @@ class Roulette:
 
         # do TOTAL_ROTATIONS number of rotations before landing on number
         sequence = (wheel_sequence * TOTAL_ROTATIONS) + wheel_sequence[:random_index + 1]
-        self.wheel_animation(ctx, sequence)
+        self.view.wheel_animation(ctx, sequence)
 
         winning_number = self.winning_value[0]
         winning_color = self.winning_value[1]
@@ -314,13 +267,9 @@ class Roulette:
         if bet is None:
             cprint("Your bet: (none)")
         else:
-            cprint(f"Your bet: {self._format_bet(bet)}")
+            cprint(f"Your bet: {self.view._format_bet(bet)}")
 
         return self.winning_value
-
-    def reset_round(self) -> None:
-        self.bets.clear()
-        self.winning_value = None
 
     def submit_bets(self, ctx: GameContext) -> None | str:
         """
@@ -528,31 +477,6 @@ class Roulette:
             "amount": bet_amount
         }
 
-    def _format_bet(self, bet: dict) -> str:
-        t = bet["type"]
-        v = bet["value"]
-        a = bet["amount"]
-
-        if t == "inside_number":
-            return f"{a} on number {v}"
-
-        if t == "outside_color":
-            return f"{a} on {v} (color)"
-
-        if t == "outside_parity":
-            return f"{a} on {v} (parity)"
-
-        if t == "outside_highlow":
-            return f"{a} on {v} (high/low)"
-
-        if t == "outside_dozen":
-            label = {"1": "1-12", "2": "13-24", "3": "25-36"}[v]
-            return f"{a} on dozen {v} ({label})"
-
-        if t == "outside_column":
-            return f"{a} on column {v}"
-
-        return f"{a} on {t}:{v}"
 
     def payout(self) -> None:
         assert self.winning_value is not None
@@ -630,15 +554,6 @@ class Roulette:
                 return MULTIPLIER_TWO_TO_ONE
 
         return MULTIPLIER_LOSS    # Unknown bet type (treat as loss)
-
-
-class EuropeanRoulette(Roulette):
-    """Plays roulette using European rules."""
-
-    def __init__(self, accounts: List[Account]):
-        super().__init__(accounts)
-        self.wheel = STANDARD_EUROPEAN_ROULETTE_WHEEL
-        self.valid_numbers = [number for (number, _, _, _) in self.wheel]
 
 
 def play_european_roulette(context: GameContext) -> None:
