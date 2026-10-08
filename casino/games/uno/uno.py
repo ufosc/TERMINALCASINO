@@ -8,6 +8,8 @@ from casino.types import GameContext
 from casino.cards import UnoDeck, UnoCard
 
 class Uno:
+    VALID_COLORS = ["red", "green", "blue", "yellow"]
+    VALID_RANKS  = [str(n) for n in range(0, 10)] + ["draw_2", "skip", "reverse"]
 
     def __init__(self, ctx: GameContext) -> None:
         self.context = ctx
@@ -25,6 +27,32 @@ class Uno:
         deck.remove(c)
         self.check_deck(deck,disc)
         return c
+
+    def is_valid_card(self, played_card_string: str, current_card: UnoCard, i: Player) -> bool:
+        valid_card = True
+        played_card_words = played_card_string.split()
+
+        if len(played_card_words) == 2 and played_card_words[1] == "+2":
+            played_card_words[1] = "draw_2"
+
+        if ((not ((len(played_card_words) == 1) and
+            played_card_words[0] in ["wild", "+4"])) and
+            (not ((len(played_card_words) == 2) and
+            played_card_words[0] in Uno.VALID_COLORS and
+            played_card_words[1] in Uno.VALID_RANKS))):
+
+            valid_card = False
+        if valid_card:
+            if len(played_card_words) == 1:
+                if played_card_words[0] == "+4":
+                    new_card = UnoCard("wild","wild_draw_4")
+                else:
+                    new_card = UnoCard("wild","wild")
+            else:
+                new_card = UnoCard(played_card_words[0],played_card_words[1])
+
+            if not (new_card in i.playable_cards(current_card)):
+                valid_card = False
 
     def play_uno(self) -> None:
         unodeck_ = UnoDeck()
@@ -73,37 +101,13 @@ class Uno:
                 i.draws_taken += 1
 
             elif (answer == "p" or answer == "play") :
-                VALID_COLORS = ["red", "green", "blue", "yellow"]
-                VALID_RANKS  = [str(n) for n in range(0, 10)] + ["draw_2", "skip", "reverse"]
-
                 valid_card = False
                 while (not valid_card): #checking if Card is in hand and can be played
                     valid_card = True
 
                     played_card_string = self.view.prompt_which_card()
-                    played_card_words = played_card_string.split()
 
-                    if len(played_card_words) == 2 and played_card_words[1] == "+2":
-                        played_card_words[1] = "draw_2"
-
-                    if ((not ((len(played_card_words) == 1) and
-                        played_card_words[0] in ["wild", "+4"])) and
-                        (not ((len(played_card_words) == 2) and
-                        played_card_words[0] in VALID_COLORS and
-                        played_card_words[1] in VALID_RANKS))):
-
-                        valid_card = False
-                    if valid_card:
-                        if len(played_card_words) == 1:
-                            if played_card_words[0] == "+4":
-                                new_card = UnoCard("wild","wild_draw_4")
-                            else:
-                                new_card = UnoCard("wild","wild")
-                        else:
-                            new_card = UnoCard(played_card_words[0],played_card_words[1])
-
-                        if not (new_card in i.playable_cards(current_card)):
-                            valid_card = False
+                    valid_card = self.is_valid_card(played_card_string, current_card, i)
 
                     if not valid_card:
                         answer = self.view.prompt_invalid_card()
@@ -112,8 +116,10 @@ class Uno:
                             i.draws_taken += 1
                             self.view.show_drawn_card(new_card)
                             break
+
                 #If actual valid card is chosen
                 if valid_card:
+                    # self.process_new_card()
                     i.hand.remove(new_card)
                     i.cards_played += 1
 
@@ -123,12 +129,13 @@ class Uno:
                         else:
                             i.wilds_played += 1
 
-                # i.hand.remove(new_card)
                 if len(i.hand) == 0:
                     continueGame = False
                     winner = i
                     self.view.show_winner(i, players)
                     break
+
+                # self.handle_special_card() # How to pass by reference so new_card can be altered? Or already bc it's a class?
                 match new_card.rank:
                     case "skip":
                         currentPlayerIndex = (currentPlayerIndex + direction) % len(players)
