@@ -11,6 +11,8 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Label
+from textual.screen import Screen
+from textual.widgets import Input, Static
 
 class CasinoApp(App):
     """Textual app for Terminal Casino."""
@@ -38,6 +40,9 @@ class CasinoApp(App):
         """Override the native ctrl+c binding popup."""
         self.push_screen(ExitPopup())
 
+    def on_mount(self) -> None:
+        self.push_screen(HomeScreen())
+
 # TODO: clean up the UI, currently extremely rough
 class ExitPopup(ModalScreen):
     """A simple exit popup"""
@@ -51,6 +56,24 @@ class ExitPopup(ModalScreen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "dismiss":
             self.app.pop_screen()
+
+class HomeScreen(Screen):
+    """Homepage header, name entry, and game selection"""
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Static(CASINO_HEADER)
+        yield Input(placeholder="Enter your name", id="name")
+        for i, game in enumerate(ALL_GAMES):
+            yield Button(game.title(), id=f"game-{i}")
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        name = self.query_one("#name", Input).value.strip()
+        if not name:
+            self.notify("Please enter a valid name first.", severity="error")
+            return
+        game = ALL_GAMES[int(event.button.id.removeprefix("game-"))]
+        self.app.exit((name, game)) #leave textual and run game below
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -198,8 +221,17 @@ def main():
 
 
 if __name__ == "__main__":
+    selection = CasinoApp().run()
+    if selection:
+        name, game = selection
+        account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
+        ctx = GameContext(account=account, config=Config.default())
+        clear_screen()
+        GAME_HANDLERS[game](ctx)
+    """ -- Other Old Main --
     app = CasinoApp()
     app.run()
+    """
     """ -- OLD MAIN --
     try:
         main()
