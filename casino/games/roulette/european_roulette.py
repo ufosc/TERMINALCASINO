@@ -7,6 +7,7 @@ import shutil
 import re
 import casino.utils as utils
 
+from casino.stats import GameStats, display_stats
 from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput, display_topbar
 from casino.accounts import Account
@@ -649,15 +650,20 @@ def play_european_roulette(context: GameContext) -> None:
     accounts = [context.account]
 
     roulette = EuropeanRoulette(accounts)
-    while True:
+
+    stats = GameStats("Roulette (European)", context.account.balance)
+    continue_game = True
+    while continue_game:
         roulette.reset_round()
         render_header(context)
+        balance_before = context.account.balance
 
         # Input to stop loop from running constantly
         choice = cinput("Press [Enter] to start a new round and [q] to quit: ").strip().lower()
 
         if choice in {"q", "quit"}:
-            return
+            continue_game = False
+            break
 
         status = roulette.submit_bets(context)
         if status == "BANKRUPT":
@@ -667,12 +673,21 @@ def play_european_roulette(context: GameContext) -> None:
         roulette.payout()
         refresh_roulette_topbar(context)
 
+        stats.rounds_played += 1
+        if context.account.balance > balance_before:
+            stats.wins += 1
+        elif context.account.balance < balance_before:
+            stats.losses += 1
+        else:
+            stats.pushes += 1
+        
+
         # play again?
         play_again = cinput("🤵: Would you like to play another round (Y/n): ").strip().lower()
         if play_again in {"", "y", "yes"}:
             pass  # next round
         elif play_again in {"n", "no"}:
-            return
+            continue_game = False
         else:
             play_again = prompt_with_error(
                 ctx=context,
@@ -683,4 +698,7 @@ def play_european_roulette(context: GameContext) -> None:
                 transform=lambda s: s.strip().lower(),
             )
             if play_again in {"n", "no"}:
-                return
+                continue_game = False
+
+    stats.ending_balance = context.account.balance
+    display_stats(stats)
