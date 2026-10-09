@@ -1,0 +1,63 @@
+name: Feature request
+description: Suggest a new game, feature, or improvement for TERMINALCASINO.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Clear, well-thought-out proposals are much easier for maintainers to review and for contributors to pick up.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the casino does this affect?
+      options:
+        - Blackjack
+        - Poker
+        - Roulette
+        - Slots
+        - A new game
+        - Documentation
+        - Code structure / refactoring
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Explain why this feature is needed or what is missing right now.
+      placeholder: Blackjack doesn't support doubling down, so players can't use a standard strategy.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe how the feature should work from the player's point of view.
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation ideas
+      description: Optional. Which files or classes might change? How does it fit the OOP structure?
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Other ways this could be solved.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this hasn't been suggested already.
+          required: true
+        - label: This feature fits the project's roadmap (documentation and the OOP overhaul).

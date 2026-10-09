@@ -1,0 +1,67 @@
+name: Bug report
+description: Report something in TERMINALCASINO that isn't working correctly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please search existing issues first to make sure it hasn't already been reported.
+
+  - type: dropdown
+    id: game
+    attributes:
+      label: Which part of the casino is affected?
+      options:
+        - Blackjack
+        - Poker
+        - Roulette
+        - Slots
+        - Main menu / navigation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear and short description of the bug.
+      placeholder: When I choose "hit" after splitting, the game crashes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps so someone else can see the same bug.
+      placeholder: |
+        1. Run `python -m casino.main`
+        2. Choose Blackjack
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or terminal output
+      description: Paste any error messages here. This will be formatted as code automatically.
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Your operating system, terminal, and Python version.
+      placeholder: Windows 11, PowerShell, Python 3.13.1
+    validations:
+      required: true
