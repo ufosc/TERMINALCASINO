@@ -313,6 +313,7 @@ class Roulette:
 
             if (self.accounts[i].balance == 0):
                 cprint(f"Skipping player {i+1} because of empty balance...")
+                i += 1
                 continue
 
             will_bet = cinput(f"🤵: Would you like to bet, Player {i+1} (y/N): ")
@@ -426,8 +427,13 @@ class Roulette:
         winning_color  = self.winning_value[1]
 
         cprint("Paying out all winners...")
-        i = 0
-        for _, bet in self.bets.items():
+        # Loop over accounts (not bets) so each payout goes to the right player,
+        # even if an earlier player skipped betting this round
+        for i, account in enumerate(self.accounts):
+            bet = self.bets.get(str(account.aid))
+            if bet is None:
+                continue
+
             bet_type   = bet["type"]
             bet_value  = bet["value"]
             bet_amount = bet["amount"]
@@ -435,7 +441,7 @@ class Roulette:
             win_multiplier = 1
             # Check if user won
             if bet_type == "color" and bet_value == winning_color:
-                if bet_type == "green":
+                if bet_value == "green":
                     win_multiplier += 35
                 else:
                     # Find account and pay back two times original bet
@@ -446,12 +452,10 @@ class Roulette:
 
             if win_multiplier > 1:
                 win_amount = bet_amount * win_multiplier
-                self.accounts[i].deposit(win_amount)
+                account.deposit(win_amount)
                 cprint(f"Player {i+1}: Won {win_amount} coins.")
             else:
                 cprint(f"Player {i+1}: Lost {bet_amount} coins.")
-            
-            i += 1
 
         cprint("Finished payout.")
 
