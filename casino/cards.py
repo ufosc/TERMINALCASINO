@@ -169,11 +169,10 @@ class UnoCard(Card):
         )
     
     def __eq__(self, other) -> bool:
-        if not isinstance(other, UnoCard):
-            return NotImplemented
-
-        return self.color == other.color and self.rank == other.rank
-
+        if (self.color == other.color and
+            self.rank == other.rank):
+            return True
+        return False
 
 
 
