@@ -1,179 +1,11 @@
-import random
-import os
-import shutil
-
-from casino.card_assets import assign_card_art
-from casino.cards import Deck, StandardDeck, StandardCard
 from casino.stats import GameStats, display_stats
 from casino.types import GameContext
-from casino.utils import clear_screen, cprint, cinput, display_topbar
+from casino.utils import clear_screen, cprint, cinput
 
-from itertools import combinations
-from collections import Counter
+from .constants import *
+from .hand import *
+from .views.PokerView import PokerView
 
-
-POKER_HEADER = """
-┌───────────────────────────────┐
-│         ♥ P O K E R ♥         │
-└───────────────────────────────┘
-"""
-
-HEADER_OPTIONS = {
-    "header": POKER_HEADER,
-    "margin": 1,
-}
-
-SECURITY_GUARD = "👮‍♂️"
-SECURITY_MSG = f"""
-{SECURITY_GUARD}: Time for you to go.
-You have been removed from the casino
-
-"""
-YES_OR_NO_PROMPT       = "[Y]es   [N]o"
-INVALID_YES_OR_NO_MSG  = "🤵: It's a yes or no, pal. You staying?"
-STAY_AT_TABLE_PROMPT   = "🤵: Would you like to stay at the table?"
-INVALID_CHOICE_MSG     = "🤵: That's not a choice in this game."
-NO_FUNDS_MSG           = "🤵: You don't have enough chips to play. Goodbye."
-
-FULL_DECK: StandardDeck = StandardDeck()
-
-
-# ---------------------------------------------------------------------------
-# Hand evaluation utilities
-# ---------------------------------------------------------------------------
-
-def get_card_value(rank: int | str) -> int:
-    """Get the numeric value of a card rank."""
-    if isinstance(rank, int):
-        return rank
-    face_values = {"J": 11, "Q": 12, "K": 13, "A": 14}
-    if rank in face_values:
-        return face_values[rank]
-    return int(rank)
-
-
-def evaluate_hand(cards: list[StandardCard]) -> int:
-    """Score a 5-card hand. Returns an integer 1–9."""
-    ranks = [get_card_value(card.rank) for card in cards]
-    suits = [card.suit for card in cards]
-
-    rank_counts = Counter(ranks)
-    suit_counts = Counter(suits)
-
-    is_flush = 5 in suit_counts.values()
-    is_straight = (
-        len(rank_counts) == 5 and
-        (max(ranks) - min(ranks) == 4 or set(ranks) == {14, 2, 3, 4, 5})
-    )
-
-    count_values = sorted(rank_counts.values(), reverse=True)
-
-    if is_straight and is_flush:
-        return 9   # Straight Flush
-    elif count_values == [4, 1]:
-        return 8   # Four of a Kind
-    elif count_values == [3, 2]:
-        return 7   # Full House
-    elif is_flush:
-        return 6   # Flush
-    elif is_straight:
-        return 5   # Straight
-    elif count_values == [3, 1, 1]:
-        return 4   # Three of a Kind
-    elif count_values == [2, 2, 1]:
-        return 3   # Two Pair
-    elif count_values == [2, 1, 1, 1]:
-        return 2   # One Pair
-    else:
-        return 1   # High Card
-
-
-def get_partial_hand_score(hand: list[StandardCard]) -> int:
-    """Evaluate hands with fewer than 5 cards."""
-    if len(hand) < 2:
-        return 1
-
-    rank_counts = Counter(card.rank for card in hand)
-    count_values = sorted(rank_counts.values(), reverse=True)
-
-    if 4 in count_values:
-        return 8   # Four of a Kind
-    elif 3 in count_values:
-        return 4   # Three of a Kind
-    elif count_values.count(2) == 2:
-        return 3   # Two Pair
-    elif 2 in count_values:
-        return 2   # One Pair
-    return 1       # High Card
-
-
-def hand_score(hand: list[StandardCard], board: list[StandardCard]) -> int:
-    """Return the best score achievable from hand + board cards."""
-    all_cards = hand + board
-    if len(all_cards) < 5:
-        return get_partial_hand_score(all_cards)
-
-    return max(evaluate_hand(list(combo)) for combo in combinations(all_cards, 5))
-
-
-def hand_name(score: int) -> str:
-    """Human-readable name for a hand score."""
-    names = {
-        9: "Straight Flush",
-        8: "Four of a Kind",
-        7: "Full House",
-        6: "Flush",
-        5: "Straight",
-        4: "Three of a Kind",
-        3: "Two Pair",
-        2: "One Pair",
-        1: "High Card",
-    }
-    return names.get(score, "Unknown Hand")
-
-
-# ---------------------------------------------------------------------------
-# Display helpers
-# ---------------------------------------------------------------------------
-
-def display_poker_topbar(ctx: GameContext) -> None:
-    display_topbar(ctx.account, **HEADER_OPTIONS)
-
-
-def print_cards(hand: list[StandardCard]) -> None:
-    """Print cards side by side (face-up)."""
-    if not hand:
-        return
-    card_lines = [card.front.strip("\n").splitlines() for card in hand]
-    max_lines = max(len(lines) for lines in card_lines)
-    for lines in card_lines:
-        while len(lines) < max_lines:
-            lines.append(" " * len(lines[0]))
-    hand_string = "\n".join(
-        "  ".join(card_lines[j][i] for j in range(len(hand)))
-        for i in range(max_lines)
-    )
-    cprint(hand_string)
-
-
-def print_opponent_cards(opponent_hand: list[StandardCard]) -> None:
-    """Print opponent's cards face-down."""
-    if not opponent_hand:
-        cprint("")
-        return
-    hidden_cards = [card.back for card in opponent_hand]
-    hand_string = "\n".join(
-        "  ".join(lines)
-        for lines in zip(*[card.strip("\n").splitlines() for card in hidden_cards])
-    )
-    cprint(hand_string)
-
-
-def print_hand(hand: list[StandardCard], hidden: bool = False) -> None:
-    if hidden:
-        print_opponent_cards(hand)
-    else:
-        print_cards(hand)
 
 
 # ---------------------------------------------------------------------------
@@ -182,14 +14,14 @@ def print_hand(hand: list[StandardCard], hidden: bool = False) -> None:
 
 class PokerGame:
     """Encapsulates a single session of Texas Hold'em Poker."""
-
-    MIN_BALANCE = 20   # minimum chips required to start a round
-    SMALL_BLIND = 10
-    BIG_BLIND = 20
+    SMALL_BLIND = SMALL_BLIND
+    MIN_BALANCE = MIN_BALANCE
+    BIG_BLIND = BIG_BLIND
 
     def __init__(self, ctx: GameContext) -> None:
         self.ctx = ctx
         self.account = ctx.account
+        self.view = PokerView(ctx)
         self.min_raise: int = ctx.config.poker_min_raise
         self.stats = GameStats("Poker", self.account.balance)
         self.stubborn = 0
@@ -201,37 +33,28 @@ class PokerGame:
     def play(self) -> None:
         """Run the full poker session (multiple rounds) until the player leaves."""
         if self.account.balance < self.MIN_BALANCE:
-            clear_screen()
-            display_poker_topbar(self.ctx)
-            cprint(NO_FUNDS_MSG)
-            cinput("Press enter to continue.")
+            self.view.show_no_funds_screen()
             return
 
         while True:
             self._play_round()
 
             if self.account.balance < self.MIN_BALANCE:
-                cprint(NO_FUNDS_MSG)
-                cinput("Press enter to continue.")
+                self.view.show_no_funds()
                 self.stats.ending_balance = self.account.balance
                 display_stats(self.stats)
                 return
 
-            cprint(STAY_AT_TABLE_PROMPT)
-            play_again = cinput(YES_OR_NO_PROMPT)
+            play_again = self.view.prompt_stay_at_table()
 
             while play_again not in "YyNn" or play_again == "":
                 self.stubborn += 1
                 if self.stubborn >= 13:
-                    clear_screen()
-                    cprint(SECURITY_MSG)
+                    self.view.show_security_message()
                     self.stats.ending_balance = self.account.balance
                     display_stats(self.stats)
                     return
-                clear_screen()
-                display_poker_topbar(self.ctx)
-                cprint(INVALID_YES_OR_NO_MSG)
-                play_again = cinput(YES_OR_NO_PROMPT)
+                play_again = self.view.reprompt_invalid_yes_no()
 
             if play_again in "Nn":
                 self.stats.ending_balance = self.account.balance
@@ -244,8 +67,7 @@ class PokerGame:
 
     def _play_round(self) -> None:
         """Play a single round of poker."""
-        clear_screen()
-        display_poker_topbar(self.ctx)
+        self.view.start_round()
 
         deck = FULL_DECK
         player_hand: list[StandardCard] = []
@@ -352,7 +174,7 @@ class PokerGame:
         else:
             prompt = "[F]old   [C]heck   [R]aise\n"
 
-        self._print_game(stage, player_hand, opponent_hand, board, pot)
+        self.view.print_game(stage, player_hand, opponent_hand, board, pot)
         action = cinput(prompt)
         raise_amount = 0
 
@@ -370,19 +192,18 @@ class PokerGame:
                 )
                 if not validation_msg:
                     break
-                self._print_game(stage, player_hand, opponent_hand, board, pot, validation_msg)
+                self.view.print_game(stage, player_hand, opponent_hand, board, pot, validation_msg)
             elif cant_call:
-                self._print_game(
+                self.view.print_game(
                     stage, player_hand, opponent_hand, board, pot,
                     f"🤵: You don't have enough chips to call {current_bet}."
                 )
             else:
-                self._print_game(stage, player_hand, opponent_hand, board, pot, INVALID_CHOICE_MSG)
+                self.view.print_game(stage, player_hand, opponent_hand, board, pot, INVALID_CHOICE_MSG)
 
             self.stubborn += 1
             if self.stubborn >= 7:
-                clear_screen()
-                cprint(SECURITY_MSG)
+                self.view.show_security_message()
                 # signal fold by returning immediately
                 return True, pot, current_bet, opponent_chips
 
@@ -422,14 +243,12 @@ class PokerGame:
         """Resolve the round and update balances/stats."""
         if player_folded:
             clear_screen()
-            display_poker_topbar(self.ctx)
-            cprint("You folded. Opponent wins the pot.")
             opponent_chips += pot
             self.stats.losses += 1
-            cprint(f"Your balance: {self.account.balance} chips\n")
+            self.view.show_fold()
             return
 
-        self._print_game("SHOWDOWN", player_hand, opponent_hand, board, pot)
+        self.view.print_game("SHOWDOWN", player_hand, opponent_hand, board, pot)
 
         player_score = hand_score(player_hand, board)
         opponent_score = hand_score(opponent_hand, board)
@@ -449,38 +268,6 @@ class PokerGame:
             self.stats.pushes += 1
 
         cprint(f"Your balance: {self.account.balance} chips\n")
-
-    # ------------------------------------------------------------------
-    # Display
-    # ------------------------------------------------------------------
-
-    def _print_game(
-        self,
-        stage: str,
-        player_hand: list[StandardCard],
-        opponent_hand: list[StandardCard],
-        board: list[StandardCard],
-        pot: int,
-        message: str = "",
-    ) -> None:
-        clear_screen()
-        display_poker_topbar(self.ctx)
-        if message:
-            cprint(message + "\n")
-        cprint(f"=== {stage.upper()} ===\n")
-        cprint("Opponent hand:")
-        print_hand(opponent_hand, hidden=(stage != "SHOWDOWN"))
-        cprint("Board:")
-        if not board:
-            cprint("No cards on the board yet.")
-        else:
-            print_hand(board)
-        cprint("Your hand:")
-        print_hand(player_hand)
-        cprint(f"Your current hand type: {hand_name(hand_score(player_hand, board))}")
-        cprint(f"Pot: {pot} chips")
-        cprint(f"Your balance: {self.account.balance} chips\n")
-
 
 # ---------------------------------------------------------------------------
 # Input validation helper (module-level, reusable by subclasses / variants)

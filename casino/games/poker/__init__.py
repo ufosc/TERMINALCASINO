@@ -1,3 +1,3 @@
-from .poker import play_poker
+from .base import play_poker
 
 __all__ = ["play_poker"]
