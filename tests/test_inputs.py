@@ -6,8 +6,11 @@ import pytest
 #Add more tests as needed
 
 
-def test_empty_name_and_quit():
-    inputs = ["","TEST","1","8","q"]
+def test_invalid_menu_input_and_quit():
+    # The name prompt now lives in the Textual `NameSelect` screen, so `main`
+    # receives the name directly. The menu only accepts "e" or "q", so "1" and
+    # "8" are rejected before "q" quits.
+    inputs = ["1","8","q"]
 
     with patch("casino.main.cinput",side_effect=inputs), \
         patch("casino.main.get_theme"), \
@@ -16,7 +19,7 @@ def test_empty_name_and_quit():
         patch("casino.main.clear_screen"), \
         patch("casino.main.display_topbar"):
 
-        main()
+        main("TEST")
 
     mock_generate.assert_called_with('TEST',ANY)
     mock_print.assert_called_with("\nGoodbye!\n")
@@ -24,7 +27,7 @@ def test_empty_name_and_quit():
 def test_interrupt():
     with patch("casino.main.cinput", side_effect=KeyboardInterrupt):
         with pytest.raises(KeyboardInterrupt):
-            main()
+            main("TEST")
 
 def test_invalid_game():
     ctx = GameContext(account=Account.generate('test', 100), config=Config.default())
