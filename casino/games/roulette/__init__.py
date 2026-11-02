@@ -1,4 +1,15 @@
-from .roulette import play_roulette
-from .european_roulette import play_european_roulette
+from .base import Roulette
+from .variants import (
+    AmericanRoulette,
+    EuropeanRoulette,
+    play_european_roulette,
+    play_roulette,
+)
 
-__all__ = ["play_roulette", "play_european_roulette"]
+__all__ = [
+    "Roulette",
+    "AmericanRoulette",
+    "EuropeanRoulette",
+    "play_roulette",
+    "play_european_roulette",
+]
