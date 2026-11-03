@@ -12,7 +12,19 @@ BASE_DIR = Path(__file__).resolve().parent
 THEME_DIR = BASE_DIR / "themes"
 
 #default fallback so theme is always defined
-theme = {"color": "", "reset": ""}
+DEFAULT_THEME = {"color": "", "reset": ""}
+theme = DEFAULT_THEME.copy()
+
+def reset_theme():
+    # Restore the default text color when the user chooses it in settings.
+    global theme
+    theme = DEFAULT_THEME.copy()
+
+def set_theme(folder: str, name: str):
+    # load the selected color file and make it the active theme.
+    global theme
+    theme = load_theme(folder, name)
+
 
 # loads theme from json file
 def load_theme(folder: str, name: str) -> dict[str, str]:
@@ -29,6 +41,11 @@ def get_theme():
     # choose from original 16 terminal colors or custom colors
     cprint(f"Please choose a theme folder below, or press enter to use default")
     folder = cinput(f"1.Original Terminal   2.Custom Colors")
+
+    #pressing enter with no choice resets the theme
+    if not folder:
+        reset_theme()
+        return
 
     # original 16
     if folder == '1':
