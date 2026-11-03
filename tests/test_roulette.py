@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from casino.games.roulette.roulette import Roulette, AmericanRoulette
+from casino.games.roulette.base import Roulette
+from casino.games.roulette.variants.american import AmericanRoulette
 from casino.accounts import Account
 from casino.config import Config
 from casino.types import GameContext
@@ -135,7 +136,7 @@ def test_payout_credits_correct_player_when_an_earlier_player_skips_betting():
 # answers into the game, instead of a real person at the keyboard.
 # ---------------------------------------------------------------------------
 
-ROULETTE_MODULE = "casino.games.roulette.roulette"
+ROULETTE_MODULE = "casino.games.roulette.base"
 
 
 def run_submit_bets(roulette, accounts, inputs):
