@@ -1,4 +1,4 @@
-from casino.games.roulette.european_roulette import (
+from casino.games.roulette.variants.european import (
     EuropeanRoulette,
     MULTIPLIER_LOSS,
     MULTIPLIER_EVEN_MONEY,
