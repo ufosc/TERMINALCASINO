@@ -6,25 +6,24 @@ import pytest
 #Add more tests as needed
 
 
-def test_empty_name_and_quit():
-    inputs = ["","TEST","1","8","q"]
+def test_main_initialization(): # Originally: test_empty_name_and_quit()
+    with patch("casino.main.Account.generate") as mock_generate, \
+         patch("casino.main.main_menu") as mock_menu, \
+         patch("casino.main.clear_screen"), \
+         patch("casino.main.display_topbar"):
 
-    with patch("casino.main.cinput",side_effect=inputs), \
-        patch("casino.main.get_theme"), \
-        patch("casino.main.Account.generate") as mock_generate, \
-        patch("casino.main.cprint") as mock_print, \
-        patch("casino.main.clear_screen"), \
-        patch("casino.main.display_topbar"):
+        main("TEST")
 
-        main()
-
-    mock_generate.assert_called_with('TEST',ANY)
-    mock_print.assert_called_with("\nGoodbye!\n")
+    mock_generate.assert_called_once_with("TEST", ANY)
+    mock_menu.assert_called_once()
 
 def test_interrupt():
-    with patch("casino.main.cinput", side_effect=KeyboardInterrupt):
+    with patch("casino.main.main_menu", side_effect=KeyboardInterrupt), \
+         patch("casino.main.clear_screen"), \
+         patch("casino.main.display_topbar"):
+
         with pytest.raises(KeyboardInterrupt):
-            main()
+            main("TEST")
 
 def test_invalid_game():
     ctx = GameContext(account=Account.generate('test', 100), config=Config.default())
