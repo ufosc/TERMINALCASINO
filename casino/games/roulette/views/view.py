@@ -6,7 +6,6 @@ from ..base import (
     ROWS,
     ROULETTE_GRID,
     SEC_BTWN_SPIN,
-    STANDARD_AMERICAN_ROULETTE_WHEEL,
     clear_screen,
     cprint_ansi_center,
     cprint_table_center,
@@ -33,11 +32,10 @@ class RouletteView:
             for col in range(len(ROULETTE_GRID[0])):
                 ROULETTE_GRID[row][col] = ' ' # each empty spot is 2 spaces
 
-        for (num_str, color, row, col) in STANDARD_AMERICAN_ROULETTE_WHEEL:
-            # col += 29
+        for (num_str, color, row, col) in self.wheel:
             if num_str != "00" and int(num_str.strip()) < 10:
                 num_str = " " + num_str
-            if num_str.strip() == highlighted_num.strip():
+            if highlighted_num is not None and num_str.strip() == highlighted_num.strip():
                 # the spot in the column before and column after the number become *'s
                 ROULETTE_GRID[row][col-1] = "*"
                 ROULETTE_GRID[row][col+1] = "*"
@@ -87,4 +85,3 @@ class RouletteView:
             return f"{a} on column {v}"
 
         return f"{a} on {t}:{v}"
-

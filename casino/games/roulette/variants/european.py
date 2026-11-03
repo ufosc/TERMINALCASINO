@@ -230,8 +230,8 @@ class EuropeanRoulette(Roulette):
         self.wheel = STANDARD_EUROPEAN_ROULETTE_WHEEL
         self.valid_numbers = [number for (number, _, _, _) in self.wheel]
 
-        from ..views.european_view import EuropeanRouletteView
-        self.view = EuropeanRouletteView(self)
+        from ..views import RouletteView
+        self.view = RouletteView(self)
 
 
 

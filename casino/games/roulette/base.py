@@ -172,7 +172,6 @@ class Roulette:
         self.bets = {}
         self.winning_value: Optional[tuple[str, str]] = None
 
-        from .views import RouletteView
         self.view = RouletteView(self)
 
     @staticmethod
@@ -431,4 +430,4 @@ class Roulette:
 
         cprint("Finished payout.")
 
-
+from .views import RouletteView

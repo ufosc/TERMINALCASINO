@@ -16,6 +16,27 @@ class AmericanRoulette(Roulette):
         super().__init__(accounts)
         self.wheel = STANDARD_AMERICAN_ROULETTE_WHEEL
         self.valid_numbers = [number for (number, _, _, _) in self.wheel]
+        self.stats = GameStats("American Roulette", accounts[0].balance)
+
+    def play_round(self, context: GameContext) -> str:
+        """Play one complete round and return its outcome status."""
+        self.reset_round()
+        previous_balance = context.account.balance
+        status = self.submit_bets(context)
+        if status == "BANKRUPT":
+            return status
+
+        self.spin_wheel(context)
+        self.payout()
+        if context.account.balance > previous_balance:
+            self.stats.wins += 1
+            self.stats.rounds_played += 1
+        elif context.account.balance < previous_balance:
+            self.stats.losses += 1
+            self.stats.rounds_played += 1
+        self.view.refresh_roulette_topbar(context)
+
+        return "ROUND_COMPLETE"
 
 
 def play_roulette(context: GameContext) -> None:
@@ -35,9 +56,7 @@ def play_roulette(context: GameContext) -> None:
 
     roulette = AmericanRoulette(accounts)
     view = roulette.view
-    stats = GameStats("American Roulette", context.account.balance)
     while continue_game:
-        roulette.reset_round()
         clear_screen()
         view.display_roulette_topbar(context)
 
@@ -47,22 +66,9 @@ def play_roulette(context: GameContext) -> None:
         if choice.lower() in {"q", "quit"}:
             continue_game = False
             break
-        prev_balance = context.account.balance
-        status = roulette.submit_bets(context)
+        status = roulette.play_round(context)
         if status == "BANKRUPT":
             break
-
-        roulette.spin_wheel(context)
-        roulette.payout()
-        if context.account.balance > prev_balance:
-            stats.wins += 1
-            stats.rounds_played += 1
-        elif context.account.balance < prev_balance:
-            stats.losses += 1
-            stats.rounds_played += 1
-        view.refresh_roulette_topbar(context)
-
-        play_again = None
 
         while True:
             valid_choices = ["N", "NO", "Y", "YES", ""]
@@ -78,7 +84,7 @@ def play_roulette(context: GameContext) -> None:
             elif play_again == "" or play_again.lower() in {"y", "yes"}:
                 continue_game = True
                 break
-    stats.ending_balance = context.account.balance
-    display_stats(stats)
+    roulette.stats.ending_balance = context.account.balance
+    display_stats(roulette.stats)
     #cprint("Exiting roulette...")
     #sleep(0.5)
