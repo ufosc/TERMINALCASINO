@@ -1,30 +1,48 @@
-from unittest.mock import patch,ANY,call,Mock
-from casino.main import *
-from casino.games import *
+import asyncio
+from unittest.mock import ANY, Mock, call, patch
+
 import pytest
+from textual.widgets import Input
 
-#Add more tests as needed
+from casino.accounts import Account
+from casino.config import Config
+from casino.main import ALL_GAMES, NameSelect, main, main_menu
+from casino.types import GameContext
 
 
-def test_empty_name_and_quit():
-    inputs = ["","TEST","1","8","q"]
-
-    with patch("casino.main.cinput",side_effect=inputs), \
-        patch("casino.main.get_theme"), \
+def test_main_quits():
+    with patch("casino.main.cinput", return_value="q"), \
         patch("casino.main.Account.generate") as mock_generate, \
         patch("casino.main.cprint") as mock_print, \
         patch("casino.main.clear_screen"), \
         patch("casino.main.display_topbar"):
+        main("TEST")
 
-        main()
-
-    mock_generate.assert_called_with('TEST',ANY)
+    mock_generate.assert_called_once_with("TEST", ANY)
     mock_print.assert_called_with("\nGoodbye!\n")
 
+
 def test_interrupt():
-    with patch("casino.main.cinput", side_effect=KeyboardInterrupt):
+    with patch("casino.main.cinput", side_effect=KeyboardInterrupt), \
+        patch("casino.main.Account.generate"), \
+        patch("casino.main.clear_screen"), \
+        patch("casino.main.display_topbar"):
         with pytest.raises(KeyboardInterrupt):
-            main()
+            main("TEST")
+
+
+def test_name_select_rejects_blank_name():
+    async def scenario():
+        app = NameSelect()
+        async with app.run_test() as pilot:
+            await pilot.press("enter")
+            assert app.return_value is None
+            assert app.query_one("#name-input", Input)
+
+            await pilot.press(*"TEST", "enter")
+        assert app.return_value == "TEST"
+
+    asyncio.run(scenario())
 
 def test_invalid_game():
     ctx = GameContext(account=Account.generate('test', 100), config=Config.default())
