@@ -32,15 +32,24 @@ def play_european_roulette(context: GameContext) -> None:
         roulette.payout()
         if context.account.balance > previous_balance:
             stats.wins += 1
+            stats.rounds_played += 1
         elif context.account.balance < previous_balance:
             stats.losses += 1
-        stats.rounds_played += 1
+            stats.rounds_played += 1
         roulette.view.refresh_topbar(context)
         choice = cinput("🤵: Would you like to play another round (Y/n): ").strip().lower()
         if choice in {"", "y", "yes"}:
             continue
-        if choice not in {"n", "no"}:
-            cprint("Please enter 'Yes' or 'No'.")
-        break
+        if choice in {"n", "no"}:
+            break
+        while choice not in {"", "y", "yes", "n", "no"}:
+            choice = roulette.view.prompt(
+                context,
+                "🤵: Would you like to play another round (Y/n): ",
+                lambda value: value in {"", "y", "yes", "n", "no"},
+                "Please enter 'Yes' or 'No'.",
+            )
+        if choice in {"n", "no"}:
+            break
     stats.ending_balance = context.account.balance
     display_stats(stats)

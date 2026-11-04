@@ -184,6 +184,13 @@ class Roulette:
 
     def _compute_win_multiplier(self, bet_type: str, bet_value: str,
                                 winning_number: str, winning_int: int | None) -> int:
+        if bet_type == "color":
+            winning_color = self.winning_value[1] if self.winning_value else ""
+            if bet_value == winning_color:
+                return MULTIPLIER_STRAIGHT_UP if bet_value == "green" else MULTIPLIER_EVEN_MONEY
+            return MULTIPLIER_LOSS
+        if bet_type == "number":
+            return MULTIPLIER_STRAIGHT_UP if bet_value == winning_number else MULTIPLIER_LOSS
         if bet_type == "inside_number":
             return MULTIPLIER_STRAIGHT_UP if bet_value == winning_number else MULTIPLIER_LOSS
         if winning_int is None:
