@@ -5,7 +5,7 @@ from casino.types import GameContext
 from casino.utils import clear_screen, cprint, cinput
 from ..constants import *
 from ..hand import Hand
-from ..base import Blackjack
+from ..base import Blackjack, Player, seat_second_player
 
 
 class EuropeanBlackjack(Blackjack):
@@ -304,31 +304,48 @@ class EuropeanBlackjack(Blackjack):
         hand.set_hand_results(result_key, msg, bet_result_str, payout_amount)
 
 
-def play_european_blackjack(context: GameContext):
+def play_european_blackjack(context: GameContext) -> str | None:
+    # optional second player with each user getting their own turn at the table.
+    second = seat_second_player(context)
+    accounts = [context.account]
+    if second is not None:
+        accounts.append(second)
+
     blackjack = EuropeanBlackjack(context)
 
-    while True:
-        end_of_round_status = blackjack.play_round()
-
-        if end_of_round_status.upper() == "EXIT":
-            blackjack.stats.ending_balance = context.account.balance
-            display_stats(blackjack.stats)
-            cprint("Exiting Blackjack...")
-            sleep(1.0)
-            break
-        elif end_of_round_status.upper() == "CONTINUE":
+    for account in accounts:
+        if account is not context.account:
+            # 2nd player's turn with fresh stats
+            blackjack.player = Player(account)
+            blackjack.stats = GameStats("Blackjack (E.U.)", account.balance)
             blackjack.reset()
-            continue
-        elif end_of_round_status.upper() == "KICKED":
-            blackjack.stats.ending_balance = context.account.balance
-            display_stats(blackjack.stats)
-            action: str = None
-            while action != "":
-                clear_screen()
-                cprint(SECURITY_MSG)
-                action = cinput("Press [Enter] to exit.")
 
-            cprint("Exiting Blackjack...")
-            sleep(1.0)
-        else:
-            raise ValueError(f"{end_of_round_status} is not a valid exit status.")
+        while True:
+            end_of_round_status = blackjack.play_round()
+
+            if end_of_round_status.upper() in {"EXIT", "MENU"}:
+                blackjack.stats.ending_balance = account.balance
+                display_stats(blackjack.stats)
+                if end_of_round_status.upper() == "MENU":
+                    cprint("Returning to the main menu...")
+                    sleep(1.0)
+                    return "MENU"
+                cprint("Exiting Blackjack...")
+                sleep(1.0)
+                break
+            elif end_of_round_status.upper() == "CONTINUE":
+                blackjack.reset()
+                continue
+            elif end_of_round_status.upper() == "KICKED":
+                blackjack.stats.ending_balance = account.balance
+                display_stats(blackjack.stats)
+                action: str = None
+                while action != "":
+                    clear_screen()
+                    cprint(SECURITY_MSG)
+                    action = cinput("Press [Enter] to exit.")
+
+                cprint("Exiting Blackjack...")
+                sleep(1.0)
+            else:
+                raise ValueError(f"{end_of_round_status} is not a valid exit status.")

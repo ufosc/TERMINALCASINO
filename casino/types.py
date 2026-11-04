@@ -12,3 +12,5 @@ from typing import Tuple
 class GameContext:
     account: Account
     config: Config
+    # below added for 2nd player functionality in blackjack
+    alt_player: Account | None = None

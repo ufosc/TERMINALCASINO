@@ -55,3 +55,25 @@ def test_game_handler_called(game_index, game_name):
     for other_name, mock_func in handlers.items():
         if other_name != game_name:
             mock_func.assert_not_called()
+
+
+def test_menu_return_reopens_game_selection_with_existing_account():
+    account = Account.generate("test", 100)
+    selected_app = Mock(
+        selected_game="blackjack (U.S.)",
+        home_account=account,
+    )
+    menu_app = Mock(selected_game=None, home_account=account)
+    handler = Mock(return_value="MENU")
+    app_factory = Mock(side_effect=[selected_app, menu_app])
+
+    with patch("casino.main.CasinoApp", app_factory), \
+         patch("casino.main.GAME_HANDLERS", {"blackjack (U.S.)": handler}), \
+         patch("casino.main.Config.default", return_value=Config.default()), \
+         patch("casino.main.clear_screen"):
+        run_casino_app()
+
+    assert app_factory.call_args_list == [call(), call(account)]
+    selected_app.run.assert_called_once()
+    menu_app.run.assert_called_once()
+    handler.assert_called_once()

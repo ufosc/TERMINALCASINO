@@ -31,7 +31,7 @@ GAME_CHOICE_PROMPT = "Please choose a game to play: "
 
 # To add a new game, just add a handler function to GAME_HANDLERS
 
-GAME_HANDLERS: dict[str, Callable[[GameContext], None]] = {
+GAME_HANDLERS: dict[str, Callable[[GameContext], str | None]] = {
     "blackjack (U.S.)": games.blackjack.play_blackjack,
     "blackjack (E.U.)": games.blackjack.play_european_blackjack,
     "slots": games.slots.play_slots,
@@ -392,16 +392,19 @@ class CasinoApp(App):
                 ("e", "exit_app", "Exit App"),
                 Binding("ctrl+c", "exit_popup", "Exit Popup", show=False)]
 
-    def __init__(self) -> None:
+    def __init__(self, account: Account | None = None) -> None:
         super().__init__()
-        # Account created on the homepage; None until the player enters a name
-        self.home_account: Account | None = None
+        # Account created on the homepage, or reused when returning from a game
+        self.home_account = account
         # Game chosen on the selection screen; None if the player backed out
         self.selected_game: str | None = None
 
     def on_mount(self) -> None:
-        """Open the homepage when the app starts."""
-        self.push_screen(HomeScreen())
+        """Open the homepage or game selection when the app starts."""
+        if self.home_account is None:
+            self.push_screen(HomeScreen())
+        else:
+            self.push_screen(GameSelectionScreen(self.home_account))
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
@@ -418,22 +421,32 @@ class CasinoApp(App):
         self.push_screen(ExitPopup())
 
 
-if __name__ == "__main__":
+def run_casino_app() -> None:
     app = CasinoApp()
     try:
-        app.run()
+        while True:
+            app.run()
+
+            if not app.selected_game or not app.home_account:
+                break
+
+            handler = GAME_HANDLERS[app.selected_game]
+            clear_screen()
+            ctx = GameContext(account=app.home_account, config=Config.default())
+            result = handler(ctx)
+            if result != "MENU":
+                clear_screen()
+                display_topbar(app.home_account, **CASINO_HEADER_OPTIONS)
+                cprint("\nThanks for playing! Goodbye!\n")
+                break
+
+            app = CasinoApp(app.home_account)
     except (KeyboardInterrupt, EOFError):
         pass
 
-    # If a game was chosen, exit Textual and open its original terminal UI.
-    if app.selected_game and app.home_account:
-        handler = GAME_HANDLERS[app.selected_game]
-        clear_screen()
-        ctx = GameContext(account=app.home_account, config=Config.default())
-        handler(ctx)  # returns when the game finishes
-        clear_screen()
-        display_topbar(app.home_account, **CASINO_HEADER_OPTIONS)
-        cprint("\nThanks for playing! Goodbye!\n")
+
+if __name__ == "__main__":
+    run_casino_app()
     """ -- OLD MAIN --
     try:
 

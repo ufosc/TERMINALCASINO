@@ -9,6 +9,28 @@ from .constants import *
 from .hand import Hand
 from .views import BlackjackView
 
+# initializes player 2's starting balance
+SECOND_PLAYER_BALANCE = 100
+
+
+def seat_second_player(context: GameContext) -> Account | None:
+    # asks up front how many people are playing (if 1 doesn't do anything)
+    raw = cinput("How many players? (1 or 2) ").strip()
+    while raw not in {"1", "2"}:
+        cprint(f"{raw} is not a valid value.")
+        raw = cinput("How many players? (1 or 2) ").strip()
+
+    if raw == "1":
+        return None
+
+    name = cinput("What is player 2's name? ").strip() or "Player 2"
+    account = Account.generate(name, SECOND_PLAYER_BALANCE)
+
+    # keeps the 2nd account active so other games can find the 2nd player later.
+    context.alt_player = account
+    cprint(f"Seated {name} with {SECOND_PLAYER_BALANCE} chips.")
+    return account
+
 
 class Player:
     """
@@ -59,14 +81,16 @@ class Blackjack(ABC):
 
         # Ask user if they would like to stay at the table
         while True:# avoid raising error
-            cprint(STAY_AT_TABLE_PROMPT)
-            play_again: str = cinput(YES_OR_NO_PROMPT)
+            play_again: str = self.view.prompt_play_again().strip()
 
             status: str = ""
             if play_again.upper() in {"", "Y", "YES"}:
                 status = "CONTINUE"
             elif play_again.upper() in {"V", "VARIANT"}:
                 status = "VARIANT"
+            elif play_again.upper() in {"M", "MENU"}:
+                clear_screen()
+                status = "MENU"
             elif play_again.upper() in {"N", "NO"}:
                 clear_screen()
                 cprint("\nThanks for playing!\n\n")

@@ -5,13 +5,15 @@ from casino.accounts import Account
 from casino.cards import StandardCard
 from casino.config import Config
 from casino.types import GameContext
-from casino.games.blackjack.variants.standard import StandardBlackjack
-from casino.games.blackjack.variants.european import EuropeanBlackjack
+from casino.games.blackjack.variants.standard import StandardBlackjack, play_blackjack
+from casino.games.blackjack.variants.european import (
+    EuropeanBlackjack,
+    play_european_blackjack,
+)
 
 # Blackjack is single-player only.
 VARIANTS = [StandardBlackjack, EuropeanBlackjack]
 BLACKJACK_MODULES = [
-    "casino.games.blackjack.base",
     "casino.games.blackjack.views.view",
     "casino.games.blackjack.variants.standard",
     "casino.games.blackjack.variants.european",
@@ -44,6 +46,40 @@ def test_single_player_uses_logged_in_account(variant):
 
 
 @pytest.mark.parametrize("variant", VARIANTS)
+def test_main_menu_choice_leaves_blackjack(variant):
+    blackjack = variant(make_context())
+
+    with patch("casino.games.blackjack.views.view.cinput", return_value="m"), \
+         patch("casino.games.blackjack.base.clear_screen"), \
+         patch("casino.games.blackjack.views.view.display_topbar"):
+        assert blackjack.play_again() == "MENU"
+
+
+@pytest.mark.parametrize(
+    ("handler", "module", "game_class"),
+    [
+        (play_blackjack, "standard", StandardBlackjack),
+        (play_european_blackjack, "european", EuropeanBlackjack),
+    ],
+)
+def test_main_menu_choice_exits_the_whole_blackjack_session(handler, module, game_class):
+    context = make_context()
+    second_player = Account.generate("second", 100)
+
+    with patch.object(game_class, "play_round", return_value="MENU") as play_round, \
+         patch(
+             f"casino.games.blackjack.variants.{module}.seat_second_player",
+             return_value=second_player,
+         ), \
+         patch(f"casino.games.blackjack.variants.{module}.display_stats"), \
+         patch(f"casino.games.blackjack.variants.{module}.cprint"), \
+         patch(f"casino.games.blackjack.variants.{module}.sleep"):
+        assert handler(context) == "MENU"
+
+    play_round.assert_called_once()
+
+
+@pytest.mark.parametrize("variant", VARIANTS)
 def test_single_player_round(variant):
     """
     Plays one full round: bet 10, stand on 18, dealer busts, player leaves.
@@ -59,6 +95,7 @@ def test_single_player_round(variant):
     for module in BLACKJACK_MODULES:
         patches.append(patch(f"{module}.cinput", side_effect=lambda *_: next(inputs)))
         patches.append(patch(f"{module}.clear_screen"))
+    patches.append(patch("casino.games.blackjack.base.clear_screen"))
     patches += [
         patch("casino.games.blackjack.variants.standard.sleep"),
         patch("casino.games.blackjack.variants.european.sleep"),

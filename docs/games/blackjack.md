@@ -54,3 +54,6 @@ There are currently two variants:
 
 - Standard Blackjack
 - European Blackjack
+
+At the end of a round, choose **M** to return to game selection and choose
+another game. Choosing **N** ends the casino session.
