@@ -4,6 +4,7 @@ import shutil
 from . import games
 from .accounts import Account
 from .config import Config
+from .theme_screen import ThemedApp
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
 from typing import Callable
@@ -12,6 +13,14 @@ from textual.binding import Binding
 from textual.containers import Center, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Label, Input
+from textual.widgets import Footer, Header, Input, Label,SelectionList, Static, ContentSwitcher, Button
+from textual import on
+from textual.containers import Horizontal
+from textual.widgets.selection_list import Selection
+from .settings import Settings
+
+
+
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -77,13 +86,13 @@ def prompt_with_refresh(
         last_error = error_message
 
 
-class NameSelect(App):
+class NameSelect(ThemedApp):
     
     CSS = """
     #title {
         text-align: center;
         width: 100%;
-        color: gold;
+        color: $primary;
         text-style: bold;
         margin-top: 2;
 
@@ -110,12 +119,12 @@ class NameSelect(App):
        
 
 
-class GameSelect(App):
+class GameSelect(ThemedApp):
     CSS = """
     #title {
         text-align: center;
         width: 100%;
-        color: gold;
+        color: $primary;
         text-style: bold;
         margin-top: 2;
 
@@ -123,14 +132,14 @@ class GameSelect(App):
     #subtitle {
         text-align: center;
         width: 100%;
-        color: cyan;
+        color: $accent;
         text-style: bold;
     }
     #enter{
 
         text-align: center;
-        color:white;
-        background:black;
+        color: $text;
+        background: $panel;
 
     }
     Horizontal{
@@ -146,6 +155,7 @@ class GameSelect(App):
     def compose(self) -> ComposeResult:
         self.title = "Terminal Casino"
         yield Header()
+        yield Footer()
         yield Static("♦ T E R M I N A L  C A S I N O ♦", id="title")
         yield Static(f"Welcome {self.username}!",id="subtitle")
         with Horizontal():
@@ -154,12 +164,12 @@ class GameSelect(App):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.exit(str(event.button.id))
 
-class MenuSelect(App):
+class MenuSelect(ThemedApp):
     CSS = """
     #title {
         text-align: center;
         width: 100%;
-        color: gold;
+        color: $primary;
         text-style: bold;
         margin-top: 2;
 
@@ -167,21 +177,21 @@ class MenuSelect(App):
     #subtitle {
         text-align: center;
         width: 100%;
-        color: cyan;
+        color: $accent;
         text-style: bold;
     }
     #enter{
 
         text-align: center;
-        color:white;
-        background:green;
+        color: $text;
+        background: $success;
 
     }
     #exit{
 
         text-align: center;
-        color:white;
-        background:red;
+        color: $text;
+        background: $error;
 
     }
     Horizontal{
@@ -196,11 +206,14 @@ class MenuSelect(App):
     def compose(self) -> ComposeResult:
         self.title = "Terminal Casino"
         yield Header()
+        yield Footer()
         yield Static("♦ T E R M I N A L  C A S I N O ♦", id="title")
         yield Static(f"Welcome {self.username}!",id="subtitle")
         with Horizontal():
             yield Button("Enter", id="enter")
+            yield Button("Settings", id="settings")
             yield Button("Exit", id="exit")
+            
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.exit(str(event.button.id))
@@ -277,13 +290,6 @@ def main(name: str):
 
     clear_screen()
     display_topbar(account=None, **CASINO_HEADER_OPTIONS)
-
-    
-    name =name
-    # theme selection
-    clear_screen()
-    display_topbar(account=None, **CASINO_HEADER_OPTIONS)
-    get_theme()
 
 
     account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
@@ -465,6 +471,10 @@ if __name__ == "__main__":
             if(step == "exit"):
                 exit()
 
+            if step == "settings":
+                # open settings, then return to the main menu
+                Settings().run()
+                continue
 
             app = GameSelect(username=name) #Select Game Mode
             
